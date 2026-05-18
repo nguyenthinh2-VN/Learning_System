@@ -24,18 +24,44 @@ public class Role {
         return new Role(id, name, description);
     }
 
-    public boolean isMember() { return "MEMBER".equals(name); }
-    public boolean isStaff() { return "STAFF".equals(name); }
-    public boolean isAdmin() { return "ADMIN".equals(name); }
+    public boolean isMember() {
+        return "MEMBER".equals(name);
+    }
 
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public String getDescription() { return description; }
+    public boolean isInstructor() {
+        return "INSTRUCTOR".equals(name);
+    }
+
+    public boolean isStaff() {
+        return "STAFF".equals(name);
+    }
+
+    public boolean isAdminUser() {
+        return "ADMIN_USER".equals(name);
+    }
+
+    public boolean isSuperAdmin() {
+        return "SUPER_ADMIN".equals(name);
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Role role)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof Role role))
+            return false;
         return Objects.equals(id, role.id);
     }
 

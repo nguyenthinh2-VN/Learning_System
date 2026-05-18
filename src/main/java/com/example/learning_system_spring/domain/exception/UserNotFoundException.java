@@ -1,7 +1,7 @@
 package com.example.learning_system_spring.domain.exception;
 
 public class UserNotFoundException extends RuntimeException {
-    public UserNotFoundException(String email) {
-        super("User not found with email: " + email);
+    public UserNotFoundException(Long id) {
+        super("Không tìm thấy người dùng với ID: " + id);
     }
 }

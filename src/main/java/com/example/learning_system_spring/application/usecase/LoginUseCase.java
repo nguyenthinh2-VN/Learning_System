@@ -20,14 +20,16 @@ public class LoginUseCase {
 
     @Transactional(readOnly = true)
     public LoginOutput execute(LoginInput input) {
-        User user = userRepo.findByEmail(input.email())
+        User user = userRepo.findByUsernameOrEmail(input.identifier(), input.identifier())
             .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(input.password(), user.getPassword())) {
             throw new InvalidCredentialsException();
         }
 
-        String accessToken = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().getName());
+        String accessToken = jwtService.generateToken(
+            user.getId(), user.getUsername(), user.getEmail(), user.getRole().getName(), user.isInternal()
+        );
         return LoginOutput.from(user, accessToken);
     }
 }

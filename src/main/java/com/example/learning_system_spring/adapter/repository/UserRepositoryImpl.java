@@ -22,6 +22,11 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByUsernameOrEmail(String username, String email) {
+        return jpaRepo.findByUsernameOrEmail(username, email).map(UserJpaEntity::toDomain);
+    }
+
+    @Override
     public User save(User user) {
         UserJpaEntity entity = UserJpaEntity.fromDomain(user);
         RoleJpaEntity managedRole = em.getReference(RoleJpaEntity.class, user.getRole().getId());

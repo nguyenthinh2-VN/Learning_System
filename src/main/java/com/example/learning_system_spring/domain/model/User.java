@@ -10,22 +10,26 @@ public class User {
         Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     private Long id;
+    private String username;
     private String email;
     private String password;
     private String name;
     private Role role;
+    private boolean isInternal;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private User(Long id, String email, String password, String name, Role role) {
+    private User(Long id, String username, String email, String password, String name, Role role, boolean isInternal) {
         this.id = id;
+        this.username = username;
         this.email = email;
         this.password = password;
         this.name = name;
         this.role = role;
+        this.isInternal = isInternal;
     }
 
-    public static User create(String email, String password, String name, Role role) {
+    public static User create(String username, String email, String password, String name, Role role, boolean isInternal) {
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
             throw new InvalidEmailException(email);
         }
@@ -38,15 +42,18 @@ public class User {
         if (role == null) {
             throw new IllegalArgumentException("Role must not be null");
         }
-        User user = new User(null, email.toLowerCase().trim(), password, name.trim(), role);
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username must not be blank");
+        }
+        User user = new User(null, username.trim(), email.toLowerCase().trim(), password, name.trim(), role, isInternal);
         user.createdAt = LocalDateTime.now();
         user.updatedAt = LocalDateTime.now();
         return user;
     }
 
-    public static User reconstitute(Long id, String email, String password, String name,
-                                     Role role, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        User user = new User(id, email, password, name, role);
+    public static User reconstitute(Long id, String username, String email, String password, String name,
+                                     Role role, boolean isInternal, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        User user = new User(id, username, email, password, name, role, isInternal);
         user.createdAt = createdAt;
         user.updatedAt = updatedAt;
         return user;
@@ -57,10 +64,12 @@ public class User {
     }
 
     public Long getId() { return id; }
+    public String getUsername() { return username; }
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public String getName() { return name; }
     public Role getRole() { return role; }
+    public boolean isInternal() { return isInternal; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

@@ -5,19 +5,21 @@ import com.example.learning_system_spring.domain.model.User;
 import java.time.LocalDateTime;
 
 public record RegisterOutput(
-    Long id,
-    String email,
-    String name,
-    String role,
-    LocalDateTime createdAt
-) {
+        Long id,
+        String username,
+        String email,
+        String name,
+        String role,
+        boolean isInternal,
+        LocalDateTime createdAt) {
     public static RegisterOutput from(User user) {
         return new RegisterOutput(
-            user.getId(),
-            user.getEmail(),
-            user.getName(),
-            user.getRole().getName(),
-            user.getCreatedAt()
-        );
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole().getName(),
+                user.isInternal(),
+                user.getCreatedAt());
     }
 }
