@@ -31,6 +31,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.COURSE_NOT_FOUND, ex.getMessage()));
     }
 
+    @ExceptionHandler(CourseAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleCourseAccessDenied(CourseAccessDeniedException ex) {
+        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(401).body(ErrorResponse.of(ErrorCode.INVALID_CREDENTIALS, ex.getMessage()));
@@ -39,21 +44,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
-            .map(e -> e.getField() + ": " + e.getDefaultMessage())
-            .reduce((a, b) -> a + "; " + b)
-            .orElse("Validation failed");
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                .reduce((a, b) -> a + "; " + b)
+                .orElse("Validation failed");
         return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VALIDATION_ERROR, message));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VALIDATION_ERROR, ex.getMessage()));
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.BAD_REQUEST, ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
-        log.error("Unexpected state error", ex);
-        return ResponseEntity.status(500).body(ErrorResponse.of(ErrorCode.INTERNAL_ERROR, "Internal server error"));
+        log.warn("Business rule violation: {}", ex.getMessage());
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.BAD_REQUEST, ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

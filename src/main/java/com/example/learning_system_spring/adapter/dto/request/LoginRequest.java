@@ -1,6 +1,6 @@
 package com.example.learning_system_spring.adapter.dto.request;
 
-import com.example.learning_system_spring.application.dto.LoginInput;
+import com.example.learning_system_spring.application.dto.Auth.LoginInput;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

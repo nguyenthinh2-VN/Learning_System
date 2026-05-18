@@ -34,22 +34,53 @@ SELECT r.id, p.id FROM roles r, permissions p WHERE r.name = 'INSTRUCTOR' AND p.
 -- Gán quyền cho STAFF
 INSERT IGNORE INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r, permissions p WHERE r.name = 'STAFF' AND p.name IN (
-    'VIEW_COURSE'
+    'VIEW_COURSE', 'CREATE_COURSE', 'EDIT_COURSE', 'DELETE_COURSE', 'UPLOAD_CONTENT'
 );
 
 -- Gán quyền cho ADMIN_USER
 INSERT IGNORE INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r, permissions p WHERE r.name = 'ADMIN_USER' AND p.name IN (
-    'VIEW_COURSE', 'VIEW_USER', 'CREATE_USER', 'EDIT_USER'
+    'VIEW_COURSE', 'CREATE_COURSE', 'EDIT_COURSE', 'DELETE_COURSE', 'UPLOAD_CONTENT', 'VIEW_USER', 'CREATE_USER', 'EDIT_USER'
 );
 
 -- Gán quyền cho SUPER_ADMIN
 INSERT IGNORE INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r, permissions p WHERE r.name = 'SUPER_ADMIN';
 
+-- Sample Data cho Users (mật khẩu tất cả là 'password123')
+INSERT IGNORE INTO users (username, email, password, name, role_id, is_internal, balance, created_at, updated_at)
+SELECT 'instructor1', 'instructor1@example.com', '$2a$10$UM/SbcTs7rQdG7qm.hs62OpN/po5zWWNDRzLB085Rzj1d0qGC8wqG', 'Giảng viên Test', r.id, true, 0, NOW(), NOW()
+FROM roles r WHERE r.name = 'INSTRUCTOR';
+
+INSERT IGNORE INTO users (username, email, password, name, role_id, is_internal, balance, created_at, updated_at)
+SELECT 'member1', 'member1@example.com', '$2a$10$UM/SbcTs7rQdG7qm.hs62OpN/po5zWWNDRzLB085Rzj1d0qGC8wqG', 'Học viên Test', r.id, false, 1000000.00, NOW(), NOW()
+FROM roles r WHERE r.name = 'MEMBER';
+
+INSERT IGNORE INTO users (username, email, password, name, role_id, is_internal, balance, created_at, updated_at)
+SELECT 'staff1', 'staff1@example.com', '$2a$10$UM/SbcTs7rQdG7qm.hs62OpN/po5zWWNDRzLB085Rzj1d0qGC8wqG', 'Nhân viên Test', r.id, true, 0, NOW(), NOW()
+FROM roles r WHERE r.name = 'STAFF';
+
+INSERT IGNORE INTO users (username, email, password, name, role_id, is_internal, balance, created_at, updated_at)
+SELECT 'admin1', 'admin1@example.com', '$2a$10$UM/SbcTs7rQdG7qm.hs62OpN/po5zWWNDRzLB085Rzj1d0qGC8wqG', 'Admin Test', r.id, true, 0, NOW(), NOW()
+FROM roles r WHERE r.name = 'ADMIN_USER';
+
+INSERT IGNORE INTO users (username, email, password, name, role_id, is_internal, balance, created_at, updated_at)
+SELECT 'superadmin1', 'superadmin1@example.com', '$2a$10$UM/SbcTs7rQdG7qm.hs62OpN/po5zWWNDRzLB085Rzj1d0qGC8wqG', 'Super Admin Test', r.id, true, 0, NOW(), NOW()
+FROM roles r WHERE r.name = 'SUPER_ADMIN';
+
 -- Sample Data cho Courses
-INSERT INTO courses (title, description, max_students, enrolled_count) VALUES
-('Spring Boot Clean Architecture', 'Khóa học hướng dẫn xây dựng dự án thực tế với Spring Boot và Clean Architecture', 100, 5),
-('Java Core từ cơ bản đến nâng cao', 'Nắm vững kiến thức nền tảng Java để dễ dàng học Spring Framework', 200, 45),
-('Thiết kế Database chuẩn', 'Cách chuẩn hóa dữ liệu, index và tối ưu truy vấn MySQL', 50, 20),
-('Vue.js 3 thực chiến', 'Kết hợp với Spring Boot làm backend tạo hệ thống trọn vẹn', 150, 10);
+INSERT INTO courses (title, description, max_students, enrolled_count, price, instructor_id) 
+SELECT 'Spring Boot Clean Architecture', 'Khóa học hướng dẫn xây dựng dự án thực tế với Spring Boot và Clean Architecture', 100, 5, 500000.00, id 
+FROM users WHERE username = 'instructor1';
+
+INSERT INTO courses (title, description, max_students, enrolled_count, price, instructor_id) 
+SELECT 'Java Core từ cơ bản đến nâng cao', 'Nắm vững kiến thức nền tảng Java để dễ dàng học Spring Framework', 200, 45, 0.00, id 
+FROM users WHERE username = 'instructor1';
+
+INSERT INTO courses (title, description, max_students, enrolled_count, price, instructor_id) 
+SELECT 'Thiết kế Database chuẩn', 'Cách chuẩn hóa dữ liệu, index và tối ưu truy vấn MySQL', 50, 20, 200000.00, id 
+FROM users WHERE username = 'instructor1';
+
+INSERT INTO courses (title, description, max_students, enrolled_count, price, instructor_id) 
+SELECT 'Vue.js 3 thực chiến', 'Kết hợp với Spring Boot làm backend tạo hệ thống trọn vẹn', 150, 10, 300000.00, id 
+FROM users WHERE username = 'instructor1';

@@ -291,7 +291,9 @@ Tất cả lỗi trả về format thống nhất:
         "title": "Spring Boot Clean Architecture",
         "description": "Học xây dựng ứng dụng với Clean Architecture",
         "maxStudents": 100,
-        "enrolledCount": 5
+        "enrolledCount": 5,
+        "price": 500000.00,
+        "instructorId": 2
       }
     ]
   },
@@ -320,7 +322,22 @@ Tất cả lỗi trả về format thống nhất:
     "title": "Spring Boot Clean Architecture",
     "description": "Học xây dựng ứng dụng với Clean Architecture",
     "maxStudents": 100,
-    "enrolledCount": 5
+    "enrolledCount": 5,
+    "price": 500000.00,
+    "instructorId": 2,
+    "sections": [
+      {
+        "title": "Phần 1: Giới thiệu",
+        "orderIndex": 1,
+        "lessons": [
+          {
+            "title": "Bài 1: Cài đặt môi trường",
+            "contentUrl": "https://video-url.com/bai1",
+            "orderIndex": 1
+          }
+        ]
+      }
+    ]
   },
   "timestamp": "2026-05-18T10:00:00"
 }
@@ -334,3 +351,167 @@ Tất cả lỗi trả về format thống nhất:
   "timestamp": "2026-05-18T10:00:00"
 }
 ```
+
+---
+
+### 6.3. Tạo khóa học mới
+
+**Endpoint:** `POST /api/v1/courses`
+
+**Yêu cầu quyền:** `CREATE_COURSE` (ROLE `INSTRUCTOR`, `STAFF`, `ADMIN_USER`, `SUPER_ADMIN`)
+
+**Request Body:**
+```json
+{
+  "title": "Spring Boot Clean Architecture",
+  "description": "Khóa học chi tiết",
+  "maxStudents": 100,
+  "price": 500000.00,
+  "requestedInstructorId": 2, 
+  "sections": [
+    {
+      "title": "Phần 1: Khởi đầu",
+      "orderIndex": 1,
+      "lessons": [
+        {
+          "title": "Bài 1",
+          "contentUrl": "url_bai_1",
+          "orderIndex": 1
+        }
+      ]
+    }
+  ]
+}
+```
+*Lưu ý: `requestedInstructorId` chỉ bắt buộc nếu người tạo là STAFF/ADMIN. Nếu là INSTRUCTOR, hệ thống sẽ tự động dùng ID của chính INSTRUCTOR đó.*
+
+**Response 201 (Created):**
+```json
+{
+  "status": 201,
+  "message": "Created",
+  "data": {
+    "id": 2,
+    "title": "Spring Boot Clean Architecture",
+    "description": "Khóa học chi tiết",
+    "maxStudents": 100,
+    "enrolledCount": 0,
+    "price": 500000.00,
+    "instructorId": 2,
+    "sections": [ ... ]
+  },
+  "timestamp": "2026-05-18T10:00:00"
+}
+```
+
+---
+
+### 6.4. Chỉnh sửa khóa học
+
+**Endpoint:** `PUT /api/v1/courses/{id}`
+
+**Yêu cầu quyền:** `EDIT_COURSE` (Giảng viên chỉ sửa khóa học của mình; Staff/Admin sửa tự do).
+
+**Request Body:**
+*(Tương tự phần Tạo khóa học nhưng cập nhật toàn phần theo Nested JSON)*
+
+**Response 200 (Updated):**
+```json
+{
+  "status": 200,
+  "message": "Updated",
+  "data": { ... },
+  "timestamp": "2026-05-18T10:00:00"
+}
+```
+
+---
+
+### 6.5. Xóa khóa học
+
+**Endpoint:** `DELETE /api/v1/courses/{id}`
+
+**Yêu cầu quyền:** `DELETE_COURSE` (Giảng viên chỉ xóa khóa học của mình; Staff/Admin xóa tự do).
+
+**Response 200 (Deleted):**
+```json
+{
+  "status": 200,
+  "message": "Deleted",
+  "timestamp": "2026-05-18T10:00:00"
+}
+```
+
+---
+
+## 7. Wallet & Monetization
+
+### 7.1. Nạp tiền vào ví (Top-up)
+
+**Endpoint:** `POST /api/v1/users/me/top-up`
+
+**Yêu cầu quyền:** Phải đăng nhập (MEMBER, STAFF, INSTRUCTOR...)
+
+**Request Body:**
+```json
+{
+  "amount": 500000.00
+}
+```
+
+**Response 200 (Success):**
+```json
+{
+  "status": 200,
+  "message": "Nạp tiền thành công",
+  "data": {
+    "newBalance": 1500000.00
+  },
+  "timestamp": "2026-05-18T15:30:00"
+}
+```
+
+**Response 400 (Bad Request - Số tiền <= 0):**
+```json
+{
+  "code": "BAD_REQUEST",
+  "message": "Nạp tiền phải lớn hơn 0",
+  "timestamp": "2026-05-18T15:30:00"
+}
+```
+
+---
+
+### 7.2. Mua Khóa Học
+
+**Endpoint:** `POST /api/v1/courses/{id}/purchase`
+
+**Yêu cầu quyền:** Phải đăng nhập. Hệ thống tự động trừ tiền trong ví. Nếu là nội bộ (isInternal = true), khóa học được tính giá 0đ.
+
+**Path Variables:**
+| Field | Type | Mô tả |
+|-------|------|-------|
+| id | Long | ID của khóa học muốn mua |
+
+**Response 200 (Success):**
+```json
+{
+  "status": 200,
+  "message": "Đăng ký khóa học thành công",
+  "data": {
+    "enrollmentId": 1,
+    "paidPrice": 500000.00
+  },
+  "timestamp": "2026-05-18T15:35:00"
+}
+```
+
+**Response 400/500 (Lỗi nghiệp vụ):**
+```json
+{
+  "code": "BAD_REQUEST",
+  "message": "Số dư không đủ để thanh toán khóa học. Vui lòng nạp thêm tiền.",
+  "timestamp": "2026-05-18T15:35:00"
+}
+```
+*Ghi chú: Sẽ bắn lỗi nếu khóa học đã đầy, hoặc user đã mua khóa học này rồi.*

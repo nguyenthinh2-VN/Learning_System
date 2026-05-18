@@ -1,8 +1,8 @@
 package com.example.learning_system_spring.adapter.repository;
 
-import com.example.learning_system_spring.adapter.repository.jpa.RoleJpaEntity;
-import com.example.learning_system_spring.adapter.repository.jpa.UserJpaEntity;
-import com.example.learning_system_spring.application.repository.UserRepository;
+import com.example.learning_system_spring.adapter.repository.jpa.role_permissionEntity.RoleJpaEntity;
+import com.example.learning_system_spring.adapter.repository.jpa.UserEntity.UserJpaEntity;
+import com.example.learning_system_spring.application.repository.User.UserRepository;
 import com.example.learning_system_spring.domain.model.User;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -38,5 +38,10 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public boolean existsByEmail(String email) {
         return jpaRepo.existsByEmail(email);
+    }
+
+    @Override
+    public Optional<User> findByIdForUpdate(Long id) {
+        return jpaRepo.findByIdForUpdate(id).map(UserJpaEntity::toDomain);
     }
 }

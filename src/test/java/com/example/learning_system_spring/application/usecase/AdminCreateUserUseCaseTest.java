@@ -1,9 +1,10 @@
 package com.example.learning_system_spring.application.usecase;
 
 import com.example.learning_system_spring.application.dto.CreateUserInput;
-import com.example.learning_system_spring.application.dto.RegisterOutput;
+import com.example.learning_system_spring.application.dto.Auth.RegisterOutput;
 import com.example.learning_system_spring.application.repository.RoleRepository;
-import com.example.learning_system_spring.application.repository.UserRepository;
+import com.example.learning_system_spring.application.repository.User.UserRepository;
+import com.example.learning_system_spring.application.usecase.User.AdminCreateUserUseCase;
 import com.example.learning_system_spring.application.usecase.strategy.user.UsernameGeneratorFactory;
 import com.example.learning_system_spring.domain.exception.EmailAlreadyExistsException;
 import com.example.learning_system_spring.domain.model.Role;

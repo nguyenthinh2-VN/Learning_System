@@ -18,10 +18,10 @@ Danh sách các vai trò (Roles) trong hệ thống:
 |---|-----------|-------|--------|------------|-------|------------|-------------|
 | 1 | `VIEW_COURSE` | Xem danh sách và chi tiết khóa học | [x] | [x] | [x] | [x] | [x] |
 | 2 | `ENROLL_COURSE` | Đăng ký tham gia khóa học | [ ] | [ ] | [ ] | [ ] | [x] |
-| 3 | `CREATE_COURSE` | Tạo khóa học mới | [ ] | [x] | [ ] | [ ] | [x] |
-| 4 | `EDIT_COURSE` | Chỉnh sửa thông tin khóa học | [ ] | [x] | [ ] | [ ] | [x] |
-| 5 | `DELETE_COURSE` | Xóa khóa học | [ ] | [x] | [ ] | [ ] | [x] |
-| 6 | `UPLOAD_CONTENT` | Tải lên tài liệu, bài giảng, video | [ ] | [x] | [ ] | [ ] | [x] |
+| 3 | `CREATE_COURSE` | Tạo khóa học mới | [ ] | [x] | [x] | [x] | [x] |
+| 4 | `EDIT_COURSE` | Chỉnh sửa thông tin khóa học | [ ] | [x] | [x] | [x] | [x] |
+| 5 | `DELETE_COURSE` | Xóa khóa học | [ ] | [x] | [x] | [x] | [x] |
+| 6 | `UPLOAD_CONTENT` | Tải lên tài liệu, bài giảng, video | [ ] | [x] | [x] | [x] | [x] |
 | 7 | `VIEW_USER` | Xem thông tin người dùng | [ ] | [ ] | [ ] | [x] | [x] |
 | 8 | `CREATE_USER` | Cấp tài khoản mới (Nội bộ/Ngoài) | [ ] | [ ] | [ ] | [x] | [x] |
 | 9 | `EDIT_USER` | Chỉnh sửa thông tin người dùng | [ ] | [ ] | [ ] | [x] | [x] |

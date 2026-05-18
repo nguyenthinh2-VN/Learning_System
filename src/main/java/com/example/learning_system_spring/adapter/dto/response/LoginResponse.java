@@ -1,6 +1,6 @@
 package com.example.learning_system_spring.adapter.dto.response;
 
-import com.example.learning_system_spring.application.dto.LoginOutput;
+import com.example.learning_system_spring.application.dto.Auth.LoginOutput;
 
 import java.time.LocalDateTime;
 

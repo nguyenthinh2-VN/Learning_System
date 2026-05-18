@@ -1,6 +1,6 @@
 package com.example.learning_system_spring.adapter.repository;
 
-import com.example.learning_system_spring.adapter.repository.jpa.RoleJpaEntity;
+import com.example.learning_system_spring.adapter.repository.jpa.role_permissionEntity.RoleJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

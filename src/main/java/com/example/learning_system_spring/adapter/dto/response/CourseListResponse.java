@@ -1,11 +1,12 @@
 package com.example.learning_system_spring.adapter.dto.response;
 
-import com.example.learning_system_spring.application.dto.GetCourseListOutput;
+import com.example.learning_system_spring.application.dto.Course.GetCourseListOutput;
 import com.example.learning_system_spring.application.dto.PageResult;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 @Getter
 @Builder
@@ -24,6 +25,8 @@ public class CourseListResponse {
         private String description;
         private int maxStudents;
         private int enrolledCount;
+        private BigDecimal price;
+        private Long instructorId;
     }
 
     public static CourseListResponse from(PageResult<GetCourseListOutput> pageResult) {
@@ -34,6 +37,8 @@ public class CourseListResponse {
                         .description(output.description())
                         .maxStudents(output.maxStudents())
                         .enrolledCount(output.enrolledCount())
+                        .price(output.price())
+                        .instructorId(output.instructorId())
                         .build())
                 .toList();
 

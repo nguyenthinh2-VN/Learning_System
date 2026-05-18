@@ -1,7 +1,7 @@
 package com.example.learning_system_spring.infrastructure.config;
 
-import com.example.learning_system_spring.adapter.repository.jpa.PermissionJpaEntity;
-import com.example.learning_system_spring.adapter.repository.jpa.RoleJpaEntity;
+import com.example.learning_system_spring.adapter.repository.jpa.role_permissionEntity.PermissionJpaEntity;
+import com.example.learning_system_spring.adapter.repository.jpa.role_permissionEntity.RoleJpaEntity;
 import com.example.learning_system_spring.domain.model.Permission;
 import com.example.learning_system_spring.domain.model.Role;
 import jakarta.persistence.EntityManager;

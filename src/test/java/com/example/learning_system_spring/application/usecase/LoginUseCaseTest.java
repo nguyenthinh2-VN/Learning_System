@@ -1,8 +1,9 @@
 package com.example.learning_system_spring.application.usecase;
 
-import com.example.learning_system_spring.application.dto.LoginInput;
-import com.example.learning_system_spring.application.dto.LoginOutput;
-import com.example.learning_system_spring.application.repository.UserRepository;
+import com.example.learning_system_spring.application.dto.Auth.LoginInput;
+import com.example.learning_system_spring.application.dto.Auth.LoginOutput;
+import com.example.learning_system_spring.application.repository.User.UserRepository;
+import com.example.learning_system_spring.application.usecase.Auth.LoginUseCase;
 import com.example.learning_system_spring.domain.exception.InvalidCredentialsException;
 import com.example.learning_system_spring.domain.model.Role;
 import com.example.learning_system_spring.domain.model.User;
@@ -45,7 +46,7 @@ class LoginUseCaseTest {
         // Arrange
         LoginInput input = new LoginInput("MEM123", "password");
         Role memberRole = Role.reconstitute(1L, "MEMBER", "Học viên");
-        User user = User.reconstitute(1L, "MEM123", "user@test.com", "encodedPassword", "Test User", memberRole, false,
+        User user = User.reconstitute(1L, "MEM123", "user@test.com", "encodedPassword", "Test User", memberRole, false, java.math.BigDecimal.ZERO,
                 LocalDateTime.now(), LocalDateTime.now());
 
         when(userRepository.findByUsernameOrEmail("MEM123", "MEM123")).thenReturn(Optional.of(user));
@@ -76,7 +77,7 @@ class LoginUseCaseTest {
         // Arrange
         LoginInput input = new LoginInput("MEM123", "wrongPassword");
         Role memberRole = Role.reconstitute(1L, "MEMBER", "Học viên");
-        User user = User.reconstitute(1L, "MEM123", "user@test.com", "encodedPassword", "Test User", memberRole, false,
+        User user = User.reconstitute(1L, "MEM123", "user@test.com", "encodedPassword", "Test User", memberRole, false, java.math.BigDecimal.ZERO,
                 LocalDateTime.now(), LocalDateTime.now());
 
         when(userRepository.findByUsernameOrEmail("MEM123", "MEM123")).thenReturn(Optional.of(user));

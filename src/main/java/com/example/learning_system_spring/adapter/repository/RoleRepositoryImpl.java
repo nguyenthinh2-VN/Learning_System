@@ -1,6 +1,6 @@
 package com.example.learning_system_spring.adapter.repository;
 
-import com.example.learning_system_spring.adapter.repository.jpa.RoleJpaEntity;
+import com.example.learning_system_spring.adapter.repository.jpa.role_permissionEntity.RoleJpaEntity;
 import com.example.learning_system_spring.application.repository.RoleRepository;
 import com.example.learning_system_spring.domain.model.Role;
 import lombok.RequiredArgsConstructor;

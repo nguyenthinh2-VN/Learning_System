@@ -1,6 +1,6 @@
 package com.example.learning_system_spring.adapter.dto.request;
 
-import com.example.learning_system_spring.application.dto.RegisterInput;
+import com.example.learning_system_spring.application.dto.Auth.RegisterInput;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
