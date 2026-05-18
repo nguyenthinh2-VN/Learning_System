@@ -1,0 +1,23 @@
+package com.example.learning_system_spring.application.dto;
+
+import com.example.learning_system_spring.domain.model.User;
+
+import java.time.LocalDateTime;
+
+public record RegisterOutput(
+    Long id,
+    String email,
+    String name,
+    String role,
+    LocalDateTime createdAt
+) {
+    public static RegisterOutput from(User user) {
+        return new RegisterOutput(
+            user.getId(),
+            user.getEmail(),
+            user.getName(),
+            user.getRole().getName(),
+            user.getCreatedAt()
+        );
+    }
+}

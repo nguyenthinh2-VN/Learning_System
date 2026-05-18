@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/learning_system_dev?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+server:
+  port: 8080
+logging:
+  level:
+    com.example.learning_system_spring: DEBUG
+
+jwt:
+  secret: dGVzdC1zZWNyZXQta2V5LWZvci1sZWFybmluZy1zeXN0ZW0tc3ByaW5nLWFwcGxpY2F0aW9uLWp3dC1zZWNyZXQ=
+  expiration: 86400000
