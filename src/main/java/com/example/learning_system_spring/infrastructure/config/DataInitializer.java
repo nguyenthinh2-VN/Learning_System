@@ -44,12 +44,14 @@ public class DataInitializer implements CommandLineRunner {
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("CREATE_COURSE", "Tạo khóa học mới")));
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("EDIT_COURSE", "Chỉnh sửa khóa học")));
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("DELETE_COURSE", "Xóa khóa học")));
+        em.persist(PermissionJpaEntity.fromDomain(Permission.create("CREATE_SECTION", "Tạo chương học trong khóa học")));
+        em.persist(PermissionJpaEntity.fromDomain(Permission.create("EDIT_SECTION", "Sửa / Xóa chương học")));
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("VIEW_USER", "Xem thông tin người dùng")));
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("EDIT_USER", "Chỉnh sửa người dùng")));
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("DELETE_USER", "Xóa người dùng")));
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("MANAGE_ROLE", "Quản lý phân quyền")));
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("VIEW_REPORT", "Xem báo cáo thống kê")));
 
-        log.info("Seeded 10 permissions");
+        log.info("Seeded 12 permissions");
     }
 }

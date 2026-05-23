@@ -3,6 +3,7 @@ package com.example.learning_system_spring.infrastructure.exception;
 import com.example.learning_system_spring.domain.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -34,6 +35,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CourseAccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleCourseAccessDenied(CourseAccessDeniedException ex) {
         return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(SectionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleSectionNotFound(SectionNotFoundException ex) {
+        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.SECTION_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(SectionAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleSectionAccessDenied(SectionAccessDeniedException ex) {
+        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.SECTION_ACCESS_DENIED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, "Bạn không có quyền thực hiện hành động này."));
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)

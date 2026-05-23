@@ -1,5 +1,6 @@
 package com.example.learning_system_spring.adapter.repository.jpa.CourseEntity;
 
+import com.example.learning_system_spring.domain.model.CourseLesson;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,4 +29,17 @@ public class CourseLessonJpaEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "section_id", nullable = false)
     private CourseSectionJpaEntity section;
+
+    public CourseLesson toDomain() {
+        return CourseLesson.reconstitute(id, title, contentUrl, orderIndex);
+    }
+
+    public static CourseLessonJpaEntity fromDomain(CourseLesson lesson) {
+        CourseLessonJpaEntity entity = new CourseLessonJpaEntity();
+        entity.id = lesson.getId();
+        entity.title = lesson.getTitle();
+        entity.contentUrl = lesson.getContentUrl();
+        entity.orderIndex = lesson.getOrderIndex();
+        return entity;
+    }
 }

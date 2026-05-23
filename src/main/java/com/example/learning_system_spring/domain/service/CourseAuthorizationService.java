@@ -8,12 +8,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class CourseAuthorizationService {
 
-    public void authorizeEditOrDelete(Course course, Long userId, Role userRole) {
-        if (userRole.isInstructor()) {
-            if (course.getInstructorId() == null || !course.getInstructorId().equals(userId)) {
+    /**
+     * Kiểm tra quyền sửa / xóa Course.
+     * - INSTRUCTOR: chỉ được thao tác course của chính mình
+     * - STAFF / ADMIN_USER / SUPER_ADMIN: toàn quyền
+     * - MEMBER: không có quyền
+     */
+    public void authorizeEditOrDelete(Course course, Long requesterId, Role requesterRole) {
+        if (requesterRole.isInstructor()) {
+            if (!CourseOwnershipPolicy.isOwner(course, requesterId)) {
                 throw new CourseAccessDeniedException("Giảng viên chỉ có quyền sửa/xóa khóa học do chính mình tạo.");
             }
-        } else if (!userRole.isStaff() && !userRole.isAdminUser() && !userRole.isSuperAdmin()) {
+        } else if (!CourseOwnershipPolicy.hasFullCourseAccess(requesterRole)) {
             throw new CourseAccessDeniedException("Bạn không có quyền sửa/xóa khóa học này.");
         }
     }
