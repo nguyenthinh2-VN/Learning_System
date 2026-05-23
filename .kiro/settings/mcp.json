@@ -1,10 +1,18 @@
 {
   "mcpServers": {
     "code-review-graph": {
-      "command": "uvx",
-      "args": ["code-review-graph", "serve"],
+      "command": "C:\\Users\\Duc Thinh\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python312\\Scripts\\code-review-graph.exe",
+      "args": ["serve"],
       "disabled": false,
       "autoApprove": []
+    },
+    "agentmemory": {
+      "command": "npx",
+      "args": ["-y", "@agentmemory/mcp"],
+      "env": {
+        "AGENTMEMORY_URL": "${AGENTMEMORY_URL}",
+        "AGENTMEMORY_SECRET": "${AGENTMEMORY_SECRET}"
+      }
     }
   }
 }

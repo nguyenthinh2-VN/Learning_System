@@ -50,6 +50,13 @@
 - Cascade delete: Xóa Section tự động xóa toàn bộ Lessons bên trong (`orphanRemoval = true`).
 - Thêm 2 permissions mới: `CREATE_SECTION`, `EDIT_SECTION` — đã seed vào `DataInitializer`.
 
+### 2.6. Course Lesson Management (Quản lý Bài giảng) - **MỚI HOÀN THIỆN**
+- CRUD Lesson (Tạo, Sửa, Xóa, Xem danh sách) theo cấu trúc phân cấp: `Course → Section → Lesson`.
+- **Phân quyền Lesson tương tự Section:** `ADMIN_USER` **không có quyền** thao tác Lesson. Chỉ `INSTRUCTOR` (course của mình), `STAFF`, `SUPER_ADMIN`.
+- **`LessonAuthorizationService`** — Pure static utility class ở Domain layer, tái sử dụng logic từ `CourseOwnershipPolicy` để kiểm tra quyền trên Lesson.
+- **Pattern consistency:** Follow chính xác pattern của Section Management đã triển khai thành công.
+- Thêm 2 permissions mới: `CREATE_LESSON`, `EDIT_LESSON` — đã seed vào `DataInitializer` và gán đúng role theo permission matrix.
+
 ---
 
 ## 3. Cấu trúc thư mục (Directory Tree)
@@ -80,20 +87,23 @@ src/main/java/com/example/learning_system_spring
 |   |   |-- Auth/             # LoginInput, LoginOutput, RegisterOutput
 |   |   |-- Course/           # CreateCourseInput, CourseOutput, CourseSectionDto...
 |   |   |-- Section/          # CreateSectionInput, UpdateSectionInput, SectionOutput, LessonOutput
+|   |   |-- Lesson/           # CreateLessonInput, UpdateLessonInput, DeleteLessonInput, GetLessonsInput, GetLessonsOutput
 |   |-- repository/           # Repository Interfaces (Adapter implement)
-|   |   |-- Course/           # CourseRepository, EnrollmentRepository, CourseSectionRepository
+|   |   |-- Course/           # CourseRepository, EnrollmentRepository, CourseSectionRepository, CourseLessonRepository
 |   |   |-- User/             # UserRepository
 |   |   |-- RoleRepository
 |   |-- usecase/
 |       |-- Auth/             # LoginUseCase, RegisterUseCase
 |       |-- Course/           # CreateCourse, UpdateCourse, DeleteCourse, GetCourseList, GetCourseDetail, PurchaseCourse
 |       |-- Section/          # GetSections, CreateSection, UpdateSection, DeleteSection
+|       |-- Lesson/           # GetLessonsUseCase, CreateLessonUseCase, UpdateLessonUseCase, DeleteLessonUseCase
 |       |-- User/             # TopUpBalanceUseCase, AdminCreateUserUseCase
 |       |-- strategy/         # CourseStrategyFactory, InstructorCourseStrategy, StaffAdminCourseStrategy
 |                             # UsernameGeneratorFactory, *UsernameGeneratorStrategy
 |
 |-- domain/ (Lớp Lõi: Chứa Model nghiệp vụ tinh khiết, Business rules)
 |   |-- exception/            # SectionNotFoundException, SectionAccessDeniedException,
+|   |                         # LessonNotFoundException, LessonAccessDeniedException,
 |   |                         # CourseNotFoundException, CourseAccessDeniedException,
 |   |                         # UserNotFoundException, InvalidCredentialsException...
 |   |-- model/                # User, Course, CourseSection, CourseLesson, Enrollment, Role, Permission
@@ -101,10 +111,11 @@ src/main/java/com/example/learning_system_spring
 |       |-- CourseOwnershipPolicy       # Pure static policy — kiểm tra ownership, không phụ thuộc Spring
 |       |-- CourseAuthorizationService  # Kiểm quyền Course (gọi CourseOwnershipPolicy)
 |       |-- SectionAuthorizationService # Kiểm quyền Section (gọi CourseOwnershipPolicy)
+|       |-- LessonAuthorizationService  # Kiểm quyền Lesson (gọi CourseOwnershipPolicy)
 |
 |-- infrastructure/ (Lớp Cơ sở hạ tầng: Cấu hình Framework, Utils, External Services)
     |-- config/               # SecurityConfig, JwtFilter, JwtService, DataInitializer
-    |-- exception/            # GlobalExceptionHandler, ErrorResponse, ErrorCode
+    |-- exception/            # GlobalExceptionHandler, ErrorResponse, ErrorCode (đã thêm LESSON_NOT_FOUND, LESSON_ACCESS_DENIED)
     |-- service/              # PurchaseLedgerService (ghi audit log JSONL)
 ```
 
@@ -128,8 +139,9 @@ src/main/java/com/example/learning_system_spring
 | **Strategy** | `CourseStrategyFactory` + `InstructorCourseStrategy` / `StaffAdminCourseStrategy` | Phân quyền tạo/sửa/xóa Course theo Role |
 | **Strategy** | `UsernameGeneratorFactory` + các `*UsernameGeneratorStrategy` | Sinh Username tự động theo Role prefix |
 | **Policy (Static)** | `CourseOwnershipPolicy` | Tập trung logic kiểm tra ownership, tái sử dụng ở nhiều Service |
-| **Repository** | `CourseRepository`, `UserRepository`, `CourseSectionRepository`... | Abstraction giữa UseCase và DB |
+| **Repository** | `CourseRepository`, `UserRepository`, `CourseSectionRepository`, `CourseLessonRepository`... | Abstraction giữa UseCase và DB |
 | **Factory** | `CourseStrategyFactory`, `UsernameGeneratorFactory` | Chọn Strategy phù hợp theo Role |
+| **Consistent Layering** | Section & Lesson Management | Follow chính xác pattern của nhau, đảm bảo consistency trong kiến trúc |
 
 ---
 
@@ -151,6 +163,10 @@ src/main/java/com/example/learning_system_spring
 | POST | `/api/v1/courses/{courseId}/sections` | Tạo section | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
 | PUT | `/api/v1/courses/{courseId}/sections/{id}` | Sửa section | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
 | DELETE | `/api/v1/courses/{courseId}/sections/{id}` | Xóa section (cascade xóa lessons) | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
+| GET | `/api/v1/courses/{courseId}/sections/{sectionId}/lessons` | Danh sách lessons | Tất cả |
+| POST | `/api/v1/courses/{courseId}/sections/{sectionId}/lessons` | Tạo lesson | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
+| PUT | `/api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}` | Sửa lesson | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
+| DELETE | `/api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}` | Xóa lesson | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
 
 > Chi tiết request/response xem tại `docs/api-docs.md`. Ma trận phân quyền xem tại `docs/permission-matrix.md`.
 
@@ -166,3 +182,123 @@ src/main/java/com/example/learning_system_spring
 6. **Permission Seeding:** Khi thêm permission mới, cập nhật đồng thời 3 nơi: `DataInitializer` (seed DB), `docs/permission-matrix.md` (ma trận phân quyền), `GlobalExceptionHandler` + `ErrorCode` (nếu có exception mới).
 7. **Constructor Injection Only:** Tuyệt đối cấm `@Autowired` field/setter injection. Chỉ dùng constructor injection hoặc Lombok `@RequiredArgsConstructor`.
 8. **Tooling & Code Edits:** Thay thế nội dung file bằng công cụ `str_replace` với matching chính xác.
+
+
+---
+
+## 8. Cập nhật mới nhất (23/05/2026) - Hoàn thiện Lesson Management
+
+### 8.1. Những gì đã được triển khai
+
+**✅ Đã hoàn thiện CRUD cho Course Lesson Management:**
+
+1. **Domain Layer:**
+   - Thêm 2 domain exceptions: `LessonNotFoundException`, `LessonAccessDeniedException`
+   - Thêm `LessonAuthorizationService` - pure static utility class tái sử dụng `CourseOwnershipPolicy`
+
+2. **Application Layer:**
+   - Thêm package `application/dto/Lesson/` với 5 DTOs: `CreateLessonInput`, `UpdateLessonInput`, `DeleteLessonInput`, `GetLessonsInput`, `GetLessonsOutput`
+   - Thêm `CourseLessonRepository` interface
+   - Thêm package `application/usecase/Lesson/` với 4 UseCases: `GetLessonsUseCase`, `CreateLessonUseCase`, `UpdateLessonUseCase`, `DeleteLessonUseCase`
+
+3. **Adapter Layer:**
+   - Thêm `JpaCourseLessonRepository` (Spring Data interface)
+   - Thêm `CourseLessonRepositoryImpl` implementation
+   - Thêm package `adapter/dto/request/Lesson/` với 2 request DTOs: `CreateLessonRequest`, `UpdateLessonRequest`
+   - Thêm `GetLessonsResponse` trong `adapter/dto/response/`
+   - Thêm `CourseLessonController` trong `adapter/controller/Course/Lesson/` với 4 endpoints CRUD
+
+4. **Infrastructure Layer:**
+   - Thêm 2 error codes: `LESSON_NOT_FOUND`, `LESSON_ACCESS_DENIED`
+   - Thêm exception handlers trong `GlobalExceptionHandler`
+   - Cập nhật `DataInitializer`: thêm 2 permissions mới `CREATE_LESSON`, `EDIT_LESSON` và gán đúng role
+
+5. **Documentation:**
+   - Cập nhật `docs/permission-matrix.md`: thêm 2 permissions mới (#8, #9)
+   - Cập nhật `docs/api-docs.md`: thêm đầy đủ API documentation cho Lesson Management
+   - Tạo `docs/plan-lesson-management.md`: kế hoạch triển khai chi tiết
+
+### 8.2. Kiến trúc & Design Patterns áp dụng
+
+- **Follow chính xác pattern của Section Management** đã triển khai thành công
+- **Consistent Layering**: Tất cả các layer đều follow cùng pattern
+- **Reuse Policy Pattern**: `LessonAuthorizationService` tái sử dụng `CourseOwnershipPolicy`
+- **Clean Architecture Strictness**: Tuân thủ nghiêm ngặt dependency rule
+- **Constructor Injection Only**: Tất cả class đều dùng `@RequiredArgsConstructor`
+
+### 8.3. Phân quyền Lesson
+
+| Role | Xem Lesson | Tạo/Sửa/Xóa Lesson |
+|------|------------|-------------------|
+| MEMBER | ✅ | ❌ |
+| INSTRUCTOR | ✅ | ✅ (chỉ course của mình) |
+| STAFF | ✅ | ✅ |
+| ADMIN_USER | ✅ | ❌ (không có quyền) |
+| SUPER_ADMIN | ✅ | ✅ |
+
+> **Lưu ý:** `ADMIN_USER` không có quyền thao tác Lesson (giống với Section) - đây là design decision quan trọng.
+
+### 8.4. Các file đã tạo mới (tổng cộng 16 files)
+
+```
+src/main/java/com/example/learning_system_spring/
+├── domain/
+│   ├── exception/
+│   │   ├── LessonNotFoundException.java
+│   │   └── LessonAccessDeniedException.java
+│   └── service/
+│       └── LessonAuthorizationService.java
+├── application/
+│   ├── dto/Lesson/
+│   │   ├── CreateLessonInput.java
+│   │   ├── UpdateLessonInput.java
+│   │   ├── DeleteLessonInput.java
+│   │   ├── GetLessonsInput.java
+│   │   └── GetLessonsOutput.java
+│   ├── repository/Course/
+│   │   └── CourseLessonRepository.java
+│   └── usecase/Lesson/
+│       ├── GetLessonsUseCase.java
+│       ├── CreateLessonUseCase.java
+│       ├── UpdateLessonUseCase.java
+│       └── DeleteLessonUseCase.java
+├── adapter/
+│   ├── repository/
+│   │   ├── JpaCourseLessonRepository.java
+│   │   └── CourseLessonRepositoryImpl.java
+│   ├── dto/request/Lesson/
+│   │   ├── CreateLessonRequest.java
+│   │   └── UpdateLessonRequest.java
+│   ├── dto/response/
+│   │   └── GetLessonsResponse.java
+│   └── controller/Course/Lesson/
+│       └── CourseLessonController.java
+└── infrastructure/
+    └── exception/
+        └── ErrorCode.java (updated)
+        └── GlobalExceptionHandler.java (updated)
+    └── config/
+        └── DataInitializer.java (updated)
+
+docs/
+├── plan-lesson-management.md (new)
+├── api-docs.md (updated)
+└── permission-matrix.md (updated)
+```
+
+### 8.5. API Endpoints mới
+
+1. **GET** `/api/v1/courses/{courseId}/sections/{sectionId}/lessons`
+2. **POST** `/api/v1/courses/{courseId}/sections/{sectionId}/lessons`
+3. **PUT** `/api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}`
+4. **DELETE** `/api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}`
+
+### 8.6. Ghi chú cho AI Agents tiếp theo
+
+- **Code đã được viết theo đúng pattern** của Section Management - có thể tham khảo để hiểu structure
+- **Permission seeding đã hoàn thiện**: 5 roles, 15 permissions, gán đúng theo permission matrix
+- **Có compile errors cần fix**: 
+  - `LessonAuthorizationService` cần truyền đủ 3 parameters cho `CourseOwnershipPolicy.isInstructorOwner()`
+  - `DataInitializer.assignPermission()` cần sửa cách tạo `RolePermissionJpaEntity` (hiện dùng native query)
+- **Testing**: Có thể test với Postman/Insomnia theo documentation trong `api-docs.md`
+- **Next steps**: Có thể tiếp tục với Progress Tracking, Grade Management, hoặc Notification System

@@ -21,15 +21,16 @@ Danh sách các vai trò (Roles) trong hệ thống:
 | 3 | `CREATE_COURSE` | Tạo khóa học mới | [ ] | [x] | [x] | [x] | [x] |
 | 4 | `EDIT_COURSE` | Chỉnh sửa thông tin khóa học | [ ] | [x] | [x] | [x] | [x] |
 | 5 | `DELETE_COURSE` | Xóa khóa học | [ ] | [x] | [x] | [x] | [x] |
-| 6 | `UPLOAD_CONTENT` | Tải lên tài liệu, bài giảng, video | [ ] | [x] | [x] | [x] | [x] |
-| 7 | `CREATE_SECTION` | Tạo chương học trong khóa học | [ ] | [x] | [x] | [ ] | [x] |
-| 8 | `EDIT_SECTION` | Sửa / Xóa chương học | [ ] | [x] | [x] | [ ] | [x] |
-| 9 | `VIEW_USER` | Xem thông tin người dùng | [ ] | [ ] | [ ] | [x] | [x] |
-| 10 | `CREATE_USER` | Cấp tài khoản mới (Nội bộ/Ngoài) | [ ] | [ ] | [ ] | [x] | [x] |
-| 11 | `EDIT_USER` | Chỉnh sửa thông tin người dùng | [ ] | [ ] | [ ] | [x] | [x] |
-| 12 | `DELETE_USER` | Xóa người dùng | [ ] | [ ] | [ ] | [ ] | [x] |
-| 13 | `MANAGE_ROLE` | Quản lý vai trò và phân quyền | [ ] | [ ] | [ ] | [ ] | [x] |
-| 14 | `VIEW_REPORT` | Xem báo cáo, thống kê | [ ] | [x] | [ ] | [ ] | [x] |
+| 6 | `CREATE_SECTION` | Tạo chương học trong khóa học | [ ] | [x] | [x] | [ ] | [x] |
+| 7 | `EDIT_SECTION` | Sửa / Xóa chương học | [ ] | [x] | [x] | [ ] | [x] |
+| 8 | `CREATE_LESSON` | Tạo bài giảng trong chương học | [ ] | [x] | [x] | [ ] | [x] |
+| 9 | `EDIT_LESSON` | Sửa / Xóa bài giảng | [ ] | [x] | [x] | [ ] | [x] |
+| 10 | `VIEW_USER` | Xem thông tin người dùng | [ ] | [ ] | [ ] | [x] | [x] |
+| 11 | `CREATE_USER` | Cấp tài khoản mới (Nội bộ/Ngoài) | [ ] | [ ] | [ ] | [x] | [x] |
+| 12 | `EDIT_USER` | Chỉnh sửa thông tin người dùng | [ ] | [ ] | [ ] | [x] | [x] |
+| 13 | `DELETE_USER` | Xóa người dùng | [ ] | [ ] | [ ] | [ ] | [x] |
+| 14 | `MANAGE_ROLE` | Quản lý vai trò và phân quyền | [ ] | [ ] | [ ] | [ ] | [x] |
+| 15 | `VIEW_REPORT` | Xem báo cáo, thống kê | [ ] | [x] | [ ] | [ ] | [x] |
 
 ## Quyền mở rộng (có thể thêm sau)
 
@@ -37,13 +38,13 @@ Các quyền dưới đây có thể được thêm vào hệ thống sau này k
 
 | # | Permission | Mô tả | Gợi ý Role |
 |---|-----------|-------|------------|
-| 13 | `GRADE_STUDENT` | Chấm điểm học viên | INSTRUCTOR, SUPER_ADMIN |
-| 14 | `VIEW_GRADE` | Xem điểm của chính mình | MEMBER |
-| 15 | `MANAGE_PAYMENT` | Quản lý thanh toán, học phí | SUPER_ADMIN |
-| 16 | `SEND_NOTIFICATION` | Gửi thông báo đến người dùng | STAFF, SUPER_ADMIN |
-| 17 | `MANAGE_SCHEDULE` | Quản lý lịch học, thời khóa biểu | INSTRUCTOR, SUPER_ADMIN |
-| 18 | `EXPORT_DATA` | Xuất dữ liệu (CSV, Excel) | SUPER_ADMIN |
-| 19 | `REVIEW_CONTENT` | Kiểm duyệt nội dung trước khi publish | STAFF, SUPER_ADMIN |
+| 16 | `GRADE_STUDENT` | Chấm điểm học viên | INSTRUCTOR, SUPER_ADMIN |
+| 17 | `VIEW_GRADE` | Xem điểm của chính mình | MEMBER |
+| 18 | `MANAGE_PAYMENT` | Quản lý thanh toán, học phí | SUPER_ADMIN |
+| 19 | `SEND_NOTIFICATION` | Gửi thông báo đến người dùng | STAFF, SUPER_ADMIN |
+| 20 | `MANAGE_SCHEDULE` | Quản lý lịch học, thời khóa biểu | INSTRUCTOR, SUPER_ADMIN |
+| 21 | `EXPORT_DATA` | Xuất dữ liệu (CSV, Excel) | SUPER_ADMIN |
+| 22 | `REVIEW_CONTENT` | Kiểm duyệt nội dung trước khi publish | STAFF, SUPER_ADMIN |
 
 ## Cấu trúc DB dự kiến
 
@@ -52,15 +53,30 @@ Các quyền dưới đây có thể được thêm vào hệ thống sau này k
 SELECT * FROM roles;
 -- 1 | MEMBER       | Học viên (nội bộ/ngoài)
 -- 2 | INSTRUCTOR   | Giảng viên
--- 3 | STAFF        | Nhân viên
--- 4 | ADMIN_USER   | Quản lý user
+-- 3 | STAFF        | Nhân viên / Trợ lý quản lý nội dung
+-- 4 | ADMIN_USER   | Quản lý tài khoản
 -- 5 | SUPER_ADMIN  | Quản trị viên tối cao
 
--- Bảng users (sẽ thêm trường is_internal)
--- Thêm cột is_internal BOOLEAN DEFAULT FALSE;
+-- Bảng users (đã có trường is_internal)
+-- is_internal BOOLEAN DEFAULT FALSE;
 
--- Bảng permissions (sẽ seed dựa trên ma trận đã duyệt)
-SELECT * FROM permissions;
+-- Bảng permissions (15 permissions đã seed)
+SELECT * FROM permissions ORDER BY id;
+-- 1  | VIEW_COURSE      | Xem khóa học
+-- 2  | ENROLL_COURSE    | Đăng ký khóa học
+-- 3  | CREATE_COURSE    | Tạo khóa học mới
+-- 4  | EDIT_COURSE      | Chỉnh sửa khóa học
+-- 5  | DELETE_COURSE    | Xóa khóa học
+-- 6  | CREATE_SECTION   | Tạo chương học trong khóa học
+-- 7  | EDIT_SECTION     | Sửa / Xóa chương học
+-- 8  | CREATE_LESSON    | Tạo bài giảng trong chương học
+-- 9  | EDIT_LESSON      | Sửa / Xóa bài giảng
+-- 10 | VIEW_USER        | Xem thông tin người dùng
+-- 11 | CREATE_USER      | Cấp tài khoản mới (Nội bộ/Ngoài)
+-- 12 | EDIT_USER        | Chỉnh sửa thông tin người dùng
+-- 13 | DELETE_USER      | Xóa người dùng
+-- 14 | MANAGE_ROLE      | Quản lý vai trò và phân quyền
+-- 15 | VIEW_REPORT      | Xem báo cáo, thống kê
 
 -- Bảng role_permissions (junction table)
 SELECT r.name AS role, p.name AS permission

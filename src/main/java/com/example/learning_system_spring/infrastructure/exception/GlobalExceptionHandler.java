@@ -47,6 +47,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.SECTION_ACCESS_DENIED, ex.getMessage()));
     }
 
+    @ExceptionHandler(LessonNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleLessonNotFound(LessonNotFoundException ex) {
+        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.LESSON_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(LessonAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleLessonAccessDenied(LessonAccessDeniedException ex) {
+        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.LESSON_ACCESS_DENIED, ex.getMessage()));
+    }
+
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
         return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, "Bạn không có quyền thực hiện hành động này."));
