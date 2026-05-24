@@ -42,4 +42,20 @@ public class CourseOwnershipPolicy {
     public static boolean isInstructorOwner(Course course, Long requesterId, Role role) {
         return role.isInstructor() && isOwner(course, requesterId);
     }
+
+    /**
+     * Kiểm tra requester có quyền xem course chưa publish không.
+     * Áp dụng cho GetCourseDetailUseCase: course chưa publish chỉ owner / admin xem được.
+     */
+    public static boolean canViewUnpublished(Course course, Long requesterId, Role role) {
+        if (role == null) return false;
+        return isOwner(course, requesterId) || hasFullCourseAccess(role);
+    }
+
+    /**
+     * Kiểm tra requester là admin (STAFF / ADMIN_USER / SUPER_ADMIN) — bypass priceLocked.
+     */
+    public static boolean isAdmin(Role role) {
+        return hasFullCourseAccess(role);
+    }
 }

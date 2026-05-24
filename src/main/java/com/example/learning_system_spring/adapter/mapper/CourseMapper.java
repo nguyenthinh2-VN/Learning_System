@@ -31,6 +31,10 @@ public class CourseMapper {
                 entity.getEnrolledCount(),
                 entity.getPrice(),
                 entity.getInstructorId(),
+                entity.isPublished(),
+                entity.isPriceLocked(),
+                entity.getPublishedAt(),
+                entity.getPublishedBy(),
                 sections);
     }
 
@@ -75,6 +79,10 @@ public class CourseMapper {
         entity.setEnrolledCount(course.getEnrolledCount());
         entity.setPrice(course.getPrice());
         entity.setInstructorId(course.getInstructorId());
+        entity.setPublished(course.isPublished());
+        entity.setPriceLocked(course.isPriceLocked());
+        entity.setPublishedAt(course.getPublishedAt());
+        entity.setPublishedBy(course.getPublishedBy());
 
         if (course.getSections() != null) {
             course.getSections().forEach(sectionDomain -> {

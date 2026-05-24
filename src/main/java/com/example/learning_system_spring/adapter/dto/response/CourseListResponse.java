@@ -5,8 +5,9 @@ import com.example.learning_system_spring.application.dto.PageResult;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.List;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -27,6 +28,9 @@ public class CourseListResponse {
         private int enrolledCount;
         private BigDecimal price;
         private Long instructorId;
+        private boolean published;
+        private boolean priceLocked;
+        private LocalDateTime publishedAt;
     }
 
     public static CourseListResponse from(PageResult<GetCourseListOutput> pageResult) {
@@ -39,6 +43,9 @@ public class CourseListResponse {
                         .enrolledCount(output.enrolledCount())
                         .price(output.price())
                         .instructorId(output.instructorId())
+                        .published(output.published())
+                        .priceLocked(output.priceLocked())
+                        .publishedAt(output.publishedAt())
                         .build())
                 .toList();
 

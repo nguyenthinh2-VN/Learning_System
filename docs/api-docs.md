@@ -268,6 +268,8 @@ Tất cả lỗi trả về format thống nhất:
 
 **Endpoint:** `GET /api/v1/courses`
 
+> **Lưu ý quan trọng:** Endpoint public này CHỈ trả về các khóa học đã được duyệt (`published = true`). Course mới do INSTRUCTOR / STAFF / ADMIN tạo mặc định ẩn (`published = false`) và không xuất hiện ở đây cho đến khi STAFF / SUPER_ADMIN duyệt qua `POST /api/v1/admin/courses/{id}/publish`. INSTRUCTOR muốn xem khóa học của mình (kể cả khi chưa duyệt) phải dùng `GET /api/v1/instructor/courses`.
+
 **Query Parameters:**
 | Field | Type | Default | Mô tả |
 |-------|------|---------|-------|
@@ -359,6 +361,8 @@ Tất cả lỗi trả về format thống nhất:
 **Endpoint:** `POST /api/v1/courses`
 
 **Yêu cầu quyền:** `CREATE_COURSE` (ROLE `INSTRUCTOR`, `STAFF`, `ADMIN_USER`, `SUPER_ADMIN`)
+
+> **Workflow duyệt:** Course tạo ra mặc định `published = false`, `priceLocked = false`, KHÔNG xuất hiện ở public listing. STAFF / SUPER_ADMIN cần duyệt qua `POST /api/v1/admin/courses/{id}/publish` để công khai. Khi publish, server tự động set `priceLocked = true`, INSTRUCTOR không sửa được giá nữa (xem section 10).
 
 **Request Body:**
 ```json
@@ -486,35 +490,96 @@ Tất cả lỗi trả về format thống nhất:
 
 **Endpoint:** `POST /api/v1/courses/{id}/purchase`
 
-**Yêu cầu quyền:** Phải đăng nhập. Hệ thống tự động trừ tiền trong ví. Nếu là nội bộ (isInternal = true), khóa học được tính giá 0đ.
+**Yêu cầu quyền:** Phải đăng nhập. Hệ thống tự động trừ tiền trong ví. Nếu là nội bộ (`isInternal = true`), khóa học được tính giá 0đ.
+
+> **Voucher tích hợp:** Body có thể chứa `voucherCode` (tùy chọn) để áp dụng giảm giá. Server LUÔN tính lại giá ở thời điểm checkout, không tin giá quote trước đó. Xem chi tiết tại Section 11 (Voucher Pricing).
+
+> **Anti-tampering:** DTO request CHỈ khai báo `voucherCode`. Mọi field giá khác (`price`, `originalPrice`, `discount`, `finalPrice`, `paidPrice`) nếu có trong body sẽ bị bỏ qua hoàn toàn.
 
 **Path Variables:**
 | Field | Type | Mô tả |
 |-------|------|-------|
 | id | Long | ID của khóa học muốn mua |
 
-**Response 200 (Success):**
+**Request Body (tùy chọn):**
+```json
+{
+  "voucherCode": "WELCOME50"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| voucherCode | String | No | 0–32 ký tự, regex `^[A-Za-z0-9_-]*$` |
+
+**Response 200 (Success — không voucher):**
 ```json
 {
   "status": 200,
   "message": "Đăng ký khóa học thành công",
   "data": {
     "enrollmentId": 1,
-    "paidPrice": 500000.00
+    "originalPrice": 500000.00,
+    "discountAmount": 0.00,
+    "finalPrice": 500000.00,
+    "paidPrice": 500000.00,
+    "voucherApplied": false,
+    "voucherCode": null
   },
   "timestamp": "2026-05-18T15:35:00"
 }
 ```
 
-**Response 400/500 (Lỗi nghiệp vụ):**
+**Response 200 (Success — có voucher):**
 ```json
 {
-  "code": "BAD_REQUEST",
-  "message": "Số dư không đủ để thanh toán khóa học. Vui lòng nạp thêm tiền.",
+  "status": 200,
+  "message": "Đăng ký khóa học thành công",
+  "data": {
+    "enrollmentId": 1,
+    "originalPrice": 500000.00,
+    "discountAmount": 50000.00,
+    "finalPrice": 450000.00,
+    "paidPrice": 450000.00,
+    "voucherApplied": true,
+    "voucherCode": "WELCOME50"
+  },
   "timestamp": "2026-05-18T15:35:00"
 }
 ```
-*Ghi chú: Sẽ bắn lỗi nếu khóa học đã đầy, hoặc user đã mua khóa học này rồi.*
+
+**Response 400 — Course chưa publish:**
+```json
+{
+  "code": "COURSE_NOT_PUBLISHED",
+  "message": "Khóa học với ID 5 chưa được duyệt và công khai.",
+  "timestamp": "2026-05-18T15:35:00"
+}
+```
+
+**Response 400 — Đã enrolled:**
+```json
+{
+  "code": "ALREADY_ENROLLED",
+  "message": "Bạn đã đăng ký khóa học này rồi.",
+  "timestamp": "2026-05-18T15:35:00"
+}
+```
+
+**Response 400 — Số dư không đủ:**
+```json
+{
+  "code": "INSUFFICIENT_BALANCE",
+  "message": "Số dư không đủ để thanh toán khóa học.",
+  "timestamp": "2026-05-18T15:35:00"
+}
+```
+
+*Ghi chú:*
+- Khóa học đã đầy → HTTP 400 với mã `BAD_REQUEST`.
+- Internal Member (`isInternal = true`) luôn `paidPrice = 0`, voucher bị bỏ qua, không tạo Voucher_Usage.
+- INSTRUCTOR / STAFF / ADMIN_USER gửi `voucherCode` → HTTP 403 (`VOUCHER_USE_DENIED`).
+- Mọi lỗi voucher (`VOUCHER_NOT_FOUND`, `VOUCHER_EXPIRED`, `VOUCHER_USAGE_LIMIT_REACHED`...) xem section 11.
 
 ---
 
@@ -1054,7 +1119,554 @@ Base path: `/api/v1/courses/{courseId}/sections/{sectionId}/lessons`
 
 ---
 
-## 10. Tổng kết API Endpoints
+## 10. Course Approval & Visibility
+
+Khi INSTRUCTOR / STAFF / ADMIN tạo khóa học mới (`POST /api/v1/courses`), course sẽ ở trạng thái **DRAFT** (`published = false`, `priceLocked = false`) — KHÔNG xuất hiện ở public listing. STAFF / SUPER_ADMIN cần duyệt qua endpoint publish để đưa course lên public.
+
+**Hai cờ trên course:**
+
+| Cờ | Ý nghĩa |
+|----|---------|
+| `published` | Course đã được duyệt và công khai cho MEMBER xem / mua |
+| `priceLocked` | Giá bị khóa, INSTRUCTOR không sửa được (chỉ admin có `LOCK_COURSE_PRICE`) |
+
+**Workflow:**
+
+```
+INSTRUCTOR tạo course (published = false, priceLocked = false)
+  ↓
+INSTRUCTOR thêm sections / lessons (vẫn ở draft)
+  ↓
+STAFF / SUPER_ADMIN xem GET /api/v1/admin/courses/pending
+  ↓
+STAFF / SUPER_ADMIN có thể PUT /api/v1/admin/courses/{id}/price để chỉnh giá
+  ↓
+STAFF / SUPER_ADMIN POST /api/v1/admin/courses/{id}/publish
+  → published = true, priceLocked = true, publishedAt = now, publishedBy = adminId
+  → Course xuất hiện ở public listing và mua được
+  ↓
+(Tùy chọn) STAFF / SUPER_ADMIN POST /api/v1/admin/courses/{id}/unpublish nếu cần ẩn
+  → published = false (giữ nguyên priceLocked = true)
+  → Course biến mất khỏi public listing nhưng giữ nguyên enrollment đã có
+```
+
+---
+
+### 10.1. Danh sách course chưa duyệt (Pending)
+
+**Endpoint:** `GET /api/v1/admin/courses/pending`
+
+**Yêu cầu quyền:** `PUBLISH_COURSE` (Role STAFF, SUPER_ADMIN).
+
+**Query Parameters:**
+| Field | Type | Default | Mô tả |
+|-------|------|---------|-------|
+| keyword | String | (rỗng) | Tìm kiếm theo tiêu đề |
+| page | Integer | 0 | 0-indexed |
+| size | Integer | 10 | |
+
+**Response 200 (Success):** Trả về danh sách course có `published = false`.
+
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalElements": 1,
+    "totalPages": 1,
+    "page": 0,
+    "size": 10,
+    "items": [
+      {
+        "id": 5,
+        "title": "Spring Boot Advanced",
+        "price": 800000.00,
+        "instructorId": 2,
+        "published": false,
+        "priceLocked": false
+      }
+    ]
+  },
+  "timestamp": "2026-05-24T10:00:00"
+}
+```
+
+---
+
+### 10.2. Danh sách toàn bộ course (Admin)
+
+**Endpoint:** `GET /api/v1/admin/courses`
+
+**Yêu cầu quyền:** `PUBLISH_COURSE`.
+
+Query parameters tương tự pending. Response trả cả course đã publish và chưa publish.
+
+---
+
+### 10.3. Duyệt và Publish course
+
+**Endpoint:** `POST /api/v1/admin/courses/{id}/publish`
+
+**Yêu cầu quyền:** `PUBLISH_COURSE` (Role STAFF, SUPER_ADMIN).
+
+**Path Variables:**
+| Field | Type | Mô tả |
+|-------|------|-------|
+| id | Long | ID của khóa học |
+
+**Response 200 (Published):**
+```json
+{
+  "status": 200,
+  "message": "Khóa học đã được duyệt và public",
+  "data": {
+    "id": 5,
+    "title": "Spring Boot Advanced",
+    "price": 800000.00,
+    "published": true,
+    "priceLocked": true,
+    "publishedAt": "2026-05-24T10:30:00",
+    "publishedBy": 3
+  },
+  "timestamp": "2026-05-24T10:30:00"
+}
+```
+
+**Response 400 — Course đã publish:**
+```json
+{
+  "code": "COURSE_ALREADY_PUBLISHED",
+  "message": "Khóa học với ID 5 đã được publish trước đó.",
+  "timestamp": "2026-05-24T10:30:00"
+}
+```
+
+**Response 400 — Giá không hợp lệ:**
+```json
+{
+  "code": "BAD_REQUEST",
+  "message": "Giá khóa học không hợp lệ. Vui lòng đặt giá trước khi publish.",
+  "timestamp": "2026-05-24T10:30:00"
+}
+```
+
+---
+
+### 10.4. Unpublish course
+
+**Endpoint:** `POST /api/v1/admin/courses/{id}/unpublish`
+
+**Yêu cầu quyền:** `PUBLISH_COURSE`.
+
+> Khi unpublish, `published = false` nhưng `priceLocked` GIỮ NGUYÊN. Các Enrollment đã có không bị xóa, học viên đã mua vẫn truy cập được khóa học.
+
+**Response 200:**
+```json
+{
+  "status": 200,
+  "message": "Khóa học đã được ẩn khỏi public",
+  "data": {
+    "id": 5,
+    "published": false,
+    "priceLocked": true
+  },
+  "timestamp": "2026-05-24T10:35:00"
+}
+```
+
+---
+
+### 10.5. Cập nhật giá (Admin override khi priceLocked)
+
+**Endpoint:** `PUT /api/v1/admin/courses/{id}/price`
+
+**Yêu cầu quyền:** `LOCK_COURSE_PRICE` (Role STAFF, SUPER_ADMIN).
+
+> Endpoint này cho phép admin sửa giá KỂ CẢ khi `priceLocked = true`. INSTRUCTOR sửa qua `PUT /api/v1/courses/{id}` thông thường sẽ bị chặn nếu `priceLocked = true`.
+
+**Request Body:**
+```json
+{
+  "price": 750000.00
+}
+```
+
+**Response 200:**
+```json
+{
+  "status": 200,
+  "message": "Giá khóa học đã được cập nhật",
+  "data": {
+    "id": 5,
+    "price": 750000.00,
+    "priceLocked": true
+  },
+  "timestamp": "2026-05-24T10:40:00"
+}
+```
+
+---
+
+### 10.6. Course của Instructor (kể cả chưa publish)
+
+**Endpoint:** `GET /api/v1/instructor/courses`
+
+**Yêu cầu quyền:** Đăng nhập + Role `INSTRUCTOR`.
+
+> Instructor chỉ thấy course do chính mình tạo. Bao gồm cả course chưa publish.
+
+**Query Parameters:** `keyword`, `page`, `size`.
+
+**Response 200:** Tương tự admin pending nhưng filter theo `instructorId` của chính requester.
+
+---
+
+### 10.7. Chi tiết course của Instructor
+
+**Endpoint:** `GET /api/v1/instructor/courses/{id}`
+
+**Yêu cầu quyền:** Đăng nhập + Role `INSTRUCTOR` + sở hữu course.
+
+> Instructor xem được chi tiết course của mình kể cả khi chưa publish.
+
+---
+
+### 10.8. Lưu ý phân quyền sau publish
+
+Khi course đã `published = true` và `priceLocked = true`:
+
+| Role | Sửa metadata (title, description, maxStudents) | Sửa price |
+|------|-----------------------------------------------|-----------|
+| INSTRUCTOR (owner) | Có | **KHÔNG** (`COURSE_PRICE_LOCKED`) |
+| STAFF | Có | Có (qua `/api/v1/admin/courses/{id}/price`) |
+| ADMIN_USER | Có | Có |
+| SUPER_ADMIN | Có | Có |
+
+INSTRUCTOR cố tình truyền `price` trong `PUT /api/v1/courses/{id}` khi `priceLocked = true` sẽ nhận:
+
+```json
+{
+  "code": "COURSE_PRICE_LOCKED",
+  "message": "Giá khóa học đã bị khóa. Vui lòng liên hệ admin để sửa.",
+  "timestamp": "2026-05-24T11:00:00"
+}
+```
+
+---
+
+### Mã lỗi bổ sung (Course Approval)
+
+| HTTP Status | Error Code | Mô tả |
+|-------------|-----------|-------|
+| 400 | `COURSE_NOT_PUBLISHED` | Khóa học chưa được duyệt và công khai |
+| 400 | `COURSE_PRICE_LOCKED` | Giá khóa học đã bị khóa, không thể sửa |
+| 400 | `COURSE_ALREADY_PUBLISHED` | Course đã được publish trước đó |
+
+---
+
+## 11. Voucher Pricing & Management
+
+Tính năng voucher cho phép STAFF / SUPER_ADMIN tạo mã giảm giá; MEMBER (External / Internal) áp dụng voucher khi mua khóa học.
+
+**Trọng tâm thiết kế — chống giả mạo (anti-tampering):**
+
+| Mối lo | Cách giải quyết |
+|--------|-----------------|
+| Tampering `courseId` | Server đọc giá trực tiếp từ DB theo `courseId` ở path |
+| Tampering `price` từ client | DTO chỉ khai báo `voucherCode`, mọi field giá bị bỏ qua |
+| Replay quote cũ | Mỗi `/purchase` tính lại giá từ đầu, không tin quote |
+| Race condition voucher quota | Pessimistic write lock trên hàng voucher + UNIQUE `(voucherId, enrollmentId)` |
+
+**Phân quyền:**
+
+| Hành động | MEMBER | INSTRUCTOR | STAFF | ADMIN_USER | SUPER_ADMIN |
+|-----------|--------|------------|-------|------------|-------------|
+| Quản lý voucher (CRUD) | ❌ | ❌ | ✅ (`MANAGE_VOUCHER`) | ❌ | ✅ |
+| Quote / áp voucher khi mua | ✅ (`USE_VOUCHER`) | ❌ | ❌ | ❌ | ✅ |
+
+> Internal Member (`isInternal = true`): luôn `paidPrice = 0`, voucher bị bỏ qua khi mua. Voucher chỉ có ý nghĩa với External Member.
+
+---
+
+### 11.1. Tạo Voucher (Admin)
+
+**Endpoint:** `POST /api/v1/admin/vouchers`
+
+**Yêu cầu quyền:** `MANAGE_VOUCHER` (Role STAFF, SUPER_ADMIN).
+
+**Request Body:**
+```json
+{
+  "code": "WELCOME50",
+  "type": "PERCENT",
+  "value": 50,
+  "scope": "ALL_COURSES",
+  "validFrom": "2026-05-01T00:00:00",
+  "validTo": "2026-12-31T23:59:59",
+  "minOrderAmount": 100000,
+  "maxDiscount": 200000,
+  "usageLimit": 1000,
+  "usagePerUser": 1,
+  "applicableCourseIds": null
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| code | String | Yes | 4–32 ký tự, regex `^[A-Za-z0-9_-]+$`, lưu uppercase, UNIQUE |
+| type | Enum | Yes | `PERCENT` hoặc `FIXED` |
+| value | BigDecimal | Yes | > 0; nếu `PERCENT` thì 0 < value ≤ 100 |
+| scope | Enum | Yes | `ALL_COURSES` hoặc `SPECIFIC_COURSES` |
+| validFrom | LocalDateTime | Yes | ISO-8601 |
+| validTo | LocalDateTime | Yes | ISO-8601, ≥ validFrom |
+| minOrderAmount | BigDecimal | No | ≥ 0, mặc định 0 |
+| maxDiscount | BigDecimal | No | ≥ 0, chỉ áp dụng khi `PERCENT`; 0 = không giới hạn |
+| usageLimit | Long | No | ≥ 0; 0 = không giới hạn |
+| usagePerUser | Integer | No | ≥ 0; 0 = không giới hạn |
+| applicableCourseIds | Set\<Long\> | Tùy `scope` | Bắt buộc và không rỗng khi `scope = SPECIFIC_COURSES` |
+
+**Response 201:**
+```json
+{
+  "status": 201,
+  "message": "Tạo voucher thành công",
+  "data": {
+    "id": 1,
+    "code": "WELCOME50",
+    "type": "PERCENT",
+    "value": 50,
+    "status": "ACTIVE",
+    "scope": "ALL_COURSES",
+    "validFrom": "2026-05-01T00:00:00",
+    "validTo": "2026-12-31T23:59:59",
+    "minOrderAmount": 100000,
+    "maxDiscount": 200000,
+    "usageLimit": 1000,
+    "usagePerUser": 1,
+    "applicableCourseIds": null,
+    "usedCount": 0,
+    "createdAt": "2026-05-24T10:00:00",
+    "updatedAt": "2026-05-24T10:00:00"
+  },
+  "timestamp": "2026-05-24T10:00:00"
+}
+```
+
+**Response 409 (Code đã tồn tại):**
+```json
+{
+  "code": "VOUCHER_CODE_ALREADY_EXISTS",
+  "message": "Voucher code WELCOME50 đã tồn tại.",
+  "timestamp": "2026-05-24T10:00:00"
+}
+```
+
+---
+
+### 11.2. Cập nhật Voucher
+
+**Endpoint:** `PUT /api/v1/admin/vouchers/{id}`
+
+**Yêu cầu quyền:** `MANAGE_VOUCHER`.
+
+> Khi voucher đã có ít nhất 1 bản ghi `Voucher_Usage`, các field `code`, `type`, `value` sẽ bị từ chối khi update — chỉ được sửa các field "mở rộng" (`status`, `scope`, `validFrom`, `validTo`, `minOrderAmount`, `maxDiscount`, `usageLimit`, `usagePerUser`, `applicableCourseIds`).
+
+**Request Body:** xem schema ở `UpdateVoucherRequest`. Không bao gồm `code`, `type`, `value`.
+
+**Response 200:** Trả về voucher đã cập nhật với `usedCount` và metadata mới.
+
+**Response 400 — usageLimit nhỏ hơn usedCount:**
+```json
+{
+  "code": "VOUCHER_USAGE_LIMIT_TOO_LOW",
+  "message": "usageLimit mới (10) không được nhỏ hơn usedCount hiện tại (15).",
+  "timestamp": "2026-05-24T11:00:00"
+}
+```
+
+**Response 400 — sửa field bất biến:**
+```json
+{
+  "code": "VOUCHER_IMMUTABLE_FIELD",
+  "message": "Không được sửa field code/type/value khi voucher đã có lượt dùng.",
+  "timestamp": "2026-05-24T11:00:00"
+}
+```
+
+---
+
+### 11.3. Soft-delete Voucher
+
+**Endpoint:** `DELETE /api/v1/admin/vouchers/{id}`
+
+**Yêu cầu quyền:** `MANAGE_VOUCHER`.
+
+> Voucher bị set `status = INACTIVE` (soft-delete) để bảo toàn lịch sử `Voucher_Usage`. Voucher đã có usage tuyệt đối không được xóa cứng.
+
+**Response 200:**
+```json
+{
+  "status": 200,
+  "message": "Voucher đã được vô hiệu hóa (soft-delete)",
+  "timestamp": "2026-05-24T11:00:00"
+}
+```
+
+---
+
+### 11.4. Danh sách Voucher (Admin)
+
+**Endpoint:** `GET /api/v1/admin/vouchers`
+
+**Yêu cầu quyền:** `MANAGE_VOUCHER`.
+
+**Query Parameters:** `page` (default 0), `size` (default 10).
+
+**Response 200:** Phân trang trả về danh sách voucher kèm `usedCount`.
+
+---
+
+### 11.5. Quote (Preview giá)
+
+**Endpoint:** `POST /api/v1/courses/{courseId}/quote`
+
+**Yêu cầu quyền:** Đăng nhập. Role MEMBER hoặc SUPER_ADMIN nếu gửi `voucherCode` (`USE_VOUCHER` permission). Role khác mà gửi `voucherCode` → 403.
+
+> Read-only, không tiêu thụ voucher. Có thể gọi nhiều lần.
+
+**Request Body (tùy chọn):**
+```json
+{
+  "voucherCode": "WELCOME50"
+}
+```
+
+> **Anti-tampering:** Body CHỈ chấp nhận `voucherCode`. Mọi field giá khác bị bỏ qua.
+
+**Response 200 — không voucher:**
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "originalPrice": 500000.00,
+    "discountAmount": 0.00,
+    "finalPrice": 500000.00,
+    "voucherApplied": false,
+    "voucherCode": null,
+    "voucherType": null,
+    "internalDiscount": false,
+    "quotedAt": "2026-05-24T11:30:00"
+  },
+  "timestamp": "2026-05-24T11:30:00"
+}
+```
+
+**Response 200 — voucher hợp lệ:**
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "originalPrice": 500000.00,
+    "discountAmount": 200000.00,
+    "finalPrice": 300000.00,
+    "voucherApplied": true,
+    "voucherCode": "WELCOME50",
+    "voucherType": "PERCENT",
+    "internalDiscount": false,
+    "quotedAt": "2026-05-24T11:30:00"
+  },
+  "timestamp": "2026-05-24T11:30:00"
+}
+```
+
+**Response 200 — Internal Member (luôn 0đ, voucher bị bỏ qua):**
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "originalPrice": 500000.00,
+    "discountAmount": 500000.00,
+    "finalPrice": 0.00,
+    "voucherApplied": false,
+    "voucherCode": null,
+    "voucherType": null,
+    "internalDiscount": true,
+    "quotedAt": "2026-05-24T11:30:00"
+  },
+  "timestamp": "2026-05-24T11:30:00"
+}
+```
+
+> `quotedAt` chỉ mang tính thông tin. KHÔNG được dùng làm chứng cứ ràng buộc giá ở luồng checkout — server luôn tính lại tại thời điểm `/purchase`.
+
+---
+
+### 11.6. Checkout với Voucher
+
+Đã được mô tả trong section 7.2 (Mua Khóa Học). Tóm tắt:
+
+- Endpoint: `POST /api/v1/courses/{id}/purchase` với body `{ "voucherCode": "..." }`.
+- Server giữ pessimistic lock trên User → Course → Voucher (thứ tự cố định, chống deadlock).
+- Validate voucher LẦN NỮA sau khi giữ lock — preview pass không có nghĩa checkout pass.
+- UNIQUE `(voucher_id, enrollment_id)` ở DB chống race tạo 2 usage cho cùng enrollment.
+- Audit log `event = "VOUCHER_APPLIED"` được ghi vào `logs/purchase_ledger.jsonl`.
+
+---
+
+### Voucher Validation Rules
+
+Validator kiểm tra theo thứ tự cố định (cùng đầu vào → cùng exception):
+
+1. `status = ACTIVE`
+2. `validFrom ≤ now`
+3. `now ≤ validTo`
+4. Scope (course nằm trong `applicableCourseIds` nếu `SPECIFIC_COURSES`)
+5. `originalPrice ≥ minOrderAmount`
+6. `usedCount < usageLimit` (toàn cục, 0 = không giới hạn)
+7. `perUserCount < usagePerUser` (theo user, 0 = không giới hạn)
+
+---
+
+### Pricing Engine Rules
+
+| Voucher Type | Công thức tính `discountAmount` |
+|--------------|---------------------------------|
+| `null` | 0 (không giảm) |
+| `PERCENT` | `min(originalPrice × value / 100, maxDiscount)` (HALF_UP, scale 2) — `maxDiscount = 0` nghĩa không giới hạn |
+| `FIXED` | `min(value, originalPrice)` |
+
+Invariants luôn được enforce:
+- `0 ≤ discountAmount ≤ originalPrice`
+- `finalPrice = originalPrice − discountAmount`
+- `0 ≤ finalPrice ≤ originalPrice`
+- Mọi BigDecimal `scale = 2`, rounding `HALF_UP`
+- `originalPrice = 0` → `discountAmount = 0`, `finalPrice = 0` (voucher vô nghĩa với khóa miễn phí)
+
+---
+
+### Mã lỗi Voucher
+
+| HTTP Status | Error Code | Mô tả |
+|-------------|-----------|-------|
+| 404 | `VOUCHER_NOT_FOUND` | Không tìm thấy voucher với code đã chuẩn hóa |
+| 400 | `VOUCHER_INACTIVE` | Voucher đang ở trạng thái INACTIVE |
+| 400 | `VOUCHER_NOT_YET_ACTIVE` | Chưa tới thời điểm `validFrom` |
+| 400 | `VOUCHER_EXPIRED` | Đã quá `validTo` |
+| 400 | `VOUCHER_NOT_APPLICABLE` | Course không nằm trong `applicableCourseIds` |
+| 400 | `VOUCHER_MIN_ORDER_NOT_MET` | `originalPrice < minOrderAmount` |
+| 409 | `VOUCHER_USAGE_LIMIT_REACHED` | Đã đạt giới hạn lượt dùng tổng |
+| 409 | `VOUCHER_USAGE_PER_USER_EXCEEDED` | User đã đạt giới hạn lượt dùng cá nhân |
+| 403 | `VOUCHER_USE_DENIED` | Role không được phép sử dụng voucher |
+| 409 | `VOUCHER_CODE_ALREADY_EXISTS` | Code đã tồn tại khi tạo voucher |
+| 400 | `VOUCHER_USAGE_LIMIT_TOO_LOW` | `usageLimit` mới nhỏ hơn `usedCount` hiện tại |
+| 400 | `VOUCHER_IMMUTABLE_FIELD` | Sửa field bất biến (code/type/value) khi voucher đã có usage |
+
+---
+
+## 12. Tổng kết API Endpoints
 
 ### Auth
 - `POST /api/v1/auth/register` - Đăng ký tài khoản
@@ -1062,12 +1674,22 @@ Base path: `/api/v1/courses/{courseId}/sections/{sectionId}/lessons`
 - `POST /api/v1/admin/users` - Admin tạo tài khoản
 
 ### Course Management
-- `GET /api/v1/courses` - Danh sách khóa học (phân trang)
+- `GET /api/v1/courses` - Danh sách khóa học (chỉ `published = true`)
 - `GET /api/v1/courses/{id}` - Chi tiết khóa học
-- `POST /api/v1/courses` - Tạo khóa học
+- `POST /api/v1/courses` - Tạo khóa học (mặc định ẩn, chờ duyệt)
 - `PUT /api/v1/courses/{id}` - Cập nhật khóa học
 - `DELETE /api/v1/courses/{id}` - Xóa khóa học
-- `POST /api/v1/courses/{id}/purchase` - Mua khóa học
+- `POST /api/v1/courses/{id}/purchase` - Mua khóa học (tùy chọn `voucherCode`)
+- `POST /api/v1/courses/{id}/quote` - Quote giá (preview với voucher, read-only)
+
+### Course Approval (Admin / Instructor)
+- `GET /api/v1/instructor/courses` - Course của instructor (cả pending)
+- `GET /api/v1/instructor/courses/{id}` - Chi tiết course của instructor
+- `GET /api/v1/admin/courses/pending` - Danh sách course chờ duyệt
+- `GET /api/v1/admin/courses` - Toàn bộ course (cả publish và pending)
+- `POST /api/v1/admin/courses/{id}/publish` - Duyệt và công khai course
+- `POST /api/v1/admin/courses/{id}/unpublish` - Ẩn course đã publish
+- `PUT /api/v1/admin/courses/{id}/price` - Sửa giá course (kể cả khi `priceLocked`)
 
 ### Wallet
 - `POST /api/v1/users/me/top-up` - Nạp tiền vào ví
@@ -1084,9 +1706,15 @@ Base path: `/api/v1/courses/{courseId}/sections/{sectionId}/lessons`
 - `PUT /api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}` - Cập nhật lesson
 - `DELETE /api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}` - Xóa lesson
 
+### Voucher Management (Admin)
+- `POST /api/v1/admin/vouchers` - Tạo voucher
+- `GET /api/v1/admin/vouchers` - Danh sách voucher (phân trang)
+- `PUT /api/v1/admin/vouchers/{id}` - Cập nhật voucher
+- `DELETE /api/v1/admin/vouchers/{id}` - Soft-delete voucher
+
 ---
 
-## 11. Testing với Postman/Insomnia
+## 13. Testing với Postman/Insomnia
 
 ### Authentication Flow:
 1. **Register** → Lấy thông tin user (không có token)
@@ -1100,8 +1728,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJNRU0yQjRBMUQiLCJ1c2VySWQiO
 ```
 
 ### Testing Scenarios:
-1. **MEMBER**: Chỉ xem courses/sections/lessons, nạp tiền, mua khóa học
-2. **INSTRUCTOR**: Tạo/sửa/xóa course của mình, tạo/sửa/xóa section/lesson của course mình
-3. **STAFF**: Toàn quyền course/section/lesson (trừ user management)
-4. **ADMIN_USER**: Quản lý user, course (nhưng không có quyền section/lesson)
-5. **SUPER_ADMIN**: Toàn quyền hệ thống
+1. **MEMBER (External)**: Xem courses public, nạp tiền, quote giá với voucher, mua khóa học (có / không voucher).
+2. **MEMBER (Internal)**: Mua khóa học luôn 0đ; voucher bị bỏ qua; quote luôn `internalDiscount = true`.
+3. **INSTRUCTOR**: Tạo course (mặc định ẩn) → thêm sections / lessons → chờ admin duyệt. Sau publish, không sửa được giá. Xem course của mình qua `/api/v1/instructor/courses`.
+4. **STAFF**: Toàn quyền course / section / lesson, duyệt course (`PUBLISH_COURSE`), khóa giá (`LOCK_COURSE_PRICE`), quản lý voucher (`MANAGE_VOUCHER`).
+5. **ADMIN_USER**: Quản lý user, course (CRUD) nhưng KHÔNG có quyền section / lesson, KHÔNG duyệt course, KHÔNG quản lý voucher.
+6. **SUPER_ADMIN**: Toàn quyền hệ thống bao gồm `USE_VOUCHER` (mua test) và `MANAGE_VOUCHER`.
+
+### Voucher / Course Approval flow gợi ý test:
+1. STAFF login → `POST /api/v1/admin/vouchers` tạo voucher `WELCOME50`.
+2. INSTRUCTOR login → `POST /api/v1/courses` tạo course (course ở DRAFT, không xuất hiện ở public list).
+3. STAFF → `GET /api/v1/admin/courses/pending` thấy course chờ duyệt.
+4. STAFF → `POST /api/v1/admin/courses/{id}/publish` để công khai. Course xuất hiện ở `GET /api/v1/courses`.
+5. MEMBER login → `POST /api/v1/courses/{id}/quote` với `{ "voucherCode": "WELCOME50" }` xem giá preview.
+6. MEMBER → `POST /api/v1/courses/{id}/purchase` với `{ "voucherCode": "WELCOME50" }` để mua thực sự. Server tính lại giá độc lập, ghi `Voucher_Usage` và audit log.
+7. Kiểm tra `logs/purchase_ledger.jsonl` thấy 2 dòng JSONL: `PURCHASE_COMPLETED` (hoặc `VOUCHER_APPLIED`).

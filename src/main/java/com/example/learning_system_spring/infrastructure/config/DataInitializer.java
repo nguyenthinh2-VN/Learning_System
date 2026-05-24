@@ -56,8 +56,12 @@ public class DataInitializer implements CommandLineRunner {
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("DELETE_USER", "Xóa người dùng")));
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("MANAGE_ROLE", "Quản lý phân quyền")));
         em.persist(PermissionJpaEntity.fromDomain(Permission.create("VIEW_REPORT", "Xem báo cáo thống kê")));
+        em.persist(PermissionJpaEntity.fromDomain(Permission.create("PUBLISH_COURSE", "Duyệt và publish khóa học")));
+        em.persist(PermissionJpaEntity.fromDomain(Permission.create("LOCK_COURSE_PRICE", "Khóa giá / sửa giá đã khóa")));
+        em.persist(PermissionJpaEntity.fromDomain(Permission.create("MANAGE_VOUCHER", "Tạo / sửa / xóa / xem voucher")));
+        em.persist(PermissionJpaEntity.fromDomain(Permission.create("USE_VOUCHER", "Áp dụng voucher khi mua khóa học")));
 
-        log.info("Seeded 14 permissions");
+        log.info("Seeded 18 permissions");
     }
 
     private void assignPermissionsToRoles() {
@@ -92,10 +96,15 @@ public class DataInitializer implements CommandLineRunner {
         PermissionJpaEntity deleteUser = getPermission("DELETE_USER");
         PermissionJpaEntity manageRole = getPermission("MANAGE_ROLE");
         PermissionJpaEntity viewReport = getPermission("VIEW_REPORT");
+        PermissionJpaEntity publishCourse = getPermission("PUBLISH_COURSE");
+        PermissionJpaEntity lockCoursePrice = getPermission("LOCK_COURSE_PRICE");
+        PermissionJpaEntity manageVoucher = getPermission("MANAGE_VOUCHER");
+        PermissionJpaEntity useVoucher = getPermission("USE_VOUCHER");
 
         // Gán permission theo ma trận phân quyền
-        // MEMBER: VIEW_COURSE
+        // MEMBER: VIEW_COURSE, USE_VOUCHER (chỉ MEMBER được áp dụng voucher khi mua khóa)
         assignPermission(memberRole, viewCourse);
+        assignPermission(memberRole, useVoucher);
         
         // INSTRUCTOR: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, CREATE_SECTION, EDIT_SECTION, CREATE_LESSON, EDIT_LESSON, VIEW_REPORT
         assignPermission(instructorRole, viewCourse);
@@ -108,7 +117,8 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(instructorRole, editLesson);
         assignPermission(instructorRole, viewReport);
         
-        // STAFF: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, CREATE_SECTION, EDIT_SECTION, CREATE_LESSON, EDIT_LESSON
+        // STAFF: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, CREATE_SECTION, EDIT_SECTION, CREATE_LESSON, EDIT_LESSON,
+        //        PUBLISH_COURSE, LOCK_COURSE_PRICE, MANAGE_VOUCHER
         assignPermission(staffRole, viewCourse);
         assignPermission(staffRole, createCourse);
         assignPermission(staffRole, editCourse);
@@ -117,6 +127,9 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(staffRole, editSection);
         assignPermission(staffRole, createLesson);
         assignPermission(staffRole, editLesson);
+        assignPermission(staffRole, publishCourse);
+        assignPermission(staffRole, lockCoursePrice);
+        assignPermission(staffRole, manageVoucher);
         
         // ADMIN_USER: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, VIEW_USER, EDIT_USER
         assignPermission(adminUserRole, viewCourse);
@@ -141,6 +154,10 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(superAdminRole, deleteUser);
         assignPermission(superAdminRole, manageRole);
         assignPermission(superAdminRole, viewReport);
+        assignPermission(superAdminRole, publishCourse);
+        assignPermission(superAdminRole, lockCoursePrice);
+        assignPermission(superAdminRole, manageVoucher);
+        assignPermission(superAdminRole, useVoucher);
 
         log.info("Assigned permissions to roles according to permission matrix");
     }

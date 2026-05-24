@@ -1,7 +1,9 @@
 package com.example.learning_system_spring.application.dto.Course;
 
 import com.example.learning_system_spring.domain.model.Course;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public record GetCourseListOutput(
         Long id,
@@ -10,7 +12,10 @@ public record GetCourseListOutput(
         int maxStudents,
         int enrolledCount,
         BigDecimal price,
-        Long instructorId
+        Long instructorId,
+        boolean published,
+        boolean priceLocked,
+        LocalDateTime publishedAt
 ) {
     public static GetCourseListOutput from(Course course) {
         return new GetCourseListOutput(
@@ -20,7 +25,10 @@ public record GetCourseListOutput(
                 course.getMaxStudents(),
                 course.getEnrolledCount(),
                 course.getPrice(),
-                course.getInstructorId()
+                course.getInstructorId(),
+                course.isPublished(),
+                course.isPriceLocked(),
+                course.getPublishedAt()
         );
     }
 }

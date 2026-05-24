@@ -6,14 +6,17 @@ import com.example.learning_system_spring.application.dto.Course.CourseSectionDt
 import com.example.learning_system_spring.application.dto.Course.UpdateCourseInput;
 import com.example.learning_system_spring.application.repository.Course.CourseRepository;
 import com.example.learning_system_spring.domain.exception.CourseNotFoundException;
+import com.example.learning_system_spring.domain.exception.CoursePriceLockedException;
 import com.example.learning_system_spring.domain.model.Course;
 import com.example.learning_system_spring.domain.model.CourseLesson;
 import com.example.learning_system_spring.domain.model.CourseSection;
 import com.example.learning_system_spring.domain.service.CourseAuthorizationService;
+import com.example.learning_system_spring.domain.service.CourseOwnershipPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +33,14 @@ public class UpdateCourseUseCase {
                 .orElseThrow(() -> new CourseNotFoundException(input.courseId()));
 
         authorizationService.authorizeEditOrDelete(course, input.requesterId(), input.requesterRole());
+
+        // Nếu giá thay đổi và course đã priceLocked, chỉ admin mới sửa được.
+        BigDecimal newPrice = input.price() != null ? input.price() : course.getPrice();
+        boolean priceChanged = newPrice.compareTo(course.getPrice()) != 0;
+        if (priceChanged && course.isPriceLocked()
+                && !CourseOwnershipPolicy.isAdmin(input.requesterRole())) {
+            throw new CoursePriceLockedException(course.getId());
+        }
 
         List<CourseSection> domainSections = new ArrayList<>();
         if (input.sections() != null) {
@@ -50,15 +61,19 @@ public class UpdateCourseUseCase {
             }
         }
 
-        // Tạo 1 Course mới với id cũ để update toàn phần
+        // Tạo course mới với id cũ + giữ nguyên flag published / priceLocked / publishedAt / publishedBy
         Course updatedCourse = Course.reconstitute(
                 course.getId(),
                 input.title(),
                 input.description(),
                 input.maxStudents(),
                 course.getEnrolledCount(),
-                input.price(),
+                newPrice,
                 course.getInstructorId(),
+                course.isPublished(),
+                course.isPriceLocked(),
+                course.getPublishedAt(),
+                course.getPublishedBy(),
                 domainSections);
 
         Course savedCourse = courseRepository.save(updatedCourse);

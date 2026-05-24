@@ -11,9 +11,27 @@ import jakarta.persistence.LockModeType;
 import java.util.Optional;
 
 interface JpaCourseRepository extends JpaRepository<CourseJpaEntity, Long> {
-    
-    @Query("SELECT c FROM CourseJpaEntity c WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    Page<CourseJpaEntity> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT c FROM CourseJpaEntity c "
+            + "WHERE c.published = true "
+            + "  AND (:keyword = '' OR LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<CourseJpaEntity> searchPublished(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT c FROM CourseJpaEntity c "
+            + "WHERE c.published = false "
+            + "  AND (:keyword = '' OR LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<CourseJpaEntity> searchPending(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT c FROM CourseJpaEntity c "
+            + "WHERE :keyword = '' OR LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<CourseJpaEntity> searchAll(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT c FROM CourseJpaEntity c "
+            + "WHERE c.instructorId = :instructorId "
+            + "  AND (:keyword = '' OR LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<CourseJpaEntity> searchByInstructorId(@Param("instructorId") Long instructorId,
+                                               @Param("keyword") String keyword,
+                                               Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM CourseJpaEntity c WHERE c.id = :id")

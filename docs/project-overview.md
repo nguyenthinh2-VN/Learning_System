@@ -25,6 +25,7 @@
 ### 2.2. Phân quyền (Roles & Permissions)
 - Thiết lập Role-Based Access Control (RBAC) linh hoạt.
 - **Roles:** `MEMBER`, `INSTRUCTOR`, `STAFF`, `ADMIN_USER`, `SUPER_ADMIN`.
+- **19 permissions** đã seed (xem `docs/permission-matrix.md`).
 - Cấu trúc bảo mật lồng ghép trong `SecurityConfig` và kiểm tra quyền cụ thể tại UseCase / Controller.
 - Permissions được seed tự động qua `DataInitializer` khi khởi động lần đầu.
 
@@ -37,25 +38,66 @@
 ### 2.4. Wallet, Monetization & Checkout (Nạp ví & Thanh toán)
 - Quản lý số dư (`balance`) bằng `BigDecimal` trong Domain `User`.
 - `TopUpBalanceUseCase`: Nạp tiền vào ví. Sử dụng Pessimistic Locking (`@Lock(LockModeType.PESSIMISTIC_WRITE)`) để chống Race Condition khi nạp tiền đồng thời.
-- `PurchaseCourseUseCase`: Mua khóa học.
-  - Kiểm tra `isInternal` (Nội bộ thì giá mua = 0đ).
-  - Trừ tiền an toàn với DB Lock.
-  - Tạo Record vào bảng `enrollments` lưu lại khóa học và số tiền đã thanh toán (`paid_price`).
-- **Audit Logging:** Ghi log giao dịch Append-only định dạng JSONL vào File Local (`logs/purchase_ledger.jsonl`) để đề phòng mất mát dữ liệu DB.
+- `ApplyVoucherCheckoutUseCase`: Mua khóa học (gộp luồng có / không voucher).
+  - Giữ pessimistic lock theo thứ tự cố định `User → Course → Voucher` để tránh deadlock.
+  - Server tự đọc giá từ DB, tính lại bằng `PricingEngine`, không tin giá client.
+  - Internal Member luôn `paidPrice = 0`, voucher bị bỏ qua, không tạo `VoucherUsage`.
+- **Audit Logging:** `PurchaseLedgerService` ghi JSONL append-only vào `logs/purchase_ledger.jsonl` với 3 event: `PURCHASE_COMPLETED`, `VOUCHER_APPLIED`, `VOUCHER_REJECTED`.
 
 ### 2.5. Course Section Management (Quản lý Chương học)
-- CRUD Section (Tạo, Sửa, Xóa, Xem danh sách kèm Lessons) theo cấu trúc phân cấp: `Course → Section → Lesson`.
-- **Phân quyền Section tách biệt với Course:** `ADMIN_USER` có quyền sửa/xóa Course nhưng **không** có quyền thao tác Section. Chỉ `INSTRUCTOR` (course của mình), `STAFF`, `SUPER_ADMIN`.
-- **`CourseOwnershipPolicy`** — Pure static policy class ở Domain layer, tập trung toàn bộ logic kiểm tra ownership (`isOwner`, `hasFullAccess`, `hasFullCourseAccess`, `isInstructorOwner`). Cả `CourseAuthorizationService` và `SectionAuthorizationService` đều gọi vào đây, tránh lặp code.
-- Cascade delete: Xóa Section tự động xóa toàn bộ Lessons bên trong (`orphanRemoval = true`).
-- Thêm 2 permissions mới: `CREATE_SECTION`, `EDIT_SECTION` — đã seed vào `DataInitializer`.
+- CRUD Section theo cấu trúc phân cấp `Course → Section → Lesson`.
+- `ADMIN_USER` có quyền sửa/xóa Course nhưng **không** thao tác Section. Chỉ INSTRUCTOR (course của mình), STAFF, SUPER_ADMIN.
+- `CourseOwnershipPolicy` — pure static policy class ở Domain layer, tập trung logic kiểm tra ownership. Cả `CourseAuthorizationService`, `SectionAuthorizationService`, `LessonAuthorizationService` đều gọi vào đây.
+- Cascade delete: Xóa Section → tự động xóa toàn bộ Lessons (`orphanRemoval = true`).
+- 2 permissions: `CREATE_SECTION`, `EDIT_SECTION`.
 
-### 2.6. Course Lesson Management (Quản lý Bài giảng) - **MỚI HOÀN THIỆN**
-- CRUD Lesson (Tạo, Sửa, Xóa, Xem danh sách) theo cấu trúc phân cấp: `Course → Section → Lesson`.
-- **Phân quyền Lesson tương tự Section:** `ADMIN_USER` **không có quyền** thao tác Lesson. Chỉ `INSTRUCTOR` (course của mình), `STAFF`, `SUPER_ADMIN`.
-- **`LessonAuthorizationService`** — Pure static utility class ở Domain layer, tái sử dụng logic từ `CourseOwnershipPolicy` để kiểm tra quyền trên Lesson.
-- **Pattern consistency:** Follow chính xác pattern của Section Management đã triển khai thành công.
-- Thêm 2 permissions mới: `CREATE_LESSON`, `EDIT_LESSON` — đã seed vào `DataInitializer` và gán đúng role theo permission matrix.
+### 2.6. Course Lesson Management (Quản lý Bài giảng)
+- CRUD Lesson theo cấu trúc phân cấp `Course → Section → Lesson`.
+- Phân quyền tương tự Section: ADMIN_USER **không có quyền**, chỉ INSTRUCTOR (course của mình), STAFF, SUPER_ADMIN.
+- `LessonAuthorizationService` tái sử dụng `CourseOwnershipPolicy`.
+- 2 permissions: `CREATE_LESSON`, `EDIT_LESSON`.
+
+### 2.7. Course Approval & Visibility (MỚI)
+- Tách "tạo course" với "công khai course". Course mới mặc định `published = false`, KHÔNG xuất hiện ở public listing.
+- 2 cờ trên course:
+  - `published`: course đã duyệt và công khai.
+  - `priceLocked`: giá bị khóa, INSTRUCTOR không sửa được sau khi publish.
+- 4 endpoint mới:
+  - `GET /api/v1/admin/courses/pending` — danh sách course chờ duyệt.
+  - `POST /api/v1/admin/courses/{id}/publish` — duyệt và công khai (set `published = true`, `priceLocked = true`).
+  - `POST /api/v1/admin/courses/{id}/unpublish` — ẩn course đã publish, giữ enrollment đã có.
+  - `PUT /api/v1/admin/courses/{id}/price` — admin sửa giá kể cả khi đã `priceLocked`.
+- 2 endpoint cho INSTRUCTOR xem course của mình kể cả pending: `GET /api/v1/instructor/courses` và `GET /api/v1/instructor/courses/{id}`.
+- 3 domain exceptions: `CourseNotPublishedException`, `CoursePriceLockedException`, `CourseAlreadyPublishedException`.
+- 2 permissions: `PUBLISH_COURSE` (STAFF, SUPER_ADMIN), `LOCK_COURSE_PRICE` (STAFF, SUPER_ADMIN).
+- Audit: course publish / unpublish / price update có thể log vào `purchase_ledger.jsonl` (mở rộng từ `PurchaseLedgerService`).
+
+### 2.8. Voucher Pricing & Management (MỚI)
+- Cơ chế mã giảm giá cho luồng mua khóa học. Hỗ trợ 2 loại: `PERCENT` (giảm theo phần trăm, có `maxDiscount` cap) và `FIXED` (giảm số tiền cố định).
+- 2 endpoint nghiệp vụ:
+  - `POST /api/v1/courses/{courseId}/quote` — tính giá xem trước, read-only, không tiêu thụ voucher.
+  - `POST /api/v1/courses/{courseId}/purchase` — checkout với `voucherCode` tùy chọn, server tính lại giá độc lập.
+- 4 endpoint admin CRUD:
+  - `POST /api/v1/admin/vouchers` (tạo).
+  - `GET /api/v1/admin/vouchers` (danh sách phân trang, kèm `usedCount`).
+  - `PUT /api/v1/admin/vouchers/{id}` (cập nhật, từ chối sửa `code`/`type`/`value` khi đã có usage).
+  - `DELETE /api/v1/admin/vouchers/{id}` (soft-delete: set `status = INACTIVE`).
+- **Pure domain service:**
+  - `PricingEngine.compute(originalPrice, voucher) → PriceQuote` — pure function, không Spring/JPA, dùng `BigDecimal` scale 2 HALF_UP.
+  - `VoucherValidator.validate(voucher, courseId, originalPrice, now, globalUsedCount, perUserUsedCount)` — kiểm tra theo thứ tự cố định: status → validFrom → validTo → scope → minOrder → usageLimit → usagePerUser.
+  - Đăng ký bean qua `DomainServiceConfig` để inject vào use case.
+- **Anti-tampering (4 mặt):**
+  1. Body request DTO chỉ khai báo `voucherCode`. Mọi field giá (`price`, `discount`, `finalPrice`...) bị Spring bỏ qua không bind.
+  2. Server đọc giá từ DB theo `courseId` ở path, không tin client.
+  3. Mỗi `/purchase` tính lại giá độc lập, không có khái niệm "quote token" / "preview cache".
+  4. Pessimistic write lock trên hàng voucher + UNIQUE `(voucher_id, enrollment_id)` ở DB chống race condition.
+- **Quy tắc role:**
+  - Internal Member luôn `paidPrice = 0`, voucher bị ignore, không tạo `VoucherUsage`.
+  - INSTRUCTOR / STAFF / ADMIN_USER gửi `voucherCode` → 403 (`VOUCHER_USE_DENIED`).
+  - Chỉ MEMBER và SUPER_ADMIN có `USE_VOUCHER`.
+- 12+ domain exceptions: `VoucherNotFoundException`, `VoucherInactiveException`, `VoucherNotYetActiveException`, `VoucherExpiredException`, `VoucherNotApplicableException`, `VoucherMinOrderNotMetException`, `VoucherUsageLimitReachedException`, `VoucherUsagePerUserExceededException`, `VoucherUseDeniedException`, `VoucherCodeAlreadyExistsException`, `VoucherUsageLimitTooLowException`, `VoucherImmutableFieldException`, `AlreadyEnrolledException`, `InsufficientBalanceException`.
+- 2 permissions: `MANAGE_VOUCHER` (STAFF, SUPER_ADMIN), `USE_VOUCHER` (MEMBER, SUPER_ADMIN).
+- Audit: `VOUCHER_APPLIED` và `VOUCHER_REJECTED` ghi vào `logs/purchase_ledger.jsonl` với đầy đủ `voucherCode`, `originalPrice`, `discountAmount`, `finalPrice`, `enrollmentId`.
 
 ---
 
@@ -68,55 +110,130 @@ src/main/java/com/example/learning_system_spring
 |-- LearningSystemSpringApplication.java (Main class)
 |
 |-- adapter/  (Lớp ngoài cùng: Controllers, DTOs, DB Repositories, Mappers)
-|   |-- controller/           # REST APIs
-|   |   |-- Auth/             # AuthController
-|   |   |-- Course/           # CourseController, CourseSectionController
-|   |   |-- AdminUserController, UserController
+|   |-- controller/
+|   |   |-- Auth/AuthController.java
+|   |   |-- Course/
+|   |   |   |-- CourseController                # /api/v1/courses (public + purchase + quote)
+|   |   |   |-- CourseQuoteController            # POST /api/v1/courses/{id}/quote
+|   |   |   |-- CourseSectionController          # /api/v1/courses/{id}/sections
+|   |   |   |-- InstructorCourseController       # /api/v1/instructor/courses (kể cả pending)
+|   |   |   |-- Lesson/CourseLessonController    # /api/v1/courses/{id}/sections/{id}/lessons
+|   |   |-- AdminCourseController                # /api/v1/admin/courses/** (publish, price...)
+|   |   |-- AdminUserController                  # /api/v1/admin/users
+|   |   |-- AdminVoucherController               # /api/v1/admin/vouchers (CRUD)
+|   |   |-- UserController                       # /api/v1/users/me/top-up
 |   |-- dto/
-|   |   |-- request/          # Request DTOs (CreateCourseRequest, CreateSectionRequest...)
-|   |   |-- response/         # Response DTOs (ApiResponse, CourseDetailResponse, SectionResponse...)
-|   |-- mapper/               # CourseMapper (JPA Entity ↔ Domain)
-|   |-- repository/           # Repository Impl (gọi tới Spring Data JPA)
-|   |   |-- jpa/
-|   |       |-- CourseEntity/ # CourseJpaEntity, CourseSectionJpaEntity, CourseLessonJpaEntity, EnrollmentJpaEntity
-|   |       |-- UserEntity/   # UserJpaEntity
-|   |       |-- role_permissionEntity/ # RoleJpaEntity, PermissionJpaEntity, RolePermissionJpaEntity
+|   |   |-- request/
+|   |   |   |-- Course/                          # CreateCourseRequest, UpdateCourseRequest,
+|   |   |   |                                    #   PurchaseCourseRequest (chỉ voucherCode),
+|   |   |   |                                    #   UpdateCoursePriceRequest
+|   |   |   |-- Lesson/                          # CreateLessonRequest, UpdateLessonRequest
+|   |   |   |-- Section/                         # CreateSectionRequest, UpdateSectionRequest
+|   |   |   |-- Voucher/                         # CreateVoucherRequest, UpdateVoucherRequest
+|   |   |   |-- LoginRequest, RegisterRequest, CreateUserRequest
+|   |   |-- response/                            # ApiResponse, CourseDetailResponse,
+|   |                                            #   CourseListResponse, SectionResponse,
+|   |                                            #   LessonResponse, GetLessonsResponse,
+|   |                                            #   PurchaseCourseResponse, QuotePricingResponse,
+|   |                                            #   VoucherResponse, LoginResponse, RegisterResponse
+|   |-- mapper/                                  # CourseMapper (JPA Entity ↔ Domain)
+|   |-- repository/
+|       |-- jpa/
+|       |   |-- CourseEntity/                    # CourseJpaEntity (4 cờ: published, priceLocked,
+|       |   |                                    #   publishedAt, publishedBy), CourseSectionJpaEntity,
+|       |   |                                    #   CourseLessonJpaEntity, EnrollmentJpaEntity
+|       |   |-- UserEntity/UserJpaEntity
+|       |   |-- VoucherEntity/                   # VoucherJpaEntity, VoucherUsageJpaEntity
+|       |   |-- role_permissionEntity/           # RoleJpaEntity, PermissionJpaEntity, RolePermissionJpaEntity
+|       |-- JpaCourseRepository, JpaCourseSectionRepository, JpaCourseLessonRepository,
+|       |   JpaUserRepository, JpaRoleRepository, JpaEnrollmentRepository,
+|       |   JpaVoucherRepository, JpaVoucherUsageRepository (Spring Data interfaces)
+|       |-- *RepositoryImpl                      # Implements application.repository.* (chuyển domain ↔ JPA)
 |
 |-- application/ (Lớp Use Case: Chứa logic nghiệp vụ ứng dụng, độc lập với Framework Web/DB)
-|   |-- dto/                  # Application DTOs (Input/Output của UseCase)
-|   |   |-- Auth/             # LoginInput, LoginOutput, RegisterOutput
-|   |   |-- Course/           # CreateCourseInput, CourseOutput, CourseSectionDto...
-|   |   |-- Section/          # CreateSectionInput, UpdateSectionInput, SectionOutput, LessonOutput
-|   |   |-- Lesson/           # CreateLessonInput, UpdateLessonInput, DeleteLessonInput, GetLessonsInput, GetLessonsOutput
-|   |-- repository/           # Repository Interfaces (Adapter implement)
-|   |   |-- Course/           # CourseRepository, EnrollmentRepository, CourseSectionRepository, CourseLessonRepository
-|   |   |-- User/             # UserRepository
+|   |-- dto/
+|   |   |-- Auth/                                # LoginInput/Output, RegisterInput/Output
+|   |   |-- Course/                              # CreateCourseInput, UpdateCourseInput, DeleteCourseInput,
+|   |   |                                        #   GetCourseListInput (Scope: PUBLIC/PENDING/ALL/INSTRUCTOR),
+|   |   |                                        #   GetCourseDetailInput, CourseOutput,
+|   |   |                                        #   PublishCourseInput, UnpublishCourseInput,
+|   |   |                                        #   UpdateCoursePriceInput
+|   |   |-- Section/                             # CreateSectionInput, UpdateSectionInput,
+|   |   |                                        #   DeleteSectionInput, SectionOutput, LessonOutput
+|   |   |-- Lesson/                              # CreateLessonInput, UpdateLessonInput,
+|   |   |                                        #   DeleteLessonInput, GetLessonsInput, GetLessonsOutput
+|   |   |-- Voucher/                             # CreateVoucherInput, UpdateVoucherInput, DeleteVoucherInput,
+|   |   |                                        #   GetVouchersInput, VoucherOutput,
+|   |   |                                        #   QuotePricingInput, QuotePricingOutput,
+|   |   |                                        #   PurchaseCourseInput, PurchaseCourseOutput
+|   |   |-- CreateUserInput, PageResult
+|   |-- repository/                              # Repository Interfaces (Adapter implement)
+|   |   |-- Course/                              # CourseRepository, CourseSectionRepository,
+|   |   |                                        #   CourseLessonRepository, EnrollmentRepository
+|   |   |-- User/UserRepository
+|   |   |-- Voucher/                             # VoucherRepository, VoucherUsageRepository
 |   |   |-- RoleRepository
 |   |-- usecase/
-|       |-- Auth/             # LoginUseCase, RegisterUseCase
-|       |-- Course/           # CreateCourse, UpdateCourse, DeleteCourse, GetCourseList, GetCourseDetail, PurchaseCourse
-|       |-- Section/          # GetSections, CreateSection, UpdateSection, DeleteSection
-|       |-- Lesson/           # GetLessonsUseCase, CreateLessonUseCase, UpdateLessonUseCase, DeleteLessonUseCase
-|       |-- User/             # TopUpBalanceUseCase, AdminCreateUserUseCase
-|       |-- strategy/         # CourseStrategyFactory, InstructorCourseStrategy, StaffAdminCourseStrategy
-|                             # UsernameGeneratorFactory, *UsernameGeneratorStrategy
+|       |-- Auth/                                # LoginUseCase, RegisterUseCase
+|       |-- Course/                              # CreateCourse, UpdateCourse, DeleteCourse,
+|       |                                        #   GetCourseList, GetCourseDetail,
+|       |                                        #   PublishCourseUseCase, UnpublishCourseUseCase,
+|       |                                        #   UpdateCoursePriceUseCase
+|       |-- Section/                             # GetSections, CreateSection, UpdateSection, DeleteSection
+|       |-- Lesson/                              # GetLessons, CreateLesson, UpdateLesson, DeleteLesson
+|       |-- User/                                # TopUpBalanceUseCase, AdminCreateUserUseCase
+|       |-- Voucher/                             # CreateVoucherUseCase, UpdateVoucherUseCase,
+|       |                                        #   DeleteVoucherUseCase, GetVouchersUseCase,
+|       |                                        #   QuotePricingUseCase (read-only),
+|       |                                        #   ApplyVoucherCheckoutUseCase (entry point DUY NHẤT cho purchase)
+|       |-- strategy/                            # CourseStrategyFactory, InstructorCourseStrategy,
+|                                                #   StaffAdminCourseStrategy,
+|                                                #   UsernameGeneratorFactory + *UsernameGeneratorStrategy
 |
 |-- domain/ (Lớp Lõi: Chứa Model nghiệp vụ tinh khiết, Business rules)
-|   |-- exception/            # SectionNotFoundException, SectionAccessDeniedException,
-|   |                         # LessonNotFoundException, LessonAccessDeniedException,
-|   |                         # CourseNotFoundException, CourseAccessDeniedException,
-|   |                         # UserNotFoundException, InvalidCredentialsException...
-|   |-- model/                # User, Course, CourseSection, CourseLesson, Enrollment, Role, Permission
+|   |-- exception/                               # 27+ domain exceptions:
+|   |                                            #   - Course: CourseNotFoundException, CourseAccessDeniedException,
+|   |                                            #     CourseNotPublishedException, CoursePriceLockedException,
+|   |                                            #     CourseAlreadyPublishedException
+|   |                                            #   - Section/Lesson/User: SectionNotFoundException,
+|   |                                            #     SectionAccessDeniedException, LessonNotFoundException,
+|   |                                            #     LessonAccessDeniedException, UserNotFoundException,
+|   |                                            #     EmailAlreadyExistsException, InvalidCredentialsException,
+|   |                                            #     InvalidEmailException, InsufficientBalanceException,
+|   |                                            #     AlreadyEnrolledException
+|   |                                            #   - Voucher: VoucherNotFoundException, VoucherInactiveException,
+|   |                                            #     VoucherNotYetActiveException, VoucherExpiredException,
+|   |                                            #     VoucherNotApplicableException, VoucherMinOrderNotMetException,
+|   |                                            #     VoucherUsageLimitReachedException,
+|   |                                            #     VoucherUsagePerUserExceededException,
+|   |                                            #     VoucherUseDeniedException, VoucherCodeAlreadyExistsException,
+|   |                                            #     VoucherUsageLimitTooLowException, VoucherImmutableFieldException
+|   |-- model/                                   # User, Course (4 cờ approval), CourseSection, CourseLesson,
+|   |                                            #   Enrollment, Role, Permission
+|   |-- model/Voucher/                           # Voucher, VoucherType (PERCENT/FIXED),
+|   |                                            #   VoucherStatus (ACTIVE/INACTIVE),
+|   |                                            #   VoucherScope (ALL_COURSES/SPECIFIC_COURSES),
+|   |                                            #   VoucherUsage, PriceQuote (value object)
 |   |-- service/
-|       |-- CourseOwnershipPolicy       # Pure static policy — kiểm tra ownership, không phụ thuộc Spring
-|       |-- CourseAuthorizationService  # Kiểm quyền Course (gọi CourseOwnershipPolicy)
-|       |-- SectionAuthorizationService # Kiểm quyền Section (gọi CourseOwnershipPolicy)
-|       |-- LessonAuthorizationService  # Kiểm quyền Lesson (gọi CourseOwnershipPolicy)
+|       |-- CourseOwnershipPolicy                # Pure static policy — kiểm tra ownership
+|       |-- CourseAuthorizationService           # Kiểm quyền Course
+|       |-- SectionAuthorizationService          # Kiểm quyền Section
+|       |-- LessonAuthorizationService           # Kiểm quyền Lesson
+|       |-- PricingEngine                        # Pure domain — tính giá (PERCENT/FIXED, BigDecimal)
+|       |-- VoucherValidator                     # Pure domain — validate voucher theo thứ tự cố định
 |
 |-- infrastructure/ (Lớp Cơ sở hạ tầng: Cấu hình Framework, Utils, External Services)
-    |-- config/               # SecurityConfig, JwtFilter, JwtService, DataInitializer
-    |-- exception/            # GlobalExceptionHandler, ErrorResponse, ErrorCode (đã thêm LESSON_NOT_FOUND, LESSON_ACCESS_DENIED)
-    |-- service/              # PurchaseLedgerService (ghi audit log JSONL)
+    |-- config/
+    |   |-- SecurityConfig                       # Filter chain, public endpoints (login/register, GET /courses)
+    |   |-- JwtAuthenticationFilter, JwtService
+    |   |-- CustomAuthenticationEntryPoint
+    |   |-- DataInitializer                      # Seed 5 roles + 19 permissions + role-permission matrix
+    |   |-- DomainServiceConfig                  # Đăng ký PricingEngine + VoucherValidator làm Spring bean
+    |-- exception/
+    |   |-- ErrorCode                            # 30+ enum codes (course, section, lesson, voucher, purchase)
+    |   |-- ErrorResponse, GlobalExceptionHandler# Map mọi domain exception → HTTP response
+    |-- service/
+        |-- PurchaseLedgerService                # JSONL audit log: PURCHASE_COMPLETED, VOUCHER_APPLIED, VOUCHER_REJECTED
 ```
 
 ---
@@ -124,11 +241,14 @@ src/main/java/com/example/learning_system_spring
 ## 4. Database Schema (Các bảng cốt lõi)
 
 - **`users`**: Quản lý tài khoản, mật khẩu (Bcrypt), số dư `balance` và cờ `is_internal`.
-- **`roles` / `permissions` / `role_permissions`**: Cấu trúc RBAC n-n để cấp quyền linh hoạt.
-- **`courses`**: Thông tin khóa học, giá `price`, số lượng học viên `max_students`, `instructor_id`...
-- **`course_sections`**: Chương học, quan hệ N-1 với `courses`. Có `order_index` để sắp xếp thứ tự.
+- **`roles` / `permissions` / `role_permissions`**: Cấu trúc RBAC n-n. 19 permissions seed sẵn.
+- **`courses`**: Thông tin khóa học, `price`, `max_students`, `instructor_id`, **+ 4 cột mới**: `published`, `price_locked`, `published_at`, `published_by`. INDEX `(published)` để filter public listing nhanh.
+- **`course_sections`**: Chương học, quan hệ N-1 với `courses`. Có `order_index`.
 - **`course_lessons`**: Bài giảng, quan hệ N-1 với `course_sections`. Có `content_url` và `order_index`.
-- **`enrollments`**: Lưu lịch sử mua khóa học. Chứa `user_id`, `course_id`, `paid_price` và ngày đăng ký.
+- **`enrollments`**: Lưu lịch sử mua khóa học. Chứa `user_id`, `course_id`, `paid_price`, `enrolled_at`.
+- **`vouchers`** (MỚI): `code` UNIQUE (lưu UPPERCASE), `type` (PERCENT/FIXED), `value`, `status` (ACTIVE/INACTIVE), `scope` (ALL_COURSES/SPECIFIC_COURSES), `valid_from`, `valid_to`, `min_order_amount`, `max_discount`, `usage_limit`, `usage_per_user`. INDEX `(status, valid_to)` để filter voucher còn hạn nhanh.
+- **`voucher_courses`** (MỚI, mapping cho `scope = SPECIFIC_COURSES`): composite PK `(voucher_id, course_id)` với FK CASCADE.
+- **`voucher_usages`** (MỚI): bản ghi tiêu thụ voucher với `voucher_id`, `user_id`, `course_id`, `enrollment_id`, `original_price`, `discount_amount`, `final_price`, `applied_at`. **UNIQUE `(voucher_id, enrollment_id)`** chống race condition. INDEX `(voucher_id)` và `(voucher_id, user_id)` để đếm `usedCount` hiệu quả.
 
 ---
 
@@ -139,166 +259,153 @@ src/main/java/com/example/learning_system_spring
 | **Strategy** | `CourseStrategyFactory` + `InstructorCourseStrategy` / `StaffAdminCourseStrategy` | Phân quyền tạo/sửa/xóa Course theo Role |
 | **Strategy** | `UsernameGeneratorFactory` + các `*UsernameGeneratorStrategy` | Sinh Username tự động theo Role prefix |
 | **Policy (Static)** | `CourseOwnershipPolicy` | Tập trung logic kiểm tra ownership, tái sử dụng ở nhiều Service |
-| **Repository** | `CourseRepository`, `UserRepository`, `CourseSectionRepository`, `CourseLessonRepository`... | Abstraction giữa UseCase và DB |
+| **Pure Domain Service** | `PricingEngine`, `VoucherValidator` | Logic tính giá / validate voucher độc lập với Spring/JPA — testable bằng unit test thuần |
+| **Repository** | `CourseRepository`, `UserRepository`, `VoucherRepository`... | Abstraction giữa UseCase và DB |
 | **Factory** | `CourseStrategyFactory`, `UsernameGeneratorFactory` | Chọn Strategy phù hợp theo Role |
-| **Consistent Layering** | Section & Lesson Management | Follow chính xác pattern của nhau, đảm bảo consistency trong kiến trúc |
+| **Value Object** | `PriceQuote` (`originalPrice`, `discountAmount`, `finalPrice`) | Đại diện kết quả tính giá bất biến |
+| **Pessimistic Lock** | `User`, `Course`, `Voucher` qua `@Lock(LockModeType.PESSIMISTIC_WRITE)` | Chống race condition tài chính & quota voucher |
+| **Soft-delete** | Voucher (set `status = INACTIVE`) | Bảo toàn lịch sử Voucher_Usage |
 
 ---
 
-## 6. Danh sách API Endpoints
+## 6. Tổng quan API Endpoints
 
-| Method | URL | Mô tả | Quyền |
-|--------|-----|-------|-------|
-| POST | `/api/v1/auth/register` | Đăng ký tài khoản | Public |
-| POST | `/api/v1/auth/login` | Đăng nhập, lấy JWT | Public |
-| POST | `/api/v1/admin/users` | Admin tạo tài khoản nội bộ | ADMIN_USER, STAFF, SUPER_ADMIN |
-| GET | `/api/v1/courses` | Danh sách khóa học (phân trang) | Tất cả |
-| GET | `/api/v1/courses/{id}` | Chi tiết khóa học | Tất cả |
-| POST | `/api/v1/courses` | Tạo khóa học | INSTRUCTOR, STAFF, ADMIN_USER, SUPER_ADMIN |
-| PUT | `/api/v1/courses/{id}` | Sửa khóa học | INSTRUCTOR (của mình), STAFF, ADMIN_USER, SUPER_ADMIN |
-| DELETE | `/api/v1/courses/{id}` | Xóa khóa học | INSTRUCTOR (của mình), STAFF, ADMIN_USER, SUPER_ADMIN |
-| POST | `/api/v1/courses/{id}/purchase` | Mua khóa học | Đăng nhập |
-| POST | `/api/v1/users/me/top-up` | Nạp tiền vào ví | Đăng nhập |
-| GET | `/api/v1/courses/{courseId}/sections` | Danh sách sections (kèm lessons) | Tất cả |
-| POST | `/api/v1/courses/{courseId}/sections` | Tạo section | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
-| PUT | `/api/v1/courses/{courseId}/sections/{id}` | Sửa section | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
-| DELETE | `/api/v1/courses/{courseId}/sections/{id}` | Xóa section (cascade xóa lessons) | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
-| GET | `/api/v1/courses/{courseId}/sections/{sectionId}/lessons` | Danh sách lessons | Tất cả |
-| POST | `/api/v1/courses/{courseId}/sections/{sectionId}/lessons` | Tạo lesson | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
-| PUT | `/api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}` | Sửa lesson | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
-| DELETE | `/api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}` | Xóa lesson | INSTRUCTOR (của mình), STAFF, SUPER_ADMIN |
+| Nhóm | Số endpoints | Tham chiếu |
+|------|--------------|------------|
+| Auth | 3 | `docs/api-docs.md` mục 1 |
+| Course public | 6 (list, detail, create, update, delete, purchase) | mục 6 + 7 |
+| Course quote | 1 (`POST /api/v1/courses/{id}/quote`) | mục 11.5 |
+| Course Approval (admin + instructor) | 7 (pending, all, publish, unpublish, price + 2 instructor endpoints) | mục 10 |
+| Wallet | 1 (top-up) | mục 7.1 |
+| Section | 4 (CRUD) | mục 8 |
+| Lesson | 4 (CRUD) | mục 9 |
+| Voucher Admin | 4 (CRUD) | mục 11.1–11.4 |
 
-> Chi tiết request/response xem tại `docs/api-docs.md`. Ma trận phân quyền xem tại `docs/permission-matrix.md`.
+> Chi tiết request / response xem `docs/api-docs.md`. Ma trận phân quyền xem `docs/permission-matrix.md`. Kế hoạch chi tiết xem `docs/plan-voucher-pricing.md` và `docs/plan-course-approval.md`.
 
 ---
 
 ## 7. Quy tắc chung khi tiếp tục phát triển (For AI Agents)
 
 1. **Clean Architecture Strictness:** Model trong `domain/model` tuyệt đối **không** dùng bất kỳ annotation của JPA hay Spring nào. JPA Entity phải nằm ở `adapter/repository/jpa`. Chuyển đổi giữa 2 dạng này thông qua các phương thức `toDomain()` và `fromDomain()`.
-2. **Business Logic Location:** Logic nghiệp vụ chính (kiểm tra điều kiện, thao tác tiền) luôn nằm ở `application/usecase`.
-3. **Concurrency:** Đối với các API liên quan đến tài chính (Nạp ví, Mua khóa học), luôn gọi Repository với `@Lock(LockModeType.PESSIMISTIC_WRITE)` để khóa Row DB, ngăn Race Condition.
-4. **Exception Handling:** Ném ra Domain Exception (kế thừa `RuntimeException` hoặc `IllegalStateException`) trong UseCase. Sau đó, `GlobalExceptionHandler` ở layer Infrastructure sẽ tự động catch và map ra API Response format thống nhất (VD: HTTP 400 kèm mã `BAD_REQUEST`).
-5. **Authorization Pattern:** Mọi logic kiểm tra ownership/quyền trên Course đều đi qua `CourseOwnershipPolicy` (static methods). Không viết lại điều kiện `instructorId.equals(requesterId)` ở nhiều nơi.
-6. **Permission Seeding:** Khi thêm permission mới, cập nhật đồng thời 3 nơi: `DataInitializer` (seed DB), `docs/permission-matrix.md` (ma trận phân quyền), `GlobalExceptionHandler` + `ErrorCode` (nếu có exception mới).
-7. **Constructor Injection Only:** Tuyệt đối cấm `@Autowired` field/setter injection. Chỉ dùng constructor injection hoặc Lombok `@RequiredArgsConstructor`.
-8. **Tooling & Code Edits:** Thay thế nội dung file bằng công cụ `str_replace` với matching chính xác.
-
+2. **Pure Domain Service:** `PricingEngine`, `VoucherValidator`, `CourseOwnershipPolicy` là class thuần Java, KHÔNG dùng `@Service` / `@Component`. Đăng ký bean qua `DomainServiceConfig` (`@Bean`).
+3. **Business Logic Location:** Logic nghiệp vụ chính (kiểm tra điều kiện, thao tác tiền, validate voucher) luôn nằm ở `application/usecase` hoặc `domain/service`. Domain method (như `Course.publish()`, `Course.updatePrice()`, `User.deductBalance()`) đặt ở domain model.
+4. **Concurrency:** Đối với các API tài chính (top-up, mua khóa học, voucher), luôn dùng `@Lock(LockModeType.PESSIMISTIC_WRITE)`. Thứ tự lock cố định `User → Course → Voucher` để tránh deadlock.
+5. **Anti-tampering:** DTO request cho luồng pricing CHỈ khai báo trường nghiệp vụ (`voucherCode`). KHÔNG bao giờ khai báo field giá tiền (`price`, `discount`, `finalPrice`) — Spring sẽ tự bỏ qua field thừa từ client.
+6. **Server-side Recomputation:** Mọi luồng định giá (`/quote`, `/purchase`) PHẢI đọc giá từ DB và tính lại bằng `PricingEngine`. Không tin kết quả của lần gọi trước.
+7. **Exception Handling:** Ném Domain Exception (kế thừa `RuntimeException` / `IllegalStateException`) trong UseCase. `GlobalExceptionHandler` ở Infrastructure layer map ra HTTP response thống nhất.
+8. **Authorization Pattern:** Mọi logic kiểm tra ownership trên Course đi qua `CourseOwnershipPolicy` (static). Không lặp `instructorId.equals(requesterId)` ở nhiều nơi.
+9. **Permission Seeding:** Khi thêm permission mới, cập nhật đồng thời 3 nơi: `DataInitializer` (seed DB + gán role), `docs/permission-matrix.md`, `GlobalExceptionHandler` + `ErrorCode` (nếu có exception mới).
+10. **Audit Logging:** Mọi event tài chính (purchase, voucher applied, voucher rejected) ghi qua `PurchaseLedgerService` để có audit trail bất biến trong `logs/purchase_ledger.jsonl`.
+11. **Constructor Injection Only:** Tuyệt đối cấm `@Autowired` field/setter injection. Chỉ dùng constructor injection hoặc Lombok `@RequiredArgsConstructor`.
+12. **Tooling & Code Edits:** Thay thế nội dung file bằng `str_replace` với matching chính xác. Tạo file mới bằng `fs_write`.
 
 ---
 
-## 8. Cập nhật mới nhất (23/05/2026) - Hoàn thiện Lesson Management
+## 8. Cập nhật mới nhất (24/05/2026) — Voucher Pricing & Course Approval
 
-### 8.1. Những gì đã được triển khai
+### 8.1. Course Approval Workflow (mới)
 
-**✅ Đã hoàn thiện CRUD cho Course Lesson Management:**
+**Mục tiêu:** Tách "tạo course" với "công khai course" để chống lộ giá trước khi admin duyệt và tránh course chưa hoàn thiện hiển thị công khai.
 
-1. **Domain Layer:**
-   - Thêm 2 domain exceptions: `LessonNotFoundException`, `LessonAccessDeniedException`
-   - Thêm `LessonAuthorizationService` - pure static utility class tái sử dụng `CourseOwnershipPolicy`
+**Triển khai:**
+- Thêm 4 cột vào `courses`: `published`, `price_locked`, `published_at`, `published_by`.
+- 3 use case mới: `PublishCourseUseCase`, `UnpublishCourseUseCase`, `UpdateCoursePriceUseCase`.
+- `GetCourseListUseCase` mở rộng với 4 scope: `PUBLIC` (public listing chỉ trả published), `PENDING`, `ALL`, `INSTRUCTOR`.
+- 3 domain exception mới + 3 error code: `COURSE_NOT_PUBLISHED`, `COURSE_PRICE_LOCKED`, `COURSE_ALREADY_PUBLISHED`.
+- 2 controller mới: `AdminCourseController` (5 endpoints), `InstructorCourseController` (2 endpoints).
+- 2 permission mới: `PUBLISH_COURSE`, `LOCK_COURSE_PRICE`. Gán cho STAFF + SUPER_ADMIN.
+- `CourseController.purchase` và `CourseQuoteController` đã thêm check `course.published` đầu luồng — ném `CourseNotPublishedException` nếu chưa duyệt.
 
-2. **Application Layer:**
-   - Thêm package `application/dto/Lesson/` với 5 DTOs: `CreateLessonInput`, `UpdateLessonInput`, `DeleteLessonInput`, `GetLessonsInput`, `GetLessonsOutput`
-   - Thêm `CourseLessonRepository` interface
-   - Thêm package `application/usecase/Lesson/` với 4 UseCases: `GetLessonsUseCase`, `CreateLessonUseCase`, `UpdateLessonUseCase`, `DeleteLessonUseCase`
+### 8.2. Voucher Pricing & Management (mới)
 
-3. **Adapter Layer:**
-   - Thêm `JpaCourseLessonRepository` (Spring Data interface)
-   - Thêm `CourseLessonRepositoryImpl` implementation
-   - Thêm package `adapter/dto/request/Lesson/` với 2 request DTOs: `CreateLessonRequest`, `UpdateLessonRequest`
-   - Thêm `GetLessonsResponse` trong `adapter/dto/response/`
-   - Thêm `CourseLessonController` trong `adapter/controller/Course/Lesson/` với 4 endpoints CRUD
+**Mục tiêu:** Cơ chế mã giảm giá an toàn cho luồng mua khóa học. Anti-tampering 4 mặt + concurrency-safe.
 
-4. **Infrastructure Layer:**
-   - Thêm 2 error codes: `LESSON_NOT_FOUND`, `LESSON_ACCESS_DENIED`
-   - Thêm exception handlers trong `GlobalExceptionHandler`
-   - Cập nhật `DataInitializer`: thêm 2 permissions mới `CREATE_LESSON`, `EDIT_LESSON` và gán đúng role
+**Triển khai:**
+- 6 domain model: `Voucher`, `VoucherType`, `VoucherStatus`, `VoucherScope`, `VoucherUsage`, `PriceQuote`.
+- 12 voucher exceptions + `AlreadyEnrolledException` mới.
+- 2 pure domain service: `PricingEngine` (compute), `VoucherValidator` (validate). Đăng ký bean qua `DomainServiceConfig`.
+- 2 application repository interface + 2 JPA entity + 2 repository impl.
+- 6 use case: 4 admin CRUD (`CreateVoucherUseCase`, `UpdateVoucherUseCase`, `DeleteVoucherUseCase`, `GetVouchersUseCase`) + `QuotePricingUseCase` (read-only) + `ApplyVoucherCheckoutUseCase` (gộp luồng có / không voucher, thay thế `PurchaseCourseUseCase` cũ — hiện đã không còn).
+- 2 controller mới: `AdminVoucherController` (4 CRUD endpoints), `CourseQuoteController` (1 endpoint).
+- `CourseController.purchase` cập nhật để gọi `ApplyVoucherCheckoutUseCase`, chấp nhận `voucherCode` tùy chọn trong body.
+- `PurchaseCourseRequest` DTO chỉ khai báo `voucherCode` (regex `^[A-Za-z0-9_-]*$`, max 32) — chống tampering.
+- `PurchaseLedgerService` mở rộng với 2 method mới: `logVoucherApplied`, `logVoucherRejected`.
+- 12 error code mới trong `ErrorCode` enum + 12 handler trong `GlobalExceptionHandler`.
+- 2 permission mới: `MANAGE_VOUCHER` (STAFF, SUPER_ADMIN), `USE_VOUCHER` (MEMBER, SUPER_ADMIN).
 
-5. **Documentation:**
-   - Cập nhật `docs/permission-matrix.md`: thêm 2 permissions mới (#8, #9)
-   - Cập nhật `docs/api-docs.md`: thêm đầy đủ API documentation cho Lesson Management
-   - Tạo `docs/plan-lesson-management.md`: kế hoạch triển khai chi tiết
+### 8.3. Anti-tampering & Concurrency Properties
 
-### 8.2. Kiến trúc & Design Patterns áp dụng
+**Anti-tampering (4 mặt):**
 
-- **Follow chính xác pattern của Section Management** đã triển khai thành công
-- **Consistent Layering**: Tất cả các layer đều follow cùng pattern
-- **Reuse Policy Pattern**: `LessonAuthorizationService` tái sử dụng `CourseOwnershipPolicy`
-- **Clean Architecture Strictness**: Tuân thủ nghiêm ngặt dependency rule
-- **Constructor Injection Only**: Tất cả class đều dùng `@RequiredArgsConstructor`
+| Mối lo | Cách giải quyết |
+|--------|-----------------|
+| Client tampering `courseId` | Server đọc giá từ DB theo `courseId` ở path |
+| Client tampering `price` / `finalPrice` | DTO chỉ khai báo `voucherCode`, Spring bỏ qua field thừa |
+| Replay quote cũ | Mỗi `/purchase` tính lại giá độc lập, không có quote token |
+| Race condition voucher quota | Pessimistic lock `User → Course → Voucher` + UNIQUE `(voucher_id, enrollment_id)` |
 
-### 8.3. Phân quyền Lesson
+**Pricing Engine invariants** (cho mọi đầu vào hợp lệ):
+- `0 ≤ discountAmount ≤ originalPrice`
+- `finalPrice = originalPrice − discountAmount`
+- `0 ≤ finalPrice ≤ originalPrice`
+- BigDecimal scale 2, rounding HALF_UP
+- `originalPrice = 0` → cả discount và final đều 0 (voucher vô nghĩa với khóa miễn phí)
 
-| Role | Xem Lesson | Tạo/Sửa/Xóa Lesson |
-|------|------------|-------------------|
-| MEMBER | ✅ | ❌ |
-| INSTRUCTOR | ✅ | ✅ (chỉ course của mình) |
-| STAFF | ✅ | ✅ |
-| ADMIN_USER | ✅ | ❌ (không có quyền) |
-| SUPER_ADMIN | ✅ | ✅ |
+**Voucher Validator** kiểm tra theo thứ tự cố định:
+`status → validFrom → validTo → scope → minOrder → usageLimit → usagePerUser`
 
-> **Lưu ý:** `ADMIN_USER` không có quyền thao tác Lesson (giống với Section) - đây là design decision quan trọng.
+→ Cùng đầu vào luôn ném cùng exception (deterministic).
 
-### 8.4. Các file đã tạo mới (tổng cộng 16 files)
+### 8.4. Permission Matrix sau update
 
-```
-src/main/java/com/example/learning_system_spring/
-├── domain/
-│   ├── exception/
-│   │   ├── LessonNotFoundException.java
-│   │   └── LessonAccessDeniedException.java
-│   └── service/
-│       └── LessonAuthorizationService.java
-├── application/
-│   ├── dto/Lesson/
-│   │   ├── CreateLessonInput.java
-│   │   ├── UpdateLessonInput.java
-│   │   ├── DeleteLessonInput.java
-│   │   ├── GetLessonsInput.java
-│   │   └── GetLessonsOutput.java
-│   ├── repository/Course/
-│   │   └── CourseLessonRepository.java
-│   └── usecase/Lesson/
-│       ├── GetLessonsUseCase.java
-│       ├── CreateLessonUseCase.java
-│       ├── UpdateLessonUseCase.java
-│       └── DeleteLessonUseCase.java
-├── adapter/
-│   ├── repository/
-│   │   ├── JpaCourseLessonRepository.java
-│   │   └── CourseLessonRepositoryImpl.java
-│   ├── dto/request/Lesson/
-│   │   ├── CreateLessonRequest.java
-│   │   └── UpdateLessonRequest.java
-│   ├── dto/response/
-│   │   └── GetLessonsResponse.java
-│   └── controller/Course/Lesson/
-│       └── CourseLessonController.java
-└── infrastructure/
-    └── exception/
-        └── ErrorCode.java (updated)
-        └── GlobalExceptionHandler.java (updated)
-    └── config/
-        └── DataInitializer.java (updated)
+5 roles × 19 permissions. Highlight các permission mới:
 
-docs/
-├── plan-lesson-management.md (new)
-├── api-docs.md (updated)
-└── permission-matrix.md (updated)
-```
+| Permission | MEMBER | INSTRUCTOR | STAFF | ADMIN_USER | SUPER_ADMIN |
+|-----------|:------:|:----------:|:-----:|:----------:|:-----------:|
+| `PUBLISH_COURSE` | | | ✅ | | ✅ |
+| `LOCK_COURSE_PRICE` | | | ✅ | | ✅ |
+| `MANAGE_VOUCHER` | | | ✅ | | ✅ |
+| `USE_VOUCHER` | ✅ | | | | ✅ |
 
-### 8.5. API Endpoints mới
+> Lưu ý: INSTRUCTOR / ADMIN_USER không có `USE_VOUCHER` vì họ không phải đối tượng mua khóa học. STAFF có `MANAGE_VOUCHER` (quản lý) nhưng không có `USE_VOUCHER` (không tự mua).
 
-1. **GET** `/api/v1/courses/{courseId}/sections/{sectionId}/lessons`
-2. **POST** `/api/v1/courses/{courseId}/sections/{sectionId}/lessons`
-3. **PUT** `/api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}`
-4. **DELETE** `/api/v1/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}`
+### 8.5. Files mới và sửa (~70 files cộng dồn cho 2 feature)
+
+**Domain layer:**
+- 7 voucher model + 6 voucher domain exceptions mới + 6 voucher exceptions phụ trợ.
+- 3 course approval exceptions: `CourseNotPublishedException`, `CoursePriceLockedException`, `CourseAlreadyPublishedException`.
+- 2 pure domain service: `PricingEngine`, `VoucherValidator`.
+- `Course.java` cập nhật: 4 field mới + 3 method (`publish`, `unpublish`, `updatePrice`).
+
+**Application layer:**
+- 9 voucher DTO record + 3 course approval DTO + cập nhật `GetCourseListInput` với enum `Scope`.
+- 2 voucher repository interface mới.
+- 6 voucher use case + 3 course approval use case mới.
+
+**Adapter layer:**
+- 2 voucher JPA entity + 2 Spring Data interface + 2 repository impl.
+- 4 voucher request/response DTO + cập nhật `PurchaseCourseRequest`.
+- 3 controller mới: `AdminVoucherController`, `CourseQuoteController`, `AdminCourseController`, `InstructorCourseController`.
+
+**Infrastructure:**
+- `ErrorCode`: thêm 15 enum mới.
+- `GlobalExceptionHandler`: thêm 15 handler mới.
+- `DataInitializer`: seed 4 permission mới + gán role.
+- `DomainServiceConfig` (mới): đăng ký `PricingEngine` + `VoucherValidator` làm Spring bean.
+- `PurchaseLedgerService`: thêm 2 method `logVoucherApplied`, `logVoucherRejected`.
+
+**Documentation:**
+- `docs/api-docs.md`: thêm section 12 (Course Approval) và section 13 (Voucher Pricing).
+- `docs/permission-matrix.md`: cập nhật 4 permission mới.
+- `docs/plan-voucher-pricing.md`, `docs/plan-course-approval.md`: kế hoạch chi tiết đã có sẵn.
+- `.kiro/specs/voucher-pricing/requirements.md` + `.kiro/specs/voucher-management/requirements.md`: requirements EARS với 12 yêu cầu + 19 correctness properties cho property-based testing.
 
 ### 8.6. Ghi chú cho AI Agents tiếp theo
 
-- **Code đã được viết theo đúng pattern** của Section Management - có thể tham khảo để hiểu structure
-- **Permission seeding đã hoàn thiện**: 5 roles, 15 permissions, gán đúng theo permission matrix
-- **Có compile errors cần fix**: 
-  - `LessonAuthorizationService` cần truyền đủ 3 parameters cho `CourseOwnershipPolicy.isInstructorOwner()`
-  - `DataInitializer.assignPermission()` cần sửa cách tạo `RolePermissionJpaEntity` (hiện dùng native query)
-- **Testing**: Có thể test với Postman/Insomnia theo documentation trong `api-docs.md`
-- **Next steps**: Có thể tiếp tục với Progress Tracking, Grade Management, hoặc Notification System
+- **Code đã build và chạy** — entry point duy nhất cho purchase là `ApplyVoucherCheckoutUseCase` (gộp cả luồng có / không voucher). `PurchaseCourseUseCase` cũ đã không còn.
+- **Pure domain service đăng ký bean ở `DomainServiceConfig`** — không thêm `@Service`/`@Component` vào `PricingEngine` / `VoucherValidator`.
+- **Audit log chỉ qua `PurchaseLedgerService`** — không viết file JSONL trực tiếp ở use case.
+- **`@PreAuthorize` đã có tại method-level** thông qua `@EnableMethodSecurity`. Nếu thêm endpoint admin mới, dùng `@PreAuthorize("hasAuthority('MANAGE_VOUCHER')")` thay vì check trong use case.
+- **Property-based testing**: Pricing engine có 19 correctness property liệt kê trong `.kiro/specs/voucher-pricing/requirements.md` (Pricing engine: 8, Validator: 3, Quote-Checkout consistency: 3, Race: 2, Audit roundtrip: 1, anti-tampering example tests: 2). Khi viết test, tham khảo trực tiếp file đó.
+- **Next steps có thể tiếp tục:** Course Submit-for-review endpoint, Voucher detail endpoint (`GET /admin/vouchers/{id}`), Voucher usage history (`GET /admin/vouchers/{id}/usages`), Progress Tracking, Notification System.

@@ -21,27 +21,44 @@ public class CourseRepositoryImpl implements CourseRepository {
     private final JpaCourseRepository jpaCourseRepository;
     private final CourseMapper courseMapper;
 
-    @Override
-    public PageResult<Course> searchCourses(String keyword, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<CourseJpaEntity> entityPage;
+    private String normalizeKeyword(String keyword) {
+        return keyword == null ? "" : keyword.trim();
+    }
 
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            entityPage = jpaCourseRepository.searchByKeyword(keyword.trim(), pageable);
-        } else {
-            entityPage = jpaCourseRepository.findAll(pageable);
-        }
-
+    private PageResult<Course> toPageResult(Page<CourseJpaEntity> entityPage) {
         List<Course> courses = entityPage.getContent().stream()
                 .map(courseMapper::toDomain)
                 .toList();
-
         return PageResult.of(
                 entityPage.getTotalElements(),
                 entityPage.getTotalPages(),
                 entityPage.getNumber(),
                 entityPage.getSize(),
                 courses);
+    }
+
+    @Override
+    public PageResult<Course> searchPublishedCourses(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return toPageResult(jpaCourseRepository.searchPublished(normalizeKeyword(keyword), pageable));
+    }
+
+    @Override
+    public PageResult<Course> searchPendingCourses(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return toPageResult(jpaCourseRepository.searchPending(normalizeKeyword(keyword), pageable));
+    }
+
+    @Override
+    public PageResult<Course> searchAllCourses(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return toPageResult(jpaCourseRepository.searchAll(normalizeKeyword(keyword), pageable));
+    }
+
+    @Override
+    public PageResult<Course> searchByInstructorId(Long instructorId, String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return toPageResult(jpaCourseRepository.searchByInstructorId(instructorId, normalizeKeyword(keyword), pageable));
     }
 
     @Override

@@ -57,6 +57,93 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.LESSON_ACCESS_DENIED, ex.getMessage()));
     }
 
+    @ExceptionHandler(CourseNotPublishedException.class)
+    public ResponseEntity<ErrorResponse> handleCourseNotPublished(CourseNotPublishedException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.COURSE_NOT_PUBLISHED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(CoursePriceLockedException.class)
+    public ResponseEntity<ErrorResponse> handleCoursePriceLocked(CoursePriceLockedException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.COURSE_PRICE_LOCKED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(CourseAlreadyPublishedException.class)
+    public ResponseEntity<ErrorResponse> handleCourseAlreadyPublished(CourseAlreadyPublishedException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.COURSE_ALREADY_PUBLISHED, ex.getMessage()));
+    }
+
+    // ==== Voucher exceptions ====
+
+    @ExceptionHandler(VoucherNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherNotFound(VoucherNotFoundException ex) {
+        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.VOUCHER_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherInactiveException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherInactive(VoucherInactiveException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_INACTIVE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherNotYetActiveException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherNotYetActive(VoucherNotYetActiveException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_NOT_YET_ACTIVE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherExpired(VoucherExpiredException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_EXPIRED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherNotApplicableException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherNotApplicable(VoucherNotApplicableException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_NOT_APPLICABLE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherMinOrderNotMetException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherMinOrderNotMet(VoucherMinOrderNotMetException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_MIN_ORDER_NOT_MET, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherUsageLimitReachedException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherUsageLimitReached(VoucherUsageLimitReachedException ex) {
+        return ResponseEntity.status(409).body(ErrorResponse.of(ErrorCode.VOUCHER_USAGE_LIMIT_REACHED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherUsagePerUserExceededException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherUsagePerUser(VoucherUsagePerUserExceededException ex) {
+        return ResponseEntity.status(409).body(ErrorResponse.of(ErrorCode.VOUCHER_USAGE_PER_USER_EXCEEDED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherUseDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherUseDenied(VoucherUseDeniedException ex) {
+        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.VOUCHER_USE_DENIED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherCodeAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherCodeExists(VoucherCodeAlreadyExistsException ex) {
+        return ResponseEntity.status(409).body(ErrorResponse.of(ErrorCode.VOUCHER_CODE_ALREADY_EXISTS, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherUsageLimitTooLowException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherUsageLimitTooLow(VoucherUsageLimitTooLowException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_USAGE_LIMIT_TOO_LOW, ex.getMessage()));
+    }
+
+    @ExceptionHandler(VoucherImmutableFieldException.class)
+    public ResponseEntity<ErrorResponse> handleVoucherImmutable(VoucherImmutableFieldException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_IMMUTABLE_FIELD, ex.getMessage()));
+    }
+
+    @ExceptionHandler(AlreadyEnrolledException.class)
+    public ResponseEntity<ErrorResponse> handleAlreadyEnrolled(AlreadyEnrolledException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.ALREADY_ENROLLED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientBalance(InsufficientBalanceException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.INSUFFICIENT_BALANCE, ex.getMessage()));
+    }
+
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
         return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, "Bạn không có quyền thực hiện hành động này."));

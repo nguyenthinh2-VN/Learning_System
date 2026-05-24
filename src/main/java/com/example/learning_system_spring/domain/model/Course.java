@@ -1,11 +1,14 @@
 package com.example.learning_system_spring.domain.model;
 
+import com.example.learning_system_spring.domain.exception.CourseAlreadyPublishedException;
+import com.example.learning_system_spring.domain.exception.CoursePriceLockedException;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,10 +23,17 @@ public class Course {
     private int enrolledCount;
     private BigDecimal price;
     private Long instructorId;
+    private boolean published;
+    private boolean priceLocked;
+    private LocalDateTime publishedAt;
+    private Long publishedBy;
     @Builder.Default
     private List<CourseSection> sections = new ArrayList<>();
 
-    // Use builder for creation, but can add factory methods if needed
+    /**
+     * Tạo course mới. Mặc định ẨN (published = false, priceLocked = false).
+     * Course chỉ công khai sau khi admin duyệt qua publish().
+     */
     public static Course create(String title, String description, int maxStudents, BigDecimal price, Long instructorId,
             List<CourseSection> sections) {
         if (maxStudents <= 0) {
@@ -36,12 +46,17 @@ public class Course {
                 .price(price != null ? price : BigDecimal.ZERO)
                 .enrolledCount(0)
                 .instructorId(instructorId)
+                .published(false)
+                .priceLocked(false)
+                .publishedAt(null)
+                .publishedBy(null)
                 .sections(sections != null ? new ArrayList<>(sections) : new ArrayList<>())
                 .build();
     }
 
     public static Course reconstitute(Long id, String title, String description, int maxStudents, int enrolledCount,
-            BigDecimal price, Long instructorId, List<CourseSection> sections) {
+            BigDecimal price, Long instructorId, boolean published, boolean priceLocked,
+            LocalDateTime publishedAt, Long publishedBy, List<CourseSection> sections) {
         return Course.builder()
                 .id(id)
                 .title(title)
@@ -50,6 +65,10 @@ public class Course {
                 .price(price != null ? price : BigDecimal.ZERO)
                 .enrolledCount(enrolledCount)
                 .instructorId(instructorId)
+                .published(published)
+                .priceLocked(priceLocked)
+                .publishedAt(publishedAt)
+                .publishedBy(publishedBy)
                 .sections(sections != null ? new ArrayList<>(sections) : new ArrayList<>())
                 .build();
     }
@@ -63,5 +82,44 @@ public class Course {
             throw new IllegalStateException("Course is already full");
         }
         enrolledCount++;
+    }
+
+    /**
+     * Duyệt và publish course. Tự động khóa giá để INSTRUCTOR không sửa được.
+     * Nếu cần sửa giá sau publish, admin phải dùng UpdateCoursePriceUseCase.
+     */
+    public void publish(Long publisherId) {
+        if (this.published) {
+            throw new CourseAlreadyPublishedException(this.id);
+        }
+        if (this.price == null || this.price.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalStateException("Giá khóa học không hợp lệ. Vui lòng đặt giá trước khi publish.");
+        }
+        this.published = true;
+        this.priceLocked = true;
+        this.publishedAt = LocalDateTime.now();
+        this.publishedBy = publisherId;
+    }
+
+    /**
+     * Ẩn course đã publish khỏi public listing. Giữ nguyên priceLocked để khi
+     * publish lại không cần đặt giá lại.
+     */
+    public void unpublish() {
+        this.published = false;
+    }
+
+    /**
+     * Cập nhật giá. Nếu priceLocked = true (sau publish), chỉ admin (isAdmin = true)
+     * mới được sửa. INSTRUCTOR khi đó phải nhờ admin.
+     */
+    public void updatePrice(BigDecimal newPrice, boolean isAdmin) {
+        if (newPrice == null || newPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Giá khóa học phải >= 0");
+        }
+        if (this.priceLocked && !isAdmin) {
+            throw new CoursePriceLockedException(this.id);
+        }
+        this.price = newPrice;
     }
 }

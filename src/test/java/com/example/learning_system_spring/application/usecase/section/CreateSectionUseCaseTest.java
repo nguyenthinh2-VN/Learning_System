@@ -49,7 +49,7 @@ class CreateSectionUseCaseTest {
     void execute_ShouldCreateSection_WhenInstructorOwnsTheCourse() {
         // Arrange
         Role instructor = Role.reconstitute(2L, "INSTRUCTOR", null);
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null);
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
         CreateSectionInput input = new CreateSectionInput(1L, 100L, instructor, "Chương 1: Giới thiệu", 1);
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
@@ -74,7 +74,7 @@ class CreateSectionUseCaseTest {
     void execute_ShouldCreateSection_WhenStaffRequests() {
         // Arrange
         Role staff = Role.reconstitute(3L, "STAFF", null);
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null);
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
         CreateSectionInput input = new CreateSectionInput(1L, 200L, staff, "Chương 2", 2);
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
@@ -108,7 +108,7 @@ class CreateSectionUseCaseTest {
     void execute_ShouldThrowSectionAccessDeniedException_WhenInstructorDoesNotOwnCourse() {
         // Arrange
         Role instructor = Role.reconstitute(2L, "INSTRUCTOR", null);
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null);
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
         CreateSectionInput input = new CreateSectionInput(1L, 999L, instructor, "Chương 1", 1); // 999L != 100L
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
@@ -124,7 +124,7 @@ class CreateSectionUseCaseTest {
     void execute_ShouldThrowSectionAccessDeniedException_WhenAdminUserRequests() {
         // Arrange
         Role adminUser = Role.reconstitute(4L, "ADMIN_USER", null);
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null);
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
         CreateSectionInput input = new CreateSectionInput(1L, 300L, adminUser, "Chương 1", 1);
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
@@ -141,7 +141,7 @@ class CreateSectionUseCaseTest {
     void execute_ShouldThrowSectionAccessDeniedException_WhenMemberRequests() {
         // Arrange
         Role member = Role.reconstitute(1L, "MEMBER", null);
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null);
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
         CreateSectionInput input = new CreateSectionInput(1L, 50L, member, "Chương 1", 1);
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));

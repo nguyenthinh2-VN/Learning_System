@@ -2,6 +2,7 @@ package com.example.learning_system_spring.application.dto.Course;
 
 import com.example.learning_system_spring.domain.model.Course;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
@@ -14,6 +15,10 @@ public record CourseOutput(
                 int enrolledCount,
                 BigDecimal price,
                 Long instructorId,
+                boolean published,
+                boolean priceLocked,
+                LocalDateTime publishedAt,
+                Long publishedBy,
                 List<CourseSectionDto> sections) {
         public static CourseOutput from(Course course) {
                 if (course == null)
@@ -37,6 +42,10 @@ public record CourseOutput(
                                 course.getEnrolledCount(),
                                 course.getPrice(),
                                 course.getInstructorId(),
+                                course.isPublished(),
+                                course.isPriceLocked(),
+                                course.getPublishedAt(),
+                                course.getPublishedBy(),
                                 sectionDtos);
         }
 }
