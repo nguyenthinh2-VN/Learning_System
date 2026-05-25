@@ -74,6 +74,7 @@ public class AdminVoucherController {
 
         UpdateVoucherInput input = new UpdateVoucherInput(
                 id, requesterId, requesterRole,
+                req.getCode(), req.getType(), req.getValue(),
                 req.getStatus(), req.getScope(), req.getValidFrom(), req.getValidTo(),
                 req.getMinOrderAmount(), req.getMaxDiscount(),
                 req.getUsageLimit(), req.getUsagePerUser(),

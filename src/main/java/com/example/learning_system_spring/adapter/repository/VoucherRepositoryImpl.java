@@ -41,6 +41,11 @@ public class VoucherRepositoryImpl implements VoucherRepository {
     }
 
     @Override
+    public Optional<Voucher> findByCodeForUpdate(String normalizedCode) {
+        return jpa.findByCodeForUpdate(normalizedCode).map(VoucherJpaEntity::toDomain);
+    }
+
+    @Override
     public boolean existsByCode(String normalizedCode) {
         return jpa.existsByCode(normalizedCode);
     }

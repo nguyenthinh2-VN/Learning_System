@@ -19,6 +19,12 @@ public interface VoucherRepository {
      */
     Optional<Voucher> findByIdForUpdate(Long id);
 
+    /**
+     * OPT-1: Load voucher theo code với pessimistic write lock trong 1 query.
+     * Dùng thay cho findByCode + findByIdForUpdate trong luồng checkout.
+     */
+    Optional<Voucher> findByCodeForUpdate(String normalizedCode);
+
     boolean existsByCode(String normalizedCode);
 
     PageResult<Voucher> findAll(int page, int size);

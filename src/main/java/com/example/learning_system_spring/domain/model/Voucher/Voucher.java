@@ -117,6 +117,28 @@ public class Voucher {
     }
 
     /**
+     * Cập nhật các field "immutable" (code / type / value).
+     * CHỈ được gọi khi usedCount == 0 — UseCase chịu trách nhiệm kiểm tra trước khi gọi.
+     * Nếu gọi khi đã có usage → UseCase phải ném VoucherImmutableFieldException trước.
+     */
+    public void updateImmutableFields(String newCode, VoucherType newType, BigDecimal newValue) {
+        if (newCode != null) {
+            if (newCode.trim().isEmpty())
+                throw new IllegalArgumentException("Voucher code không được để trống");
+            this.code = normalizeCode(newCode);
+        }
+        if (newType != null) {
+            this.type = newType;
+        }
+        if (newValue != null) {
+            if (newValue.signum() <= 0)
+                throw new IllegalArgumentException("Voucher value phải > 0");
+            this.value = newValue;
+        }
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
      * Cập nhật các field "soft" — không thay đổi code / type / value.
      * Việc cấm thay đổi 3 field đó khi đã có usage được kiểm soát ở UseCase.
      */
@@ -124,6 +146,11 @@ public class Voucher {
                                  BigDecimal newMinOrderAmount, BigDecimal newMaxDiscount,
                                  Long newUsageLimit, Integer newUsagePerUser,
                                  VoucherScope newScope, Set<Long> newApplicableCourseIds) {
+        // FIX-A: null-guard cho status và scope — tránh voucher rơi vào "limbo state"
+        if (newStatus == null)
+            throw new IllegalArgumentException("status không được null");
+        if (newScope == null)
+            throw new IllegalArgumentException("scope không được null");
         if (newValidFrom == null || newValidTo == null)
             throw new IllegalArgumentException("validFrom và validTo bắt buộc");
         if (newValidFrom.isAfter(newValidTo))

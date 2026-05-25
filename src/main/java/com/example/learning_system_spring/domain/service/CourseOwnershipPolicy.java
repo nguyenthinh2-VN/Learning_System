@@ -22,24 +22,30 @@ public class CourseOwnershipPolicy {
 
     /**
      * Kiểm tra role có quyền toàn quyền (STAFF hoặc SUPER_ADMIN) không.
+     * FIX-C: null-guard — trả false thay vì ném NPE khi role = null.
      */
     public static boolean hasFullAccess(Role role) {
+        if (role == null) return false;
         return role.isStaff() || role.isSuperAdmin();
     }
 
     /**
      * Kiểm tra role có quyền toàn quyền bao gồm cả ADMIN_USER không.
      * Dùng cho Course-level (ADMIN_USER được sửa/xóa course nhưng không được sửa section).
+     * FIX-C: null-guard — trả false thay vì ném NPE khi role = null.
      */
     public static boolean hasFullCourseAccess(Role role) {
+        if (role == null) return false;
         return role.isStaff() || role.isAdminUser() || role.isSuperAdmin();
     }
 
     /**
      * Kiểm tra INSTRUCTOR có được thao tác trên course này không.
      * Điều kiện: phải là instructor VÀ phải là chủ sở hữu course.
+     * FIX-C: null-guard — trả false thay vì ném NPE khi role = null.
      */
     public static boolean isInstructorOwner(Course course, Long requesterId, Role role) {
+        if (role == null) return false;
         return role.isInstructor() && isOwner(course, requesterId);
     }
 

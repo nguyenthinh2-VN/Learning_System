@@ -52,6 +52,14 @@ public class PricingEngine {
             discount = normalizedOriginal;
         }
 
+        // FIX-D: Precision-loss guard — nếu discount = 0 sau làm tròn HALF_UP,
+        //   coi như voucher không áp dụng được (Option A).
+        //   Tránh trạng thái voucherApplied=true nhưng discount=0 gây nhầm lẫn cho user
+        //   và tiêu thụ lượt dùng voucher mà không mang lại lợi ích.
+        if (discount.signum() == 0) {
+            return PriceQuote.noDiscount(normalizedOriginal);
+        }
+
         return PriceQuote.withVoucher(normalizedOriginal, discount, voucher.getCode(), voucher.getType());
     }
 

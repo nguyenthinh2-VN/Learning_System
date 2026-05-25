@@ -1469,9 +1469,42 @@ Tính năng voucher cho phép STAFF / SUPER_ADMIN tạo mã giảm giá; MEMBER 
 
 **Yêu cầu quyền:** `MANAGE_VOUCHER`.
 
-> Khi voucher đã có ít nhất 1 bản ghi `Voucher_Usage`, các field `code`, `type`, `value` sẽ bị từ chối khi update — chỉ được sửa các field "mở rộng" (`status`, `scope`, `validFrom`, `validTo`, `minOrderAmount`, `maxDiscount`, `usageLimit`, `usagePerUser`, `applicableCourseIds`).
+> **Immutable fields** (`code`, `type`, `value`): có thể gửi để sửa, nhưng chỉ được chấp nhận khi voucher **chưa có bất kỳ `Voucher_Usage` nào** (`usedCount = 0`). Nếu đã có usage → 400 `VOUCHER_IMMUTABLE_FIELD`. Không gửi (để `null`) = giữ nguyên giá trị cũ.
+>
+> **Soft fields** (`status`, `scope`, `validFrom`, `validTo`, `minOrderAmount`, `maxDiscount`, `usageLimit`, `usagePerUser`, `applicableCourseIds`): luôn được sửa, bắt buộc gửi đầy đủ.
 
-**Request Body:** xem schema ở `UpdateVoucherRequest`. Không bao gồm `code`, `type`, `value`.
+**Request Body:**
+```json
+{
+  "code": "SUMMER50",
+  "type": "PERCENT",
+  "value": 50,
+  "status": "ACTIVE",
+  "scope": "ALL_COURSES",
+  "validFrom": "2026-06-01T00:00:00",
+  "validTo": "2026-12-31T23:59:59",
+  "minOrderAmount": 100000,
+  "maxDiscount": 200000,
+  "usageLimit": 500,
+  "usagePerUser": 1,
+  "applicableCourseIds": null
+}
+```
+
+| Field | Type | Required | Ghi chú |
+|-------|------|----------|---------|
+| code | String | No | Nullable — chỉ sửa được khi `usedCount = 0`; regex `^[A-Za-z0-9_-]{1,32}$` |
+| type | Enum | No | Nullable — chỉ sửa được khi `usedCount = 0`; `PERCENT` hoặc `FIXED` |
+| value | BigDecimal | No | Nullable — chỉ sửa được khi `usedCount = 0`; > 0 |
+| status | Enum | **Yes** | `ACTIVE` hoặc `INACTIVE` |
+| scope | Enum | **Yes** | `ALL_COURSES` hoặc `SPECIFIC_COURSES` |
+| validFrom | LocalDateTime | **Yes** | ISO-8601 |
+| validTo | LocalDateTime | **Yes** | ISO-8601, ≥ validFrom |
+| minOrderAmount | BigDecimal | No | ≥ 0 |
+| maxDiscount | BigDecimal | No | ≥ 0 |
+| usageLimit | Long | No | ≥ 0; 0 = không giới hạn |
+| usagePerUser | Integer | No | ≥ 0; 0 = không giới hạn |
+| applicableCourseIds | Set\<Long\> | Tùy `scope` | Bắt buộc khi `scope = SPECIFIC_COURSES` |
 
 **Response 200:** Trả về voucher đã cập nhật với `usedCount` và metadata mới.
 
@@ -1484,11 +1517,20 @@ Tính năng voucher cho phép STAFF / SUPER_ADMIN tạo mã giảm giá; MEMBER 
 }
 ```
 
-**Response 400 — sửa field bất biến:**
+**Response 400 — sửa field bất biến khi đã có usage:**
 ```json
 {
   "code": "VOUCHER_IMMUTABLE_FIELD",
-  "message": "Không được sửa field code/type/value khi voucher đã có lượt dùng.",
+  "message": "Voucher đã có lượt dùng, không thể thay đổi field: code",
+  "timestamp": "2026-05-24T11:00:00"
+}
+```
+
+**Response 409 — code mới đã tồn tại:**
+```json
+{
+  "code": "VOUCHER_CODE_ALREADY_EXISTS",
+  "message": "Voucher code SUMMER50 đã tồn tại.",
   "timestamp": "2026-05-24T11:00:00"
 }
 ```

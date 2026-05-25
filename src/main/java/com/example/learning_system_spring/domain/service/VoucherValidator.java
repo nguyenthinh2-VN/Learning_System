@@ -43,8 +43,9 @@ public class VoucherValidator {
             throw new IllegalArgumentException("originalPrice must not be null");
         }
 
-        // 1. Status
-        if (voucher.isInactive()) {
+        // 1. Status — FIX-A: kiểm tra strict ACTIVE thay vì chỉ check isInactive()
+        //    Điều này bắt cả trường hợp status = null (do bug cũ) hoặc giá trị enum không mong đợi.
+        if (voucher.getStatus() != com.example.learning_system_spring.domain.model.Voucher.VoucherStatus.ACTIVE) {
             throw new VoucherInactiveException(voucher.getCode());
         }
 

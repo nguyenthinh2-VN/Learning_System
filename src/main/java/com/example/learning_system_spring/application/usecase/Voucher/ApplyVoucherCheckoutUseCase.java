@@ -103,7 +103,8 @@ public class ApplyVoucherCheckoutUseCase {
     private PurchaseCourseOutput processInternal(User user, Course course, PurchaseCourseInput input,
                                                  BigDecimal originalPrice) {
         course.enroll();
-        userRepository.save(user);
+        // OPT-2: Bỏ userRepository.save(user) dư — internal member không thay đổi balance,
+        //        JPA dirty checking sẽ no-op nhưng gọi thừa gây nhầm lẫn khi đọc code.
         courseRepository.save(course);
 
         Enrollment enrollment = enrollmentRepository.save(
@@ -146,11 +147,10 @@ public class ApplyVoucherCheckoutUseCase {
     private PurchaseCourseOutput processWithVoucher(User user, Course course, PurchaseCourseInput input,
                                                     BigDecimal originalPrice) {
         // [6] Voucher lock (PESSIMISTIC_WRITE) — sau User và Course
+        // OPT-1: Dùng findByCodeForUpdate thay vì findByCode + findByIdForUpdate (gộp 2 query → 1)
         String normalizedCode = Voucher.normalizeCode(input.voucherCode());
-        Voucher voucher = voucherRepository.findByCode(normalizedCode)
+        Voucher locked = voucherRepository.findByCodeForUpdate(normalizedCode)
                 .orElseThrow(() -> new VoucherNotFoundException(normalizedCode));
-        Voucher locked = voucherRepository.findByIdForUpdate(voucher.getId())
-                .orElseThrow(() -> new VoucherNotFoundException(voucher.getId()));
 
         // [7] Đếm lại usedCount BÊN TRONG transaction sau khi đã giữ lock
         long globalUsed = voucherUsageRepository.countByVoucherId(locked.getId());
