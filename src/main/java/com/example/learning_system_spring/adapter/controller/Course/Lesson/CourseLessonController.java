@@ -35,14 +35,16 @@ public class CourseLessonController {
             @PathVariable Long courseId,
             @PathVariable Long sectionId,
             @RequestHeader("Authorization") String authHeader) {
-        
-        // Parse JWT để lấy thông tin người dùng (mặc dù không cần cho GET)
+
         var claims = jwtService.parseToken(authHeader.substring(7));
-        
-        var input = new GetLessonsInput(courseId, sectionId);
+        Long requesterId = claims.get("userId", Long.class);
+        String requesterRoleName = claims.get("role", String.class);
+        Role requesterRole = Role.create(requesterRoleName, "");
+
+        var input = new GetLessonsInput(courseId, sectionId, requesterId, requesterRole);
         var output = getLessonsUseCase.execute(input);
         var response = GetLessonsResponse.from(output);
-        
+
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

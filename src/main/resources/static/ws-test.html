@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebSocket Wallet Test</title>
+  <!-- @stomp/stompjs v6 — hỗ trợ SockJS tốt hơn stompjs@2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@6/bundles/stomp.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+    .subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 24px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 960px;
+    }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card h2 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #94a3b8;
+      margin-bottom: 14px;
+    }
+    label { display: block; font-size: 0.78rem; color: #94a3b8; margin-bottom: 4px; }
+    input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus { border-color: #38bdf8; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-primary { background: #0ea5e9; color: #fff; }
+    .btn-success { background: #22c55e; color: #fff; }
+    .btn-danger  { background: #ef4444; color: #fff; }
+    .btn-warning { background: #f59e0b; color: #fff; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .status-bar.disconnected { background: #1e293b; border: 1px solid #475569; color: #94a3b8; }
+    .status-bar.connecting   { background: #1c2a1c; border: 1px solid #f59e0b; color: #fbbf24; }
+    .status-bar.connected    { background: #0f2a1a; border: 1px solid #22c55e; color: #4ade80; }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .dot.pulse { animation: pulse 1.4s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .3; }
+    }
+    .balance-display {
+      text-align: center;
+      padding: 16px 0 8px;
+    }
+    .balance-label { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; }
+    .balance-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #4ade80;
+      font-variant-numeric: tabular-nums;
+      transition: color .4s;
+    }
+    .balance-value.flash { color: #fbbf24; }
+    .log-box {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      height: 260px;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 0.75rem;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+    .log-entry {
+      padding: 6px 8px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      line-height: 1.5;
+      border-left: 3px solid transparent;
+    }
+    .log-entry.info    { border-color: #38bdf8; background: #0c1a2e; color: #7dd3fc; }
+    .log-entry.success { border-color: #22c55e; background: #0a1f0f; color: #86efac; }
+    .log-entry.error   { border-color: #ef4444; background: #1f0a0a; color: #fca5a5; }
+    .log-entry.event   { border-color: #a78bfa; background: #130f1f; color: #c4b5fd; }
+    .log-entry.warn    { border-color: #f59e0b; background: #1f1500; color: #fcd34d; }
+    .log-time { color: #475569; margin-right: 6px; }
+    .tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    .tag-ws     { background: #1d4ed8; color: #bfdbfe; }
+    .tag-api    { background: #7c3aed; color: #ddd6fe; }
+    .tag-event  { background: #065f46; color: #6ee7b7; }
+    .event-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+    }
+    .event-card .ev-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .event-card .ev-badge {
+      background: #4ade80;
+      color: #052e16;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.7rem;
+    }
+    .event-card .ev-time { color: #64748b; font-size: 0.7rem; }
+    .ev-row { display: flex; justify-content: space-between; padding: 2px 0; }
+    .ev-key { color: #64748b; }
+    .ev-val { color: #e2e8f0; font-weight: 600; }
+    .ev-val.green { color: #4ade80; }
+    .ev-val.yellow { color: #fbbf24; }
+    .full-width { grid-column: 1 / -1; }
+    .ref-display {
+      background: #0f172a;
+      border: 1px dashed #334155;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #fbbf24;
+      margin-bottom: 10px;
+      min-height: 34px;
+      word-break: break-all;
+    }
+    .section-divider {
+      border: none;
+      border-top: 1px solid #1e293b;
+      margin: 14px 0;
+    }
+    .hint { font-size: 0.72rem; color: #475569; margin-top: 6px; }
+    #eventCount {
+      display: inline-block;
+      background: #7c3aed;
+      color: #fff;
+      border-radius: 20px;
+      padding: 1px 8px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🔌 WebSocket Wallet Test</h1>
+<p class="subtitle">Learning System Spring — STOMP over SockJS · /ws · /user/queue/wallet</p>
+
+<div class="grid">
+
+  <!-- CARD 1: Auth & Connect -->
+  <div class="card">
+    <h2>① Login & Connect</h2>
+
+    <div id="statusBar" class="status-bar disconnected">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">Chưa kết nối</span>
+    </div>
+
+    <label>Base URL</label>
+    <input id="baseUrl" value="http://localhost:8080" />
+
+    <label>Identifier (username hoặc email)</label>
+    <input id="username" placeholder="Ví dụ: member1 hoặc member1@example.com" />
+
+    <label>Password</label>
+    <input id="password" type="password" placeholder="••••••••" />
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doLogin()">🔑 Login</button>
+      <button class="btn btn-success" id="btnConnect" onclick="doConnect()" disabled>⚡ Connect WS</button>
+      <button class="btn btn-danger"  id="btnDisconnect" onclick="doDisconnect()" disabled>✕ Disconnect</button>
+    </div>
+    <p class="hint" id="connectHint" style="color:#f59e0b">⚠️ Sau khi login, nhớ nhấn <strong>Connect WS</strong> trước khi trigger webhook để nhận realtime event.</p>
+
+    <hr class="section-divider" />
+
+    <label>JWT Token (tự điền sau login)</label>
+    <input id="jwtToken" placeholder="Paste token hoặc login để tự điền" />
+    <p class="hint">Sau khi login thành công, token tự điền vào đây. Bạn cũng có thể paste thủ công.</p>
+  </div>
+
+  <!-- CARD 2: Balance & Events -->
+  <div class="card">
+    <h2>② Realtime Events <span id="eventCount">0</span></h2>
+
+    <div class="balance-display">
+      <div class="balance-label">Số dư hiện tại (từ WS event)</div>
+      <div class="balance-value" id="balanceDisplay">—</div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <div id="eventList">
+      <p style="color:#475569;font-size:0.78rem;text-align:center;padding:20px 0">
+        Chưa có event nào. Kết nối WS và trigger top-up để xem.
+      </p>
+    </div>
+  </div>
+
+  <!-- CARD 3: Top-up Flow -->
+  <div class="card">
+    <h2>③ Top-up Flow (Mock)</h2>
+
+    <label>Số tiền nạp (VND, tối thiểu 10,000)</label>
+    <input id="topupAmount" type="number" value="50000" min="10000" step="10000" />
+
+    <button class="btn btn-primary" onclick="doInitTopUp()" style="margin-bottom:12px">
+      💳 Init Top-up
+    </button>
+
+    <label>Reference Code (từ init response)</label>
+    <div class="ref-display" id="refDisplay">Chưa có — nhấn Init Top-up trước</div>
+
+    <button class="btn btn-success" onclick="doMockWebhook()">
+      🎯 Trigger Mock Webhook (giả lập thanh toán)
+    </button>
+    <p class="hint">Sau khi trigger, WebSocket sẽ push WALLET_UPDATED về tab này nếu đang kết nối.</p>
+  </div>
+
+  <!-- CARD 4: Log -->
+  <div class="card">
+    <h2>④ Activity Log</h2>
+    <div class="log-box" id="logBox"></div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn btn-warning" onclick="clearLog()">🗑 Clear Log</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let stompClient = null;
+  let jwtToken = null;
+  let eventCount = 0;
+  let currentRef = null;
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
+
+  function now() {
+    return new Date().toLocaleTimeString('vi-VN', { hour12: false });
+  }
+
+  function log(msg, type = 'info', tag = 'SYS') {
+    const box = document.getElementById('logBox');
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    const tagMap = { WS: 'tag-ws', API: 'tag-api', EVENT: 'tag-event' };
+    const tagClass = tagMap[tag] || '';
+    entry.innerHTML = `<span class="log-time">${now()}</span>`
+      + (tag !== 'SYS' ? `<span class="tag ${tagClass}">${tag}</span>` : '')
+      + msg;
+    box.appendChild(entry);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function clearLog() {
+    document.getElementById('logBox').innerHTML = '';
+  }
+
+  function setStatus(state) {
+    const bar  = document.getElementById('statusBar');
+    const dot  = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    bar.className = `status-bar ${state}`;
+    dot.className = `dot${state === 'connecting' ? ' pulse' : ''}`;
+    const labels = {
+      disconnected: 'Chưa kết nối',
+      connecting:   'Đang kết nối…',
+      connected:    'Đã kết nối · Đang lắng nghe /user/queue/wallet'
+    };
+    text.textContent = labels[state];
+  }
+
+  function fmt(num) {
+    if (num == null) return '—';
+    return Number(num).toLocaleString('vi-VN') + ' ₫';
+  }
+
+  function flashBalance(val) {
+    const el = document.getElementById('balanceDisplay');
+    el.textContent = fmt(val);
+    el.classList.add('flash');
+    setTimeout(() => el.classList.remove('flash'), 1200);
+  }
+
+  function base() {
+    return document.getElementById('baseUrl').value.replace(/\/$/, '');
+  }
+
+  // ─── Login ──────────────────────────────────────────────────────────────────
+
+  async function doLogin() {
+    const identifier = document.getElementById('username').value.trim();
+    const password   = document.getElementById('password').value.trim();
+    if (!identifier || !password) { log('Nhập identifier và password', 'error'); return; }
+
+    log(`Đang login với identifier="${identifier}"…`, 'info', 'API');
+    try {
+      const res = await fetch(`${base()}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        log(`Login thất bại: ${data.message || res.status}`, 'error', 'API');
+        return;
+      }
+      jwtToken = data.data?.token || data.token;
+      document.getElementById('jwtToken').value = jwtToken;
+      document.getElementById('btnConnect').disabled = false;
+      log('Login thành công ✓ — nhấn Connect WS', 'success', 'API');
+      document.getElementById('connectHint').style.display = 'block';
+    } catch (e) {
+      log(`Lỗi kết nối server: ${e.message}`, 'error', 'API');
+    }
+  }
+
+  // ─── WebSocket Connect (StompJs v6) ─────────────────────────────────────────
+
+  function doConnect() {
+    jwtToken = document.getElementById('jwtToken').value.trim() || jwtToken;
+    if (!jwtToken) { log('Cần JWT token trước khi kết nối', 'error'); return; }
+
+    // Nếu đang có client cũ thì deactivate trước
+    if (stompClient) { stompClient.deactivate(); }
+
+    setStatus('connecting');
+    log('Khởi tạo SockJS + STOMP v6…', 'info', 'WS');
+
+    stompClient = new StompJs.Client({
+      // SockJS factory — gọi lại mỗi lần reconnect
+      webSocketFactory: () => new SockJS(`${base()}/ws`),
+
+      connectHeaders: {
+        Authorization: `Bearer ${jwtToken}`
+      },
+
+      // Reconnect tự động sau 5s nếu mất kết nối
+      reconnectDelay: 5000,
+
+      // Log STOMP frame ra Activity Log để debug
+      debug: (str) => {
+        if (str.includes('CONNECTED') || str.includes('ERROR') || str.includes('SUBSCRIBE')) {
+          log(`[STOMP] ${str}`, 'info', 'WS');
+        }
+      },
+
+      onConnect: (frame) => {
+        setStatus('connected');
+        log(`STOMP CONNECTED ✓ — user: ${frame.headers['user-name'] || '(set by server)'}`, 'success', 'WS');
+        document.getElementById('btnConnect').disabled = true;
+        document.getElementById('btnDisconnect').disabled = false;
+        document.getElementById('connectHint').style.display = 'none';
+
+        // Subscribe destination user-specific
+        stompClient.subscribe('/user/queue/wallet', (message) => {
+          try {
+            const payload = JSON.parse(message.body);
+            handleWalletEvent(payload);
+          } catch (e) {
+            log(`Parse event thất bại: ${e.message}`, 'error', 'WS');
+          }
+        });
+        log('Subscribed /user/queue/wallet ✓ — đang chờ event…', 'success', 'WS');
+      },
+
+      onStompError: (frame) => {
+        setStatus('disconnected');
+        log(`STOMP ERROR: ${frame.headers['message']} — ${frame.body}`, 'error', 'WS');
+        document.getElementById('btnConnect').disabled = false;
+        document.getElementById('btnDisconnect').disabled = true;
+      },
+
+      onDisconnect: () => {
+        setStatus('disconnected');
+        log('WebSocket disconnected', 'warn', 'WS');
+        document.getElementById('btnConnect').disabled = false;
+        document.getElementById('btnDisconnect').disabled = true;
+      },
+
+      onWebSocketError: (evt) => {
+        log(`WebSocket error: ${evt.type || JSON.stringify(evt)}`, 'error', 'WS');
+      }
+    });
+
+    stompClient.activate();
+  }
+
+  function doDisconnect() {
+    if (stompClient) {
+      stompClient.deactivate();
+      setStatus('disconnected');
+      log('Đã ngắt kết nối WebSocket', 'warn', 'WS');
+      document.getElementById('btnConnect').disabled = false;
+      document.getElementById('btnDisconnect').disabled = true;
+    }
+  }
+
+  // ─── Handle WS Event ────────────────────────────────────────────────────────
+
+  function handleWalletEvent(payload) {
+    eventCount++;
+    document.getElementById('eventCount').textContent = eventCount;
+
+    log(`WALLET_UPDATED · +${fmt(payload.addedAmount)} · balance=${fmt(payload.newBalance)}`, 'event', 'EVENT');
+    flashBalance(payload.newBalance);
+
+    const list = document.getElementById('eventList');
+    const placeholder = list.querySelector('p');
+    if (placeholder) placeholder.remove();
+
+    const card = document.createElement('div');
+    card.className = 'event-card';
+    card.innerHTML = `
+      <div class="ev-header">
+        <span class="ev-badge">WALLET_UPDATED</span>
+        <span class="ev-time">${payload.timestamp ? payload.timestamp.replace('T', ' ').substring(0, 19) : now()}</span>
+      </div>
+      <div class="ev-row"><span class="ev-key">Số tiền cộng</span><span class="ev-val yellow">+${fmt(payload.addedAmount)}</span></div>
+      <div class="ev-row"><span class="ev-key">Số dư mới</span><span class="ev-val green">${fmt(payload.newBalance)}</span></div>
+      <div class="ev-row"><span class="ev-key">Nguồn</span><span class="ev-val">${payload.source || '—'}</span></div>
+      <div class="ev-row"><span class="ev-key">Ref code</span><span class="ev-val" style="font-family:monospace;font-size:0.72rem">${payload.referenceCode || '—'}</span></div>
+      <div class="ev-row"><span class="ev-key">User ID</span><span class="ev-val">${payload.userId || '—'}</span></div>
+    `;
+    list.insertBefore(card, list.firstChild);
+  }
+
+  // ─── Top-up Init ─────────────────────────────────────────────────────────────
+
+  async function doInitTopUp() {
+    jwtToken = document.getElementById('jwtToken').value.trim() || jwtToken;
+    if (!jwtToken) { log('Cần JWT token để gọi API', 'error'); return; }
+
+    const amount = Number(document.getElementById('topupAmount').value);
+    if (!amount || amount < 10000) { log('Số tiền tối thiểu 10,000 VND', 'error'); return; }
+
+    log(`Gọi POST /api/v1/wallet/top-up/init · amount=${amount}…`, 'info', 'API');
+    try {
+      const res = await fetch(`${base()}/api/v1/wallet/top-up/init`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        },
+        body: JSON.stringify({ amount })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        log(`Init top-up thất bại: ${data.message || res.status}`, 'error', 'API');
+        return;
+      }
+      const ref = data.data?.referenceCode;
+      currentRef = ref;
+      document.getElementById('refDisplay').textContent = ref || JSON.stringify(data.data);
+      log(`Init top-up ✓ · ref=${ref}`, 'success', 'API');
+    } catch (e) {
+      log(`Lỗi: ${e.message}`, 'error', 'API');
+    }
+  }
+
+  // ─── Mock Webhook ────────────────────────────────────────────────────────────
+
+  async function doMockWebhook() {
+    if (!currentRef) { log('Chưa có referenceCode — Init top-up trước', 'error'); return; }
+
+    const isConnected = stompClient && stompClient.connected;
+    if (!isConnected) {
+      log('⚠️ WebSocket chưa kết nối — kết nối trước để nhận realtime event', 'warn', 'WS');
+    }
+
+    log(`Gọi POST /api/v1/webhook/mock?ref=${currentRef}…`, 'info', 'API');
+    try {
+      const res = await fetch(`${base()}/api/v1/webhook/mock?ref=${encodeURIComponent(currentRef)}`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (data.received) {
+        log(`Mock webhook OK ✓ · ${data.message}`, 'success', 'API');
+        if (isConnected) {
+          log('Server đã push — chờ WALLET_UPDATED event về…', 'info', 'WS');
+        }
+      } else {
+        log(`Mock webhook: ${JSON.stringify(data)}`, 'warn', 'API');
+      }
+    } catch (e) {
+      log(`Lỗi: ${e.message}`, 'error', 'API');
+    }
+  }
+
+  // ─── Enter key shortcuts ─────────────────────────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const id = document.activeElement.id;
+      if (id === 'username' || id === 'password') doLogin();
+    }
+  });
+</script>
+</body>
+</html>
