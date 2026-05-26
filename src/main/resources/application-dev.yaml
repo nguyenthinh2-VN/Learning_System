@@ -21,3 +21,22 @@ logging:
 jwt:
   secret: dGVzdC1zZWNyZXQta2V5LWZvci1sZWFybmluZy1zeXN0ZW0tc3ByaW5nLWFwcGxpY2F0aW9uLWp3dC1zZWNyZXQ=
   expiration: 86400000
+
+# Payment Gateway
+# "mock" = dev mode (dùng POST /api/v1/webhook/mock?ref=... để test)
+# "vietqr" = production (cần điền thông tin ngân hàng bên dưới)
+payment:
+  provider: mock
+
+# Chỉ dùng khi payment.provider=vietqr
+vietqr:
+  bank-id: MB
+  account-no: 1234567890
+  account-name: CONG TY TNHH MTV ThinhDev
+  webhook-secret: change-me-in-production
+
+# Wallet config
+wallet:
+  topup:
+    min-amount: 10000
+    pending-ttl-minutes: 15

@@ -1,2 +1,3 @@
 {"paidPrice":500000.00,"userId":2,"courseId":1,"timestamp":"2026-05-18T15:12:18.736197800"}
 {"paidPrice":0,"userId":9,"courseId":9,"timestamp":"2026-05-18T15:24:59.617451700"}
+{"event":"VOUCHER_APPLIED","userId":2,"courseId":1,"voucherId":1,"voucherCode":"WELCOME50","originalPrice":500000.00,"discountAmount":200000.00,"finalPrice":300000.00,"enrollmentId":1,"appliedAt":"2026-05-25T13:49:18.178244200"}

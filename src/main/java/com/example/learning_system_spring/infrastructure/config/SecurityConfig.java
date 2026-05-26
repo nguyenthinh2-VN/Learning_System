@@ -37,6 +37,10 @@ public class SecurityConfig {
                         // Public listing và detail course (chỉ course đã publish trả về).
                         .requestMatchers(HttpMethod.GET, "/api/v1/courses").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/courses/*").permitAll()
+                        // WebSocket handshake endpoint
+                        .requestMatchers("/ws/**").permitAll()
+                        // Webhook endpoints — xác thực bằng secret header, không dùng JWT
+                        .requestMatchers("/api/v1/webhook/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

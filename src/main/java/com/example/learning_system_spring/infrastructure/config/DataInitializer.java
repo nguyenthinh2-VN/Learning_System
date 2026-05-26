@@ -1,6 +1,5 @@
 package com.example.learning_system_spring.infrastructure.config;
 
-import com.example.learning_system_spring.adapter.repository.jpa.UserEntity.UserJpaEntity;
 import com.example.learning_system_spring.adapter.repository.jpa.role_permissionEntity.PermissionJpaEntity;
 import com.example.learning_system_spring.adapter.repository.jpa.role_permissionEntity.RoleJpaEntity;
 import com.example.learning_system_spring.domain.model.Permission;
@@ -9,7 +8,6 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
     private final EntityManager em;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -26,7 +23,6 @@ public class DataInitializer implements CommandLineRunner {
         initRoles();
         initPermissions();
         assignPermissionsToRoles();
-        initUsers();
     }
 
     private void initRoles() {
@@ -173,69 +169,13 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void assignPermission(RoleJpaEntity role, PermissionJpaEntity permission) {
+        // Tạo RolePermissionJpaEntity thông qua reflection hoặc tạo entity mới
+        // Vì constructor protected, chúng ta cần tạo entity theo cách khác
+        // Sử dụng native query để insert trực tiếp
         em.createNativeQuery(
                 "INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)")
                 .setParameter(1, role.getId())
                 .setParameter(2, permission.getId())
                 .executeUpdate();
-    }
-
-    private void initUsers() {
-        Long count = em.createQuery("SELECT COUNT(u) FROM UserJpaEntity u", Long.class).getSingleResult();
-        if (count > 0) return;
-
-        RoleJpaEntity memberRole     = getRole("MEMBER");
-        RoleJpaEntity instructorRole = getRole("INSTRUCTOR");
-        RoleJpaEntity staffRole      = getRole("STAFF");
-        RoleJpaEntity adminUserRole  = getRole("ADMIN_USER");
-        RoleJpaEntity superAdminRole = getRole("SUPER_ADMIN");
-
-        String pw = passwordEncoder.encode("password123");
-
-        // SUPER_ADMIN
-        em.persist(buildUser("superadmin", "superadmin@example.com", pw,
-                "Super Admin", superAdminRole, false, new java.math.BigDecimal("10000000")));
-
-        // ADMIN_USER
-        em.persist(buildUser("adminuser", "admin@example.com", pw,
-                "Admin User", adminUserRole, false, java.math.BigDecimal.ZERO));
-
-        // STAFF
-        em.persist(buildUser("staff01", "staff@example.com", pw,
-                "Nhân Viên Staff", staffRole, false, java.math.BigDecimal.ZERO));
-
-        // INSTRUCTOR
-        em.persist(buildUser("instructor01", "instructor@example.com", pw,
-                "Giảng Viên Nguyễn", instructorRole, false, java.math.BigDecimal.ZERO));
-
-        // MEMBER (external) — có sẵn balance để test mua khóa học
-        em.persist(buildUser("member01", "member@example.com", pw,
-                "Học Viên Trần", memberRole, false, new java.math.BigDecimal("5000000")));
-
-        // MEMBER (internal) — luôn mua 0đ
-        em.persist(buildUser("member_internal", "member.internal@example.com", pw,
-                "Học Viên Nội Bộ", memberRole, true, java.math.BigDecimal.ZERO));
-
-        log.info("Seeded 6 users: superadmin / adminuser / staff01 / instructor01 / member01 / member_internal (password: password123)");
-    }
-
-    private RoleJpaEntity getRole(String name) {
-        return em.createQuery("SELECT r FROM RoleJpaEntity r WHERE r.name = :name", RoleJpaEntity.class)
-                .setParameter("name", name)
-                .getSingleResult();
-    }
-
-    private UserJpaEntity buildUser(String username, String email, String encodedPassword,
-                                    String name, RoleJpaEntity role,
-                                    boolean isInternal, java.math.BigDecimal balance) {
-        UserJpaEntity u = new UserJpaEntity();
-        u.setUsername(username);
-        u.setEmail(email);
-        u.setPassword(encodedPassword);
-        u.setName(name);
-        u.setRole(role);
-        u.setInternal(isInternal);
-        u.setBalance(balance);
-        return u;
-    }
+    }   
 }

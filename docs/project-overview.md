@@ -37,7 +37,14 @@
 
 ### 2.4. Wallet, Monetization & Checkout (Nạp ví & Thanh toán)
 - Quản lý số dư (`balance`) bằng `BigDecimal` trong Domain `User`.
-- `TopUpBalanceUseCase`: Nạp tiền vào ví. Sử dụng Pessimistic Locking (`@Lock(LockModeType.PESSIMISTIC_WRITE)`) để chống Race Condition khi nạp tiền đồng thời.
+- **Wallet Top-up (Strategy Pattern / Open-Closed):**
+  - `InitTopUpUseCase`: Tạo pending `WalletTransaction` + gọi `PaymentGateway.initPayment()`. Không biết provider cụ thể.
+  - `CompleteTopUpUseCase`: Use case **dùng chung** cho mọi provider — verify pending tx → cộng tiền → push WebSocket. Cả Mock lẫn VietQR đều gọi use case này.
+  - `AdminTopUpUseCase`: Admin cộng tiền trực tiếp (COMPLETED ngay, không qua pending) → push WebSocket.
+  - `PaymentGateway` (interface port): `MockPaymentGateway` active khi `payment.provider=mock`. Khi ghép VietQR chỉ thêm `VietQrGateway` + `VietQrWebhookController`, không sửa code cũ.
+  - `WalletNotificationService`: Push WebSocket STOMP event `WALLET_UPDATED` tới đúng user qua `SimpMessagingTemplate`.
+  - Bảng `wallet_transactions`: Lưu audit trail mọi giao dịch nạp tiền (PENDING/COMPLETED/EXPIRED/FAILED, source: MOCK/VIETQR/ADMIN).
+- `TopUpBalanceUseCase` (cũ): Vẫn còn, dùng cho `/api/v1/users/me/top-up` (nạp trực tiếp không qua gateway — có thể deprecated sau).
 - `ApplyVoucherCheckoutUseCase`: Mua khóa học (gộp luồng có / không voucher).
   - Giữ pessimistic lock theo thứ tự cố định `User → Course → Voucher` để tránh deadlock.
   - Server tự đọc giá từ DB, tính lại bằng `PricingEngine`, không tin giá client.
@@ -249,6 +256,7 @@ src/main/java/com/example/learning_system_spring
 - **`vouchers`** (MỚI): `code` UNIQUE (lưu UPPERCASE), `type` (PERCENT/FIXED), `value`, `status` (ACTIVE/INACTIVE), `scope` (ALL_COURSES/SPECIFIC_COURSES), `valid_from`, `valid_to`, `min_order_amount`, `max_discount`, `usage_limit`, `usage_per_user`. INDEX `(status, valid_to)` để filter voucher còn hạn nhanh.
 - **`voucher_courses`** (MỚI, mapping cho `scope = SPECIFIC_COURSES`): composite PK `(voucher_id, course_id)` với FK CASCADE.
 - **`voucher_usages`** (MỚI): bản ghi tiêu thụ voucher với `voucher_id`, `user_id`, `course_id`, `enrollment_id`, `original_price`, `discount_amount`, `final_price`, `applied_at`. **UNIQUE `(voucher_id, enrollment_id)`** chống race condition. INDEX `(voucher_id)` và `(voucher_id, user_id)` để đếm `usedCount` hiệu quả.
+- **`wallet_transactions`** (MỚI): Audit trail mọi giao dịch nạp tiền. `reference_code` UNIQUE, `status` (PENDING/COMPLETED/EXPIRED/FAILED), `source` (MOCK/VIETQR/ADMIN), `expired_at` cho pending TTL.
 
 ---
 
@@ -262,8 +270,8 @@ src/main/java/com/example/learning_system_spring
 | **Pure Domain Service** | `PricingEngine`, `VoucherValidator` | Logic tính giá / validate voucher độc lập với Spring/JPA — testable bằng unit test thuần |
 | **Repository** | `CourseRepository`, `UserRepository`, `VoucherRepository`... | Abstraction giữa UseCase và DB |
 | **Factory** | `CourseStrategyFactory`, `UsernameGeneratorFactory` | Chọn Strategy phù hợp theo Role |
+| **Strategy** | `PaymentGateway` interface + `MockPaymentGateway` / `VietQrGateway` | Tách payment provider — thêm provider mới không sửa code cũ |
 | **Value Object** | `PriceQuote` (`originalPrice`, `discountAmount`, `finalPrice`) | Đại diện kết quả tính giá bất biến |
-| **Pessimistic Lock** | `User`, `Course`, `Voucher` qua `@Lock(LockModeType.PESSIMISTIC_WRITE)` | Chống race condition tài chính & quota voucher |
 | **Soft-delete** | Voucher (set `status = INACTIVE`) | Bảo toàn lịch sử Voucher_Usage |
 
 ---
@@ -276,7 +284,7 @@ src/main/java/com/example/learning_system_spring
 | Course public | 6 (list, detail, create, update, delete, purchase) | mục 6 + 7 |
 | Course quote | 1 (`POST /api/v1/courses/{id}/quote`) | mục 11.5 |
 | Course Approval (admin + instructor) | 7 (pending, all, publish, unpublish, price + 2 instructor endpoints) | mục 10 |
-| Wallet | 1 (top-up) | mục 7.1 |
+| Wallet | 3 (init top-up, mock webhook, admin top-up) | mục 14 |
 | Section | 4 (CRUD) | mục 8 |
 | Lesson | 4 (CRUD) | mục 9 |
 | Voucher Admin | 4 (CRUD) | mục 11.1–11.4 |

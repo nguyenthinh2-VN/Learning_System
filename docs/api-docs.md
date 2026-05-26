@@ -1785,3 +1785,231 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJNRU0yQjRBMUQiLCJ1c2VySWQiO
 5. MEMBER login → `POST /api/v1/courses/{id}/quote` với `{ "voucherCode": "WELCOME50" }` xem giá preview.
 6. MEMBER → `POST /api/v1/courses/{id}/purchase` với `{ "voucherCode": "WELCOME50" }` để mua thực sự. Server tính lại giá độc lập, ghi `Voucher_Usage` và audit log.
 7. Kiểm tra `logs/purchase_ledger.jsonl` thấy 2 dòng JSONL: `PURCHASE_COMPLETED` (hoặc `VOUCHER_APPLIED`).
+
+
+---
+
+## 14. Wallet Top-up & WebSocket
+
+### Kiến trúc tổng quan
+
+Hệ thống nạp tiền được thiết kế theo **Strategy Pattern (Open/Closed Principle)**:
+- Hiện tại dùng `MockPaymentGateway` (dev mode).
+- Khi ghép VietQR: chỉ thêm `VietQrGateway` + `VietQrWebhookController`, **không sửa code cũ**.
+- Chuyển đổi bằng config: `payment.provider=vietqr` trong `application-dev.yaml`.
+
+### 14.1. Khởi tạo nạp tiền (User tự nạp)
+
+**Endpoint:** `POST /api/v1/wallet/top-up/init`
+
+**Yêu cầu quyền:** Đăng nhập (mọi role)
+
+**Request Body:**
+```json
+{ "amount": 500000 }
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| amount | BigDecimal | Yes | >= 10,000đ |
+
+**Response 200 (khi `payment.provider=mock`):**
+```json
+{
+  "status": 200,
+  "message": "Tạo yêu cầu nạp tiền thành công",
+  "data": {
+    "referenceCode": "NAP4F8A2C1B3",
+    "amount": 500000,
+    "displayType": "MESSAGE",
+    "displayData": "Gọi POST /api/v1/webhook/mock?ref=NAP4F8A2C1B3 để giả lập thanh toán thành công",
+    "expiredAt": "2026-05-26T10:15:00"
+  },
+  "timestamp": "2026-05-26T10:00:00"
+}
+```
+
+**Response 200 (khi `payment.provider=vietqr` — sau này):**
+```json
+{
+  "status": 200,
+  "message": "Tạo yêu cầu nạp tiền thành công",
+  "data": {
+    "referenceCode": "NAP4F8A2C1B3",
+    "amount": 500000,
+    "displayType": "QR_URL",
+    "displayData": "https://img.vietqr.io/image/MB-1234567890-compact2.png?amount=500000&addInfo=NAP4F8A2C1B3",
+    "expiredAt": "2026-05-26T10:15:00"
+  },
+  "timestamp": "2026-05-26T10:00:00"
+}
+```
+
+**FE đọc `displayType` để biết render gì:**
+- `"QR_URL"` → hiển thị `<img src={displayData} />`
+- `"MESSAGE"` → hiển thị text hướng dẫn (môi trường dev)
+
+---
+
+### 14.2. Mock Webhook — Giả lập thanh toán (chỉ dev)
+
+**Endpoint:** `POST /api/v1/webhook/mock?ref={referenceCode}`
+
+**Yêu cầu quyền:** Không cần (chỉ active khi `payment.provider=mock`)
+
+**Response 200:**
+```json
+{
+  "received": true,
+  "message": "Đã cộng tiền thành công (mock)",
+  "newBalance": 1500000.00
+}
+```
+
+Sau khi gọi endpoint này, BE sẽ:
+1. Tìm pending transaction theo `referenceCode`
+2. Cộng tiền vào ví user
+3. Push WebSocket event `WALLET_UPDATED` tới FE của user
+
+---
+
+### 14.3. Admin cộng tiền thủ công
+
+**Endpoint:** `POST /api/v1/admin/users/{userId}/top-up`
+
+**Yêu cầu quyền:** `SUPER_ADMIN`
+
+**Request Body:**
+```json
+{
+  "amount": 200000,
+  "note": "Bù lỗi giao dịch #123"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| amount | BigDecimal | Yes | > 0 |
+| note | String | No | Tối đa 255 ký tự |
+
+**Response 200:**
+```json
+{
+  "status": 200,
+  "message": "Cộng tiền thành công",
+  "data": {
+    "userId": 5,
+    "username": "MEM2B4A1D",
+    "addedAmount": 200000,
+    "newBalance": 700000,
+    "note": "Bù lỗi giao dịch #123",
+    "referenceCode": "NAPADMIN_XYZ"
+  },
+  "timestamp": "2026-05-26T10:05:00"
+}
+```
+
+Sau khi cộng tiền, BE push WebSocket event `WALLET_UPDATED` tới FE của user được cộng tiền.
+
+---
+
+### 14.4. WebSocket — Nhận thông báo realtime
+
+**Kết nối:**
+```
+ws://localhost:8080/ws  (SockJS endpoint)
+```
+
+**FE cần cài:**
+```bash
+npm install @stomp/stompjs sockjs-client
+```
+
+**Code kết nối (React):**
+```js
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
+
+function connectWallet(accessToken, onBalanceUpdate) {
+  const client = new Client({
+    webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+    connectHeaders: {
+      Authorization: `Bearer ${accessToken}`  // JWT để BE biết user nào
+    },
+    onConnect: () => {
+      client.subscribe('/user/queue/wallet', (message) => {
+        const data = JSON.parse(message.body);
+        if (data.event === 'WALLET_UPDATED') {
+          onBalanceUpdate(data);
+        }
+      });
+    },
+    reconnectDelay: 5000,
+  });
+  client.activate();
+  return client;
+}
+
+// Khi logout
+function disconnectWallet(client) {
+  client?.deactivate();
+}
+```
+
+**Payload nhận được khi ví được cập nhật:**
+```json
+{
+  "event": "WALLET_UPDATED",
+  "userId": 5,
+  "newBalance": 700000.00,
+  "addedAmount": 200000.00,
+  "source": "ADMIN",
+  "referenceCode": "NAPADMIN_XYZ",
+  "note": "Bù lỗi giao dịch #123",
+  "timestamp": "2026-05-26T10:05:00"
+}
+```
+
+| Field | Giá trị có thể | Ý nghĩa |
+|-------|---------------|---------|
+| source | `MOCK` | Nạp qua mock (dev) |
+| source | `VIETQR` | Nạp qua VietQR (production) |
+| source | `ADMIN` | Admin cộng thủ công |
+
+**Hiển thị toast theo source:**
+```js
+const messages = {
+  MOCK:   `[Dev] Nạp tiền thành công: +${formatMoney(data.addedAmount)}đ`,
+  VIETQR: `Nạp tiền thành công: +${formatMoney(data.addedAmount)}đ`,
+  ADMIN:  `Tài khoản được cộng tiền: +${formatMoney(data.addedAmount)}đ`,
+};
+showToast(messages[data.source]);
+```
+
+---
+
+### 14.5. Flow test end-to-end (môi trường dev)
+
+```
+1. Login → lấy JWT token
+2. Kết nối WebSocket với token
+3. POST /api/v1/wallet/top-up/init → nhận referenceCode (ví dụ: NAP4F8A2C1B3)
+4. POST /api/v1/webhook/mock?ref=NAP4F8A2C1B3 → cộng tiền
+5. FE nhận WebSocket event WALLET_UPDATED → cập nhật số dư trên UI
+```
+
+---
+
+### 14.6. Hướng dẫn ghép VietQR (sau này)
+
+Khi cần ghép VietQR thật, chỉ cần:
+
+1. Tạo `VietQrGateway implements PaymentGateway` trong `infrastructure/payment/`
+2. Tạo `VietQrWebhookController` trong `adapter/controller/`
+   - Parse body từ VietQR
+   - Tìm `referenceCode` trong `description`
+   - Gọi `CompleteTopUpUseCase.execute(referenceCode, transactionId)`
+   - Push WebSocket qua `WalletNotificationService`
+3. Đổi config: `payment.provider=vietqr`
+
+**Không sửa bất kỳ file nào khác.**
