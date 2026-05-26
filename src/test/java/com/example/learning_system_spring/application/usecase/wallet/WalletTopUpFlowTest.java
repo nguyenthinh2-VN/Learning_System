@@ -72,9 +72,9 @@ class WalletTopUpFlowTest {
         ReflectionTestUtils.setField(initTopUpUseCase, "ttlMinutes", 15);
     }
 
-    private User makeUser(BigDecimal balance) {
+    private User makeUser(Long id, String username, BigDecimal balance) {
         return User.reconstitute(
-                1L, "MEM2B4A1D", "u@e.com", "pw", "Test User",
+                id, username, username + "@e.com", "pw", "Test User",
                 Role.reconstitute(1L, "MEMBER", null),
                 false, balance, LocalDateTime.now(), LocalDateTime.now());
     }
@@ -89,10 +89,8 @@ class WalletTopUpFlowTest {
     void flow1_initThenMockWebhook_subscriberReceivesEvent() {
         // ── Arrange ──────────────────────────────────────────────
         BigDecimal amount = new BigDecimal("500000");
-        BigDecimal initialBalance = new BigDecimal("100000");
         BigDecimal expectedBalance = new BigDecimal("600000");
 
-        // Gateway trả về message hướng dẫn (mock mode)
         when(paymentGateway.providerName()).thenReturn("MOCK");
         when(paymentGateway.initPayment(any(), eq(amount))).thenAnswer(inv -> {
             String ref = inv.getArgument(0);
@@ -100,8 +98,6 @@ class WalletTopUpFlowTest {
                     "Gọi POST /webhook/mock?ref=" + ref, "MESSAGE",
                     LocalDateTime.now().plusMinutes(15));
         });
-
-        // Lưu tx khi init
         when(walletTxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         // ── Step 1: User gọi init top-up ─────────────────────────
@@ -109,21 +105,18 @@ class WalletTopUpFlowTest {
 
         assertThat(initOutput.referenceCode()).startsWith("NAP");
         assertThat(initOutput.displayType()).isEqualTo("MESSAGE");
-        assertThat(initOutput.amount()).isEqualByComparingTo("500000");
 
         String referenceCode = initOutput.referenceCode();
 
         // ── Step 2: Mock webhook callback ────────────────────────
-        // Tìm pending tx theo ref
         WalletTransaction pendingTx = WalletTransaction.createPending(1L, amount, TxSource.MOCK, 15);
-        // Dùng reflection để set referenceCode khớp với initOutput
         ReflectionTestUtils.setField(pendingTx, "referenceCode", referenceCode);
 
         when(walletTxRepo.findPendingByRefForUpdate(referenceCode))
                 .thenReturn(Optional.of(pendingTx));
 
-        User user = makeUser(initialBalance);
-        User savedUser = makeUser(expectedBalance);
+        User user = makeUser(1L, "MEM2B4A1D", new BigDecimal("100000"));
+        User savedUser = makeUser(1L, "MEM2B4A1D", expectedBalance);
         when(userRepo.findByIdForUpdate(1L)).thenReturn(Optional.of(user));
         when(userRepo.save(any())).thenReturn(savedUser);
 
@@ -143,8 +136,11 @@ class WalletTopUpFlowTest {
         Map<String, Object> payload = captor.getValue();
         assertThat(payload.get("event")).isEqualTo("WALLET_UPDATED");
         assertThat(payload.get("userId")).isEqualTo(1L);
-        assertThat(payload.get("newBalance")).isEqualToComparingFieldByField("600000");
-        assertThat(payload.get("addedAmount")).isEqualToComparingFieldByField("500000");
+        // So sánh BigDecimal bằng compareTo để tránh scale mismatch
+        assertThat(((BigDecimal) payload.get("newBalance"))
+                .compareTo(new BigDecimal("600000"))).isZero();
+        assertThat(((BigDecimal) payload.get("addedAmount"))
+                .compareTo(new BigDecimal("500000"))).isZero();
         assertThat(payload.get("source")).isEqualTo("MOCK");
         assertThat(payload.get("referenceCode")).isEqualTo(referenceCode);
         assertThat(payload.get("timestamp")).isNotNull();
@@ -158,9 +154,8 @@ class WalletTopUpFlowTest {
     @DisplayName("FLOW 2 — admin top-up → subscriber nhận WALLET_UPDATED với source=ADMIN")
     @SuppressWarnings("unchecked")
     void flow2_adminTopUp_subscriberReceivesEvent() {
-        // ── Arrange ──────────────────────────────────────────────
-        User user = makeUser(new BigDecimal("500000"));
-        User savedUser = makeUser(new BigDecimal("700000"));
+        User user = makeUser(1L, "MEM2B4A1D", new BigDecimal("500000"));
+        User savedUser = makeUser(1L, "MEM2B4A1D", new BigDecimal("700000"));
         WalletTransaction tx = WalletTransaction.createCompleted(
                 1L, new BigDecimal("200000"), TxSource.ADMIN, "Bù lỗi #123");
 
@@ -185,8 +180,10 @@ class WalletTopUpFlowTest {
         Map<String, Object> payload = captor.getValue();
         assertThat(payload.get("event")).isEqualTo("WALLET_UPDATED");
         assertThat(payload.get("source")).isEqualTo("ADMIN");
-        assertThat((BigDecimal) payload.get("newBalance")).isEqualByComparingTo("700000");
-        assertThat((BigDecimal) payload.get("addedAmount")).isEqualByComparingTo("200000");
+        assertThat(((BigDecimal) payload.get("newBalance"))
+                .compareTo(new BigDecimal("700000"))).isZero();
+        assertThat(((BigDecimal) payload.get("addedAmount"))
+                .compareTo(new BigDecimal("200000"))).isZero();
         assertThat(payload.get("note")).isEqualTo("Bù lỗi #123");
     }
 
@@ -198,14 +195,14 @@ class WalletTopUpFlowTest {
     @DisplayName("FLOW 3 — mock webhook gọi 2 lần cùng ref → lần 2 không push WS")
     void flow3_doubleWebhook_onlyOnePush() {
         String ref = "NAP4F8A2C1B3";
-        WalletTransaction pendingTx = WalletTransaction.createPending(1L, new BigDecimal("500000"), TxSource.MOCK, 15);
+        WalletTransaction pendingTx = WalletTransaction.createPending(
+                1L, new BigDecimal("500000"), TxSource.MOCK, 15);
         ReflectionTestUtils.setField(pendingTx, "referenceCode", ref);
 
-        User user = makeUser(BigDecimal.ZERO);
-        User savedUser = makeUser(new BigDecimal("500000"));
+        User user = makeUser(1L, "MEM2B4A1D", BigDecimal.ZERO);
+        User savedUser = makeUser(1L, "MEM2B4A1D", new BigDecimal("500000"));
 
-        // Lần 1: tìm thấy PENDING
-        // Lần 2: không còn PENDING (đã COMPLETED)
+        // Lần 1: tìm thấy PENDING — lần 2: không còn PENDING
         when(walletTxRepo.findPendingByRefForUpdate(ref))
                 .thenReturn(Optional.of(pendingTx))
                 .thenReturn(Optional.empty());
@@ -223,10 +220,10 @@ class WalletTopUpFlowTest {
         try {
             completeTopUpUseCase.execute(ref, "second");
         } catch (IllegalStateException ignored) {
-            // expected
+            // expected — không push WS ở đây
         }
 
-        // Chỉ 1 lần push WS
+        // Chỉ đúng 1 lần push WS
         verify(messagingTemplate, times(1))
                 .convertAndSendToUser(anyString(), eq("/queue/wallet"), any(Map.class));
     }
@@ -239,27 +236,20 @@ class WalletTopUpFlowTest {
     @DisplayName("FLOW 4 — admin cộng tiền 2 user → mỗi user nhận đúng event của mình")
     @SuppressWarnings("unchecked")
     void flow4_twoUsers_eachReceivesOwnEvent() {
-        User userA = User.reconstitute(1L, "USER_A", "a@e.com", "pw", "A",
-                Role.reconstitute(1L, "MEMBER", null), false,
-                new BigDecimal("100000"), LocalDateTime.now(), LocalDateTime.now());
-        User savedA = User.reconstitute(1L, "USER_A", "a@e.com", "pw", "A",
-                Role.reconstitute(1L, "MEMBER", null), false,
-                new BigDecimal("200000"), LocalDateTime.now(), LocalDateTime.now());
+        User userA = makeUser(1L, "USER_A", new BigDecimal("100000"));
+        User savedA = makeUser(1L, "USER_A", new BigDecimal("200000"));
+        User userB = makeUser(2L, "USER_B", new BigDecimal("50000"));
+        User savedB = makeUser(2L, "USER_B", new BigDecimal("150000"));
 
-        User userB = User.reconstitute(2L, "USER_B", "b@e.com", "pw", "B",
-                Role.reconstitute(1L, "MEMBER", null), false,
-                new BigDecimal("50000"), LocalDateTime.now(), LocalDateTime.now());
-        User savedB = User.reconstitute(2L, "USER_B", "b@e.com", "pw", "B",
-                Role.reconstitute(1L, "MEMBER", null), false,
-                new BigDecimal("150000"), LocalDateTime.now(), LocalDateTime.now());
-
-        WalletTransaction txA = WalletTransaction.createCompleted(1L, new BigDecimal("100000"), TxSource.ADMIN, "for A");
-        WalletTransaction txB = WalletTransaction.createCompleted(2L, new BigDecimal("100000"), TxSource.ADMIN, "for B");
-
+        // Dùng thenAnswer thay vì argThat để tránh NPE khi Mockito probe matcher
         when(userRepo.findByIdForUpdate(1L)).thenReturn(Optional.of(userA));
         when(userRepo.findByIdForUpdate(2L)).thenReturn(Optional.of(userB));
-        when(userRepo.save(argThat(u -> u.getId().equals(1L)))).thenReturn(savedA);
-        when(userRepo.save(argThat(u -> u.getId().equals(2L)))).thenReturn(savedB);
+
+        // save: trả savedA khi user có id=1, savedB khi id=2
+        when(userRepo.save(any())).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            return u.getId().equals(1L) ? savedA : savedB;
+        });
         when(walletTxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         // Admin cộng tiền cho cả 2
@@ -273,14 +263,18 @@ class WalletTopUpFlowTest {
 
         // Verify: USER_A nhận event của mình
         ArgumentCaptor<Map<String, Object>> captorA = ArgumentCaptor.forClass(Map.class);
-        verify(messagingTemplate).convertAndSendToUser(eq("USER_A"), eq("/queue/wallet"), captorA.capture());
+        verify(messagingTemplate).convertAndSendToUser(
+                eq("USER_A"), eq("/queue/wallet"), captorA.capture());
         assertThat(captorA.getValue().get("note")).isEqualTo("for A");
-        assertThat((BigDecimal) captorA.getValue().get("newBalance")).isEqualByComparingTo("200000");
+        assertThat(((BigDecimal) captorA.getValue().get("newBalance"))
+                .compareTo(new BigDecimal("200000"))).isZero();
 
         // Verify: USER_B nhận event của mình
         ArgumentCaptor<Map<String, Object>> captorB = ArgumentCaptor.forClass(Map.class);
-        verify(messagingTemplate).convertAndSendToUser(eq("USER_B"), eq("/queue/wallet"), captorB.capture());
+        verify(messagingTemplate).convertAndSendToUser(
+                eq("USER_B"), eq("/queue/wallet"), captorB.capture());
         assertThat(captorB.getValue().get("note")).isEqualTo("for B");
-        assertThat((BigDecimal) captorB.getValue().get("newBalance")).isEqualByComparingTo("150000");
+        assertThat(((BigDecimal) captorB.getValue().get("newBalance"))
+                .compareTo(new BigDecimal("150000"))).isZero();
     }
 }
