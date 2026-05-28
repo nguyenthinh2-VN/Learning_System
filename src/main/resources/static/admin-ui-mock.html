@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin UI Mock — LearnSpace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'oklch(0.145 0 0)',
+            foreground: 'oklch(0.985 0 0)',
+            card: 'oklch(0.205 0 0)',
+            'card-foreground': 'oklch(0.985 0 0)',
+            muted: 'oklch(0.269 0 0)',
+            'muted-foreground': 'oklch(0.708 0 0)',
+            accent: 'oklch(0.269 0 0)',
+            'accent-foreground': 'oklch(0.985 0 0)',
+            border: 'oklch(1 0 0 / 0.10)',
+            primary: 'oklch(0.922 0 0)',
+            'primary-foreground': 'oklch(0.205 0 0)',
+            sidebar: 'oklch(0.205 0 0)',
+            'sidebar-border': 'oklch(1 0 0 / 0.10)',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: oklch(0.145 0 0); color: oklch(0.985 0 0); }
+    .icon { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-sm { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-lg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- Brand banner -->
+<div class="border-b border-border bg-card/40 px-6 py-4">
+  <h1 class="text-xl font-bold">Admin UI Mock — review trước khi build code</h1>
+  <p class="text-sm text-muted-foreground mt-1">Hai khu vực: Sidebar (expanded + collapsed) và Overview Page. Dark theme, semantic tokens.</p>
+</div>
+
+<!-- ============== SECTION 1: SIDEBAR EXPANDED ============== -->
+<section class="p-6 border-b border-border">
+  <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">1. Sidebar (expanded — 256px)</h2>
+  <div class="flex gap-4">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-sidebar border border-border rounded-xl flex flex-col h-[640px]">
+      <!-- Header -->
+      <div class="p-2">
+        <div class="flex items-center gap-2 p-2 rounded-md hover:bg-accent cursor-pointer h-12">
+          <div class="size-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-sm font-semibold leading-tight truncate">LearnSpace</span>
+            <span class="text-xs text-muted-foreground leading-tight truncate">Admin Portal</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="flex-1 overflow-auto">
+        <!-- Group: Tổng quan -->
+        <div class="p-2">
+          <div class="px-2 h-8 flex items-center text-xs font-medium text-muted-foreground/70">Tổng quan</div>
+          <div class="flex flex-col gap-0.5 mt-1">
+            <button class="flex items-center gap-2 px-2 h-8 rounded-md bg-accent text-accent-foreground text-sm font-medium">
+              <svg class="icon" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+              <span>Dashboard</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group: Quản lý -->
+        <div class="p-2">
+          <div class="px-2 h-8 flex items-center text-xs font-medium text-muted-foreground/70">Quản lý</div>
+          <div class="flex flex-col gap-0.5 mt-1">
+            <button class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent text-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span>Người dùng</span>
+            </button>
+            <button class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent text-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span>Khóa học</span>
+            </button>
+            <button class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent text-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span>Chờ duyệt</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group: Tài chính -->
+        <div class="p-2">
+          <div class="px-2 h-8 flex items-center text-xs font-medium text-muted-foreground/70">Tài chính</div>
+          <div class="flex flex-col gap-0.5 mt-1">
+            <button class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent text-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+              <span>Voucher</span>
+            </button>
+            <button class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent text-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+              <span>Cộng tiền</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-2 border-t border-border">
+        <div class="flex items-center gap-2 p-2 rounded-md hover:bg-accent cursor-pointer h-12">
+          <div class="size-8 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-500/30 flex items-center justify-center text-xs font-semibold text-indigo-300 shrink-0">
+            S
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-sm font-semibold leading-tight truncate">Super Admin Test</span>
+            <span class="text-xs text-muted-foreground leading-tight truncate">Quản trị viên</span>
+          </div>
+        </div>
+        <button class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent text-sm w-full mt-0.5 text-muted-foreground hover:text-foreground">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          <span>Đăng xuất</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Annotation -->
+    <div class="text-sm text-muted-foreground space-y-2 max-w-md">
+      <p class="font-semibold text-foreground">Khác bản hiện tại:</p>
+      <ul class="list-disc pl-5 space-y-1">
+        <li>Icon + text cùng dòng (pattern <code class="bg-muted px-1 rounded">render={'{<Link/>}'}</code>)</li>
+        <li>Logo "LearnSpace / Admin Portal" cùng card không wrap</li>
+        <li>Footer: user info ở 1 hàng, "Đăng xuất" thành button riêng full-width bên dưới, có icon</li>
+        <li>Active state có background <code class="bg-muted px-1 rounded">bg-accent</code></li>
+        <li>Hover rõ ràng, gap đều 2px</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============== SECTION 2: SIDEBAR COLLAPSED ============== -->
+<section class="p-6 border-b border-border">
+  <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">2. Sidebar (collapsed — 48px, icon only)</h2>
+  <div class="flex gap-4">
+
+    <aside class="w-12 bg-sidebar border border-border rounded-xl flex flex-col h-[640px]">
+      <!-- Header -->
+      <div class="p-2">
+        <div class="size-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="flex-1 flex flex-col gap-0.5 p-2">
+        <button class="size-8 rounded-md bg-accent flex items-center justify-center" title="Dashboard">
+          <svg class="icon" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        </button>
+        <button class="size-8 rounded-md hover:bg-accent flex items-center justify-center" title="Người dùng">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        </button>
+        <button class="size-8 rounded-md hover:bg-accent flex items-center justify-center" title="Khóa học">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </button>
+        <button class="size-8 rounded-md hover:bg-accent flex items-center justify-center" title="Chờ duyệt">
+          <svg class="icon" viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </button>
+        <button class="size-8 rounded-md hover:bg-accent flex items-center justify-center" title="Voucher">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+        </button>
+        <button class="size-8 rounded-md hover:bg-accent flex items-center justify-center" title="Cộng tiền">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/></svg>
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-2 border-t border-border flex flex-col gap-0.5">
+        <div class="size-8 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-500/30 flex items-center justify-center text-xs font-semibold text-indigo-300">S</div>
+        <button class="size-8 rounded-md hover:bg-accent flex items-center justify-center text-muted-foreground" title="Đăng xuất">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <div class="text-sm text-muted-foreground max-w-md">
+      <p class="font-semibold text-foreground mb-2">Collapsed mode:</p>
+      <ul class="list-disc pl-5 space-y-1">
+        <li>Toggle bằng Ctrl/Cmd + B (đã có sẵn trong shadcn sidebar)</li>
+        <li>Hover hiển thị tooltip phải bên cạnh</li>
+        <li>Icon centered, kích thước đều</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============== SECTION 3: OVERVIEW PAGE ============== -->
+<section class="p-6 border-b border-border">
+  <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">3. Overview Page (mock)</h2>
+
+  <div class="flex gap-0 border border-border rounded-xl overflow-hidden h-[720px]">
+    <!-- Mini sidebar -->
+    <aside class="w-56 bg-sidebar border-r border-border shrink-0 p-2 text-sm">
+      <div class="flex items-center gap-2 p-2 mb-2">
+        <div class="size-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <div class="flex flex-col min-w-0 leading-tight">
+          <span class="font-semibold truncate">LearnSpace</span>
+          <span class="text-xs text-muted-foreground truncate">Admin Portal</span>
+        </div>
+      </div>
+      <div class="px-2 h-7 flex items-center text-xs text-muted-foreground/70">Tổng quan</div>
+      <div class="flex items-center gap-2 px-2 h-8 rounded-md bg-accent mb-1"><svg class="icon" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Dashboard</div>
+      <div class="px-2 h-7 mt-2 flex items-center text-xs text-muted-foreground/70">Quản lý</div>
+      <div class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/></svg>Người dùng</div>
+      <div class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent"><svg class="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>Khóa học</div>
+      <div class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent"><svg class="icon" viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/></svg>Chờ duyệt</div>
+      <div class="px-2 h-7 mt-2 flex items-center text-xs text-muted-foreground/70">Tài chính</div>
+      <div class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent"><svg class="icon" viewBox="0 0 24 24"><path d="M13 5v2"/><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>Voucher</div>
+      <div class="flex items-center gap-2 px-2 h-8 rounded-md hover:bg-accent"><svg class="icon" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/></svg>Cộng tiền</div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 bg-background overflow-y-auto">
+      <!-- Top bar -->
+      <header class="sticky top-0 z-10 h-12 flex items-center gap-3 border-b border-border bg-background/80 backdrop-blur px-4">
+        <button class="size-7 flex items-center justify-center rounded-md hover:bg-accent">
+          <svg class="icon-sm" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+        </button>
+        <div class="w-px h-4 bg-border"></div>
+        <svg class="icon-sm text-muted-foreground" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span class="text-sm font-medium">Admin Portal</span>
+        <span class="ml-auto text-xs text-muted-foreground flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[11px] font-medium">SUPER_ADMIN</span>
+          Super Admin Test
+        </span>
+      </header>
+
+      <!-- Body -->
+      <div class="p-6 space-y-8">
+        <!-- Welcome -->
+        <div>
+          <h1 class="text-2xl font-bold">Xin chào, Super Admin Test</h1>
+          <p class="text-sm text-muted-foreground mt-1">Quản trị viên — Quản trị hệ thống LearnSpace</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-4 gap-4">
+          <div class="rounded-xl border border-border bg-card p-5 hover:border-border/80 transition">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="size-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground"><svg class="icon-lg" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg></div>
+              <p class="text-sm text-muted-foreground">Tổng khóa học</p>
+            </div>
+            <p class="text-3xl font-bold">9</p>
+          </div>
+          <div class="rounded-xl border border-border bg-card p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="size-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground"><svg class="icon-lg" viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/></svg></div>
+              <p class="text-sm text-muted-foreground">Chờ duyệt</p>
+            </div>
+            <p class="text-3xl font-bold">6</p>
+          </div>
+          <div class="rounded-xl border border-border bg-card p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="size-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground"><svg class="icon-lg" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg></div>
+              <p class="text-sm text-muted-foreground">Voucher</p>
+            </div>
+            <p class="text-3xl font-bold">6</p>
+          </div>
+          <div class="rounded-xl border border-border bg-card p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="size-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground"><svg class="icon-lg" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+              <p class="text-sm text-muted-foreground">Doanh thu</p>
+            </div>
+            <p class="text-3xl font-bold">—</p>
+            <p class="text-xs text-muted-foreground mt-1">Cần BE endpoint</p>
+          </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div>
+          <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Thao tác nhanh</h2>
+          <div class="grid grid-cols-3 gap-3">
+            <a class="group flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent transition cursor-pointer">
+              <div class="size-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:text-foreground">
+                <svg class="icon-lg" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium">Thêm tài khoản</p>
+                <p class="text-xs text-muted-foreground mt-0.5">Tạo tài khoản người dùng mới</p>
+              </div>
+              <svg class="icon-sm text-muted-foreground opacity-0 group-hover:opacity-100" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <a class="group flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent transition cursor-pointer">
+              <div class="size-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:text-foreground">
+                <svg class="icon-lg" viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium">Duyệt khóa học</p>
+                <p class="text-xs text-muted-foreground mt-0.5">Xem danh sách chờ duyệt</p>
+              </div>
+            </a>
+            <a class="group flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent transition cursor-pointer">
+              <div class="size-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:text-foreground">
+                <svg class="icon-lg" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium">Quản lý khóa học</p>
+                <p class="text-xs text-muted-foreground mt-0.5">Tất cả khóa học hệ thống</p>
+              </div>
+            </a>
+            <a class="group flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent transition cursor-pointer">
+              <div class="size-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:text-foreground">
+                <svg class="icon-lg" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium">Quản lý voucher</p>
+                <p class="text-xs text-muted-foreground mt-0.5">Tạo và quản lý mã giảm giá</p>
+              </div>
+            </a>
+            <a class="group flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent transition cursor-pointer">
+              <div class="size-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:text-foreground">
+                <svg class="icon-lg" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium">Cộng tiền thủ công</p>
+                <p class="text-xs text-muted-foreground mt-0.5">Cộng tiền vào ví người dùng</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<section class="p-6">
+  <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Token màu (dark theme)</h2>
+  <div class="grid grid-cols-6 gap-3 text-xs">
+    <div class="p-3 rounded-lg bg-background border border-border"><div class="h-8 rounded mb-2" style="background: oklch(0.145 0 0)"></div><code>--background</code></div>
+    <div class="p-3 rounded-lg bg-background border border-border"><div class="h-8 rounded mb-2" style="background: oklch(0.205 0 0)"></div><code>--card / --sidebar</code></div>
+    <div class="p-3 rounded-lg bg-background border border-border"><div class="h-8 rounded mb-2" style="background: oklch(0.269 0 0)"></div><code>--muted / --accent</code></div>
+    <div class="p-3 rounded-lg bg-background border border-border"><div class="h-8 rounded mb-2" style="background: oklch(0.985 0 0)"></div><code>--foreground</code></div>
+    <div class="p-3 rounded-lg bg-background border border-border"><div class="h-8 rounded mb-2" style="background: oklch(0.708 0 0)"></div><code>--muted-foreground</code></div>
+    <div class="p-3 rounded-lg bg-background border border-border"><div class="h-8 rounded mb-2 border border-border"></div><code>--border (10% white)</code></div>
+  </div>
+</section>
+
+</body>
+</html>

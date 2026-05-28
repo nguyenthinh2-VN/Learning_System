@@ -13,5 +13,6 @@ public record UpdateCourseInput(
                 String description,
                 int maxStudents,
                 BigDecimal price,
+                String thumbnailUrl,
                 List<CourseSectionDto> sections) {
 }

@@ -1,0 +1,109 @@
+/* ============================================================
+   LearnSpace — Brand Color System
+   Tông màu: Xanh dương học thuật, nền trắng sạch
+   Dùng: import '@/styles/brand.css' vào component cần dùng
+   ============================================================ */
+
+:root {
+  /* ── Brand Primary — Xanh dương ── */
+  --brand-primary:        #2563EB;   /* Button chính, link, accent */
+  --brand-primary-hover:  #1D4ED8;   /* Hover state */
+  --brand-primary-light:  #EFF6FF;   /* Badge bg, card bg nhạt */
+  --brand-primary-mid:    #DBEAFE;   /* Border, gradient stop */
+  --brand-primary-dark:   #1E40AF;   /* Active, pressed */
+
+  /* ── Brand Secondary — Tím gradient ── */
+  --brand-secondary:      #7C3AED;   /* Gradient phụ, highlight */
+  --brand-secondary-light:#F5F3FF;   /* Bg nhạt */
+
+  /* ── Brand Success — Xanh lá ── */
+  --brand-success:        #10B981;   /* Rating, progress, badge "Đang học" */
+  --brand-success-light:  #ECFDF5;   /* Bg nhạt */
+
+  /* ── Brand Warning ── */
+  --brand-warning:        #F59E0B;
+  --brand-warning-light:  #FFFBEB;
+
+  /* ── Text ── */
+  --brand-text-primary:   #0F172A;   /* Heading, body đậm */
+  --brand-text-secondary: #64748B;   /* Subtitle, muted */
+  --brand-text-tertiary:  #94A3B8;   /* Placeholder, disabled */
+
+  /* ── Background ── */
+  --brand-bg-page:        #FFFFFF;   /* Nền trang chính */
+  --brand-bg-section:     #F8FAFF;   /* Section xen kẽ (xanh rất nhạt) */
+  --brand-bg-card:        #FFFFFF;   /* Card bg */
+  --brand-bg-muted:       #F1F5F9;   /* Muted bg */
+
+  /* ── Border ── */
+  --brand-border:         #E2E8F0;   /* Border mặc định */
+  --brand-border-focus:   #2563EB;   /* Focus ring */
+
+  /* ── Shadow ── */
+  --brand-shadow-sm:      0 1px 3px rgba(37, 99, 235, 0.08);
+  --brand-shadow-md:      0 4px 16px rgba(37, 99, 235, 0.12);
+  --brand-shadow-lg:      0 8px 32px rgba(37, 99, 235, 0.16);
+
+  /* ── Gradient presets ── */
+  --brand-gradient-hero:  linear-gradient(135deg, #EFF6FF 0%, #F8FAFF 50%, #FFFFFF 100%);
+  --brand-gradient-card:  linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%);
+  --brand-gradient-btn:   linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  --brand-gradient-badge: linear-gradient(135deg, #DBEAFE 0%, #EDE9FE 100%);
+}
+
+/* ── Utility classes dùng trực tiếp trong JSX ── */
+
+.brand-btn-primary {
+  background: var(--brand-gradient-btn);
+  color: #fff;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.brand-btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+.brand-btn-primary:active { transform: translateY(0); }
+
+.brand-badge {
+  background: var(--brand-gradient-badge);
+  color: var(--brand-primary);
+  border: 1px solid var(--brand-primary-mid);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.brand-card {
+  background: var(--brand-bg-card);
+  border: 1px solid var(--brand-border);
+  border-radius: 1rem;
+  box-shadow: var(--brand-shadow-sm);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.brand-card:hover {
+  box-shadow: var(--brand-shadow-md);
+  transform: translateY(-2px);
+}
+
+.brand-section-alt {
+  background: var(--brand-bg-section);
+}
+
+.brand-hero-bg {
+  background: var(--brand-gradient-hero);
+}
+
+.brand-stat-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--brand-primary);
+  line-height: 1;
+}
+
+.brand-stat-label {
+  font-size: 0.75rem;
+  color: var(--brand-text-secondary);
+  margin-top: 0.25rem;
+}

@@ -4,9 +4,13 @@ import com.example.learning_system_spring.adapter.dto.request.CreateUserRequest;
 import com.example.learning_system_spring.adapter.dto.request.Wallet.AdminTopUpRequest;
 import com.example.learning_system_spring.adapter.dto.response.ApiResponse;
 import com.example.learning_system_spring.adapter.dto.response.RegisterResponse;
+import com.example.learning_system_spring.adapter.dto.response.UserListResponse;
 import com.example.learning_system_spring.application.dto.Auth.RegisterOutput;
+import com.example.learning_system_spring.application.dto.PageResult;
+import com.example.learning_system_spring.application.dto.User.UserListOutput;
 import com.example.learning_system_spring.application.dto.Wallet.AdminTopUpOutput;
 import com.example.learning_system_spring.application.usecase.User.AdminCreateUserUseCase;
+import com.example.learning_system_spring.application.usecase.User.GetUsersUseCase;
 import com.example.learning_system_spring.application.usecase.Wallet.AdminTopUpUseCase;
 import com.example.learning_system_spring.infrastructure.config.JwtService;
 import com.example.learning_system_spring.infrastructure.service.WalletNotificationService;
@@ -25,8 +29,20 @@ public class AdminUserController {
 
     private final AdminCreateUserUseCase adminCreateUserUseCase;
     private final AdminTopUpUseCase adminTopUpUseCase;
+    private final GetUsersUseCase getUsersUseCase;
     private final WalletNotificationService walletNotificationService;
     private final JwtService jwtService;
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN_USER', 'SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<PageResult<UserListResponse>>> listUsers(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PageResult<UserListOutput> result = getUsersUseCase.execute(keyword, page, size);
+        PageResult<UserListResponse> response = result.map(UserListResponse::from);
+        return ResponseEntity.ok(ApiResponse.success("Success", response));
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN_USER', 'SUPER_ADMIN', 'STAFF')")

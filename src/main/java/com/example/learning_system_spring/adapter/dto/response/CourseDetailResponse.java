@@ -18,6 +18,7 @@ public class CourseDetailResponse {
     private int enrolledCount;
     private BigDecimal price;
     private Long instructorId;
+    private String thumbnailUrl;
     private boolean published;
     private boolean priceLocked;
     private LocalDateTime publishedAt;
@@ -35,6 +36,7 @@ public class CourseDetailResponse {
                 .enrolledCount(output.enrolledCount())
                 .price(output.price())
                 .instructorId(output.instructorId())
+                .thumbnailUrl(output.thumbnailUrl())
                 .published(output.published())
                 .priceLocked(output.priceLocked())
                 .publishedAt(output.publishedAt())

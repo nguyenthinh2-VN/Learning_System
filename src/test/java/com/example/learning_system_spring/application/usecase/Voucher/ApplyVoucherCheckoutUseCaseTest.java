@@ -100,12 +100,12 @@ class ApplyVoucherCheckoutUseCaseTest {
 
     private Course publishedCourse(Long id, BigDecimal price) {
         return Course.reconstitute(id, "T", "d", 100, 0, price, 99L,
-                true, true, LocalDateTime.now(), 1L, List.of());
+                null, true, true, LocalDateTime.now(), 1L, List.of());
     }
 
     private Course draftCourse(Long id, BigDecimal price) {
         return Course.reconstitute(id, "T", "d", 100, 0, price, 99L,
-                false, false, null, null, List.of());
+                null, false, false, null, null, List.of());
     }
 
     private Voucher activeVoucher(String code, BigDecimal value) {
@@ -561,7 +561,7 @@ class ApplyVoucherCheckoutUseCaseTest {
             // Course với maxStudents = 1, enrolledCount = 1 (đầy)
             Course full = Course.reconstitute(1L, "T", "d", 1, 1,
                     new BigDecimal("100"), 99L,
-                    true, true, LocalDateTime.now(), 1L, List.of());
+                    null, true, true, LocalDateTime.now(), 1L, List.of());
 
             when(userRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(user));
             when(courseRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(full));

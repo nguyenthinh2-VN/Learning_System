@@ -75,13 +75,13 @@ class QuotePricingUseCaseTest {
 
     private Course publishedCourse(Long id, BigDecimal price) {
         Course c = Course.reconstitute(id, "T", "d", 100, 0, price, 99L,
-                true, true, LocalDateTime.now(), 1L, List.of());
+                null, true, true, LocalDateTime.now(), 1L, List.of());
         return c;
     }
 
     private Course draftCourse(Long id, BigDecimal price) {
         return Course.reconstitute(id, "T", "d", 100, 0, price, 99L,
-                false, false, null, null, List.of());
+                null, false, false, null, null, List.of());
     }
 
     private Voucher activeVoucher(String code, BigDecimal value) {

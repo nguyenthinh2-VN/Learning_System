@@ -4,8 +4,11 @@ import com.example.learning_system_spring.adapter.dto.response.ApiResponse;
 import com.example.learning_system_spring.adapter.dto.response.MyEnrollmentResponse;
 import com.example.learning_system_spring.application.dto.PageResult;
 import com.example.learning_system_spring.application.dto.User.MyEnrollmentOutput;
+import com.example.learning_system_spring.application.repository.User.UserRepository;
 import com.example.learning_system_spring.application.usecase.User.GetMyEnrollmentsUseCase;
 import com.example.learning_system_spring.application.usecase.User.TopUpBalanceUseCase;
+import com.example.learning_system_spring.domain.exception.UserNotFoundException;
+import com.example.learning_system_spring.domain.model.User;
 import com.example.learning_system_spring.infrastructure.config.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +27,7 @@ public class UserController {
 
     private final TopUpBalanceUseCase topUpBalanceUseCase;
     private final GetMyEnrollmentsUseCase getMyEnrollmentsUseCase;
+    private final UserRepository userRepository;
     private final JwtService jwtService;
 
     private Claims getClaims(HttpServletRequest request) {
@@ -31,6 +35,38 @@ public class UserController {
         return jwtService.parseToken(token);
     }
 
+    /**
+     * Xem thông tin cá nhân + số dư ví của chính mình.
+     * FE dùng endpoint này để hiển thị balance trên header/navbar.
+     *
+     * GET /api/v1/users/me/profile
+     */
+    @GetMapping("/me/profile")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMyProfile(HttpServletRequest request) {
+        Claims claims = getClaims(request);
+        Long userId = claims.get("userId", Long.class);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        Map<String, Object> data = Map.of(
+                "id",         user.getId(),
+                "username",   user.getUsername(),
+                "email",      user.getEmail(),
+                "name",       user.getName(),
+                "role",       user.getRole().getName(),
+                "isInternal", user.isInternal(),
+                "balance",    user.getBalance()
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    /**
+     * Nạp tiền trực tiếp vào ví (legacy — không qua payment gateway).
+     *
+     * POST /api/v1/users/me/top-up
+     */
     @PostMapping("/me/top-up")
     public ResponseEntity<?> topUp(
             @RequestBody Map<String, BigDecimal> requestBody,
@@ -52,6 +88,8 @@ public class UserController {
     /**
      * Lấy danh sách khóa học đã mua của chính người dùng đang đăng nhập.
      * Trả về trang rỗng nếu chưa có enrollment nào.
+     *
+     * GET /api/v1/users/me/enrollments?page=0&size=20
      */
     @GetMapping("/me/enrollments")
     public ResponseEntity<ApiResponse<PageResult<MyEnrollmentResponse>>> getMyEnrollments(

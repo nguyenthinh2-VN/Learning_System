@@ -1,17 +1,39 @@
 import api from './auth';
 
 // ═══════════════════════════════════════════
-// WALLET API
+// USER PROFILE API (Section 16)
 // ═══════════════════════════════════════════
 
 /**
- * Nạp tiền vào ví
- * POST /api/v1/users/me/top-up
- * Quyền: Đăng nhập
- * @param {number} amount
+ * Lấy thông tin cá nhân + số dư ví
+ * GET /api/v1/users/me/profile
+ * Quyền: Đăng nhập (mọi role)
+ * @returns {{ id, username, email, name, role, isInternal, balance }}
  */
-export const topUpApi = (amount) =>
-  api.post('/users/me/top-up', { amount });
+export const getProfileApi = () => api.get('/users/me/profile');
+
+// ═══════════════════════════════════════════
+// WALLET TOP-UP API (Section 14)
+// ═══════════════════════════════════════════
+
+/**
+ * Khởi tạo nạp tiền — nhận referenceCode + displayType/displayData
+ * POST /api/v1/wallet/top-up/init
+ * Quyền: Đăng nhập
+ * @param {number} amount - Tối thiểu 10,000đ
+ * @returns {{ referenceCode, amount, displayType, displayData, expiredAt }}
+ */
+export const initTopUpApi = (amount) =>
+  api.post('/wallet/top-up/init', { amount });
+
+/**
+ * Giả lập thanh toán thành công (chỉ dùng khi payment.provider=mock)
+ * POST /api/v1/webhook/mock?ref={referenceCode}
+ * Quyền: Không cần (dev only)
+ * @param {string} referenceCode
+ */
+export const mockWebhookApi = (referenceCode) =>
+  api.post(`/webhook/mock?ref=${referenceCode}`);
 
 // ═══════════════════════════════════════════
 // PURCHASE API

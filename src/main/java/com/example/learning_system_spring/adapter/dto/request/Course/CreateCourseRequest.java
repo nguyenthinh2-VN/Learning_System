@@ -25,6 +25,8 @@ public class CreateCourseRequest {
     @Min(0)
     private BigDecimal price;
 
+    private String thumbnailUrl;
+
     private Long requestedInstructorId;
 
     private List<CourseSectionDto> sections;

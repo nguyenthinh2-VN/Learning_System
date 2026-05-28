@@ -182,8 +182,17 @@ export default function CourseDetailPage() {
 
         {/* Right — Price card */}
         <div className="border rounded-xl p-5 space-y-4 h-fit">
-          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-            <BookOpen className="size-10 text-muted-foreground/20" />
+          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+            {currentCourse.thumbnailUrl ? (
+              <img
+                src={currentCourse.thumbnailUrl}
+                alt={currentCourse.title}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            ) : (
+              <BookOpen className="size-10 text-muted-foreground/20" />
+            )}
           </div>
           <p className="text-2xl font-bold">{formatPrice(currentCourse.price)}</p>
           {renderActionButton()}

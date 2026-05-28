@@ -40,7 +40,7 @@ class GetSectionsUseCaseTest {
     @Test
     void execute_ShouldReturnSections_WhenCourseExists() {
         // Arrange
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         List<CourseSection> sections = List.of(
                 CourseSection.reconstitute(1L, "Chương 1", 1, new ArrayList<>()),
                 CourseSection.reconstitute(2L, "Chương 2", 2, new ArrayList<>())
@@ -63,7 +63,7 @@ class GetSectionsUseCaseTest {
     @Test
     void execute_ShouldReturnEmptyList_WhenCourseHasNoSections() {
         // Arrange
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
         when(sectionRepository.findByCourseId(1L)).thenReturn(new ArrayList<>());
 

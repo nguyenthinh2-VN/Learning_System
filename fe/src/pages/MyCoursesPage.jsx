@@ -34,8 +34,18 @@ function EnrolledCourseCard({ enrollment, onClick }) {
       className="group border rounded-xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-background"
     >
       {/* Thumbnail */}
-      <div className="aspect-video bg-muted flex items-center justify-center relative">
-        <BookOpen className="size-10 text-muted-foreground/20" />
+      <div className="aspect-video bg-muted flex items-center justify-center relative overflow-hidden">
+        {course?.thumbnailUrl ? (
+          <img
+            src={course.thumbnailUrl}
+            alt={course?.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+          />
+        ) : null}
+        <div className={`absolute inset-0 flex items-center justify-center ${course?.thumbnailUrl ? 'hidden' : 'flex'}`}>
+          <BookOpen className="size-10 text-muted-foreground/20" />
+        </div>
         <Badge className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] hover:bg-emerald-600">
           <PlayCircle className="size-2.5 mr-1" /> Đang học
         </Badge>

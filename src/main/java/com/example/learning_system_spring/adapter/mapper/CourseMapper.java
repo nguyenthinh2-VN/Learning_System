@@ -31,6 +31,7 @@ public class CourseMapper {
                 entity.getEnrolledCount(),
                 entity.getPrice(),
                 entity.getInstructorId(),
+                entity.getThumbnailUrl(),
                 entity.isPublished(),
                 entity.isPriceLocked(),
                 entity.getPublishedAt(),
@@ -79,6 +80,7 @@ public class CourseMapper {
         entity.setEnrolledCount(course.getEnrolledCount());
         entity.setPrice(course.getPrice());
         entity.setInstructorId(course.getInstructorId());
+        entity.setThumbnailUrl(course.getThumbnailUrl());
         entity.setPublished(course.isPublished());
         entity.setPriceLocked(course.isPriceLocked());
         entity.setPublishedAt(course.getPublishedAt());

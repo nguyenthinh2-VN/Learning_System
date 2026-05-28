@@ -26,5 +26,7 @@ public class UpdateCourseRequest {
     @Min(0)
     private BigDecimal price;
 
+    private String thumbnailUrl;
+
     private List<CourseSectionDto> sections;
 }

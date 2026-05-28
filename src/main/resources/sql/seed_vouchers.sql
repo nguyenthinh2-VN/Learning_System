@@ -33,7 +33,7 @@ VALUES (
 INSERT IGNORE INTO vouchers (code, type, value, status, scope, valid_from, valid_to,
     min_order_amount, max_discount, usage_limit, usage_per_user, created_at, updated_at)
 VALUES (
-    'SPRING30', 'PERCENT', 30.00, 'ACTIVE', 'SPECIFIC',
+    'SPRING30', 'PERCENT', 30.00, 'ACTIVE', 'SPECIFIC_COURSES',
     '2026-01-01 00:00:00', '2026-12-31 23:59:59',
     0.00,
     200000.00,
@@ -53,7 +53,7 @@ WHERE v.code = 'SPRING30'
 INSERT IGNORE INTO vouchers (code, type, value, status, scope, valid_from, valid_to,
     min_order_amount, max_discount, usage_limit, usage_per_user, created_at, updated_at)
 VALUES (
-    'COMBO50', 'PERCENT', 50.00, 'ACTIVE', 'SPECIFIC',
+    'COMBO50', 'PERCENT', 50.00, 'ACTIVE', 'SPECIFIC_COURSES',
     '2026-01-01 00:00:00', '2026-12-31 23:59:59',
     0.00,
     150000.00,

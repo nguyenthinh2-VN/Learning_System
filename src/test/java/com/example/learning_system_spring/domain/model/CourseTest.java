@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CourseTest {
 
     private Course freshCourse(BigDecimal price) {
-        return Course.create("Test Course", "desc", 100, price, 1L, List.of());
+        return Course.create("Test Course", "desc", 100, price, 1L, null, List.of());
     }
 
     @Nested
@@ -46,7 +46,7 @@ class CourseTest {
         @Test
         @DisplayName("maxStudents <= 0 → reject")
         void rejectZeroMaxStudents() {
-            assertThatThrownBy(() -> Course.create("X", "y", 0, BigDecimal.TEN, 1L, List.of()))
+            assertThatThrownBy(() -> Course.create("X", "y", 0, BigDecimal.TEN, 1L, null, List.of()))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
@@ -89,7 +89,7 @@ class CourseTest {
             // Course.reconstitute với price = null cũng được set ZERO ở Course.builder.
             // Test xác nhận behavior này — course "không có giá" coi như miễn phí.
             Course c = Course.reconstitute(1L, "X", "y", 100, 0,
-                    null, 1L, false, false, null, null, List.of());
+                    null, 1L, null, false, false, null, null, List.of());
             assertThat(c.getPrice()).isEqualByComparingTo("0");
             c.publish(1L);
             assertThat(c.isPublished()).isTrue();
@@ -185,7 +185,7 @@ class CourseTest {
         @Test
         @DisplayName("enroll trong khi đang full → IllegalStateException")
         void enrollWhenFull() {
-            Course c = Course.create("X", "y", 1, BigDecimal.TEN, 1L, List.of());
+            Course c = Course.create("X", "y", 1, BigDecimal.TEN, 1L, null, List.of());
             c.enroll();
             assertThatThrownBy(c::enroll).isInstanceOf(IllegalStateException.class);
         }
@@ -193,7 +193,7 @@ class CourseTest {
         @Test
         @DisplayName("Multiple enrolls tăng enrolledCount đúng")
         void multipleEnrolls() {
-            Course c = Course.create("X", "y", 5, BigDecimal.TEN, 1L, List.of());
+            Course c = Course.create("X", "y", 5, BigDecimal.TEN, 1L, null, List.of());
             for (int i = 0; i < 5; i++) c.enroll();
             assertThat(c.getEnrolledCount()).isEqualTo(5);
             assertThat(c.isFull()).isTrue();

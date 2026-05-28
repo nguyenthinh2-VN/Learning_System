@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { publicLogin } = useAuth();
+  const { publicLogin, fetchProfile } = useAuth();
 
   const [form, setForm] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -49,6 +49,8 @@ export default function LoginPage() {
     try {
       const res = await loginApi({ identifier: form.identifier, password: form.password });
       const data = res.data.data;
+
+      // Lưu thông tin cơ bản + token vào AuthContext
       publicLogin(
         {
           id: data.id,
@@ -60,7 +62,19 @@ export default function LoginPage() {
         },
         data.accessToken
       );
-      navigate('/');
+
+      // Gọi profile API để lấy balance ngay sau khi có token
+      await fetchProfile();
+
+      // Redirect theo role
+      const role = data.role;
+      if (role === 'INSTRUCTOR') {
+        navigate('/instructor');
+      } else if (['STAFF', 'ADMIN_USER', 'SUPER_ADMIN'].includes(role)) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       const msg = err?.response?.data?.message;
       if (err?.response?.status === 401) {
@@ -72,6 +86,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="h-screen flex items-center justify-center bg-background px-4">

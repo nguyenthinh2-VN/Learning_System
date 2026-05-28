@@ -48,7 +48,7 @@ class DeleteSectionUseCaseTest {
         // Arrange
         Role instructor = Role.reconstitute(2L, "INSTRUCTOR", null);
         CourseSection section = CourseSection.reconstitute(10L, "Chương 1", 1, new ArrayList<>());
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         DeleteSectionInput input = new DeleteSectionInput(10L, 1L, 100L, instructor);
 
         when(sectionRepository.findById(10L)).thenReturn(Optional.of(section));
@@ -67,7 +67,7 @@ class DeleteSectionUseCaseTest {
         // Arrange
         Role staff = Role.reconstitute(3L, "STAFF", null);
         CourseSection section = CourseSection.reconstitute(10L, "Chương 1", 1, new ArrayList<>());
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         DeleteSectionInput input = new DeleteSectionInput(10L, 1L, 200L, staff);
 
         when(sectionRepository.findById(10L)).thenReturn(Optional.of(section));
@@ -115,7 +115,7 @@ class DeleteSectionUseCaseTest {
         // Arrange
         Role instructor = Role.reconstitute(2L, "INSTRUCTOR", null);
         CourseSection section = CourseSection.reconstitute(10L, "Chương 1", 1, new ArrayList<>());
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         DeleteSectionInput input = new DeleteSectionInput(10L, 1L, 999L, instructor);
 
         when(sectionRepository.findById(10L)).thenReturn(Optional.of(section));
@@ -133,7 +133,7 @@ class DeleteSectionUseCaseTest {
         // Arrange
         Role adminUser = Role.reconstitute(4L, "ADMIN_USER", null);
         CourseSection section = CourseSection.reconstitute(10L, "Chương 1", 1, new ArrayList<>());
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         DeleteSectionInput input = new DeleteSectionInput(10L, 1L, 300L, adminUser);
 
         when(sectionRepository.findById(10L)).thenReturn(Optional.of(section));

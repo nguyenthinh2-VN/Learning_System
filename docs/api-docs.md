@@ -371,6 +371,7 @@ Tất cả lỗi trả về format thống nhất:
   "description": "Khóa học chi tiết",
   "maxStudents": 100,
   "price": 500000.00,
+  "thumbnailUrl": "https://example.com/images/spring-boot.jpg",
   "requestedInstructorId": 2, 
   "sections": [
     {
@@ -402,6 +403,7 @@ Tất cả lỗi trả về format thống nhất:
     "enrolledCount": 0,
     "price": 500000.00,
     "instructorId": 2,
+    "thumbnailUrl": "https://example.com/images/spring-boot.jpg",
     "sections": [ ... ]
   },
   "timestamp": "2026-05-18T10:00:00"
@@ -2106,3 +2108,240 @@ Quy tắc phân quyền **đã được siết chặt** — không còn cho phé
 ```
 
 > **Lưu ý thiết kế:** Khóa học giá 0đ vẫn yêu cầu enrollment row. `ApplyVoucherCheckoutUseCase` đã tạo enrollment cho giao dịch 0đ (internal member). Không có ngoại lệ "khóa học miễn phí".
+
+---
+
+## 16. User Profile & Wallet Balance
+
+### 16.1. Xem thông tin cá nhân + số dư ví
+
+**Endpoint:** `GET /api/v1/users/me/profile`
+
+**Yêu cầu quyền:** Đăng nhập (mọi role)
+
+FE dùng endpoint này để hiển thị thông tin user và số dư ví trên header/navbar sau khi login.
+
+**Response 200:**
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "id": 1,
+    "username": "MEM2B4A1D",
+    "email": "user@example.com",
+    "name": "Nguyễn Văn A",
+    "role": "MEMBER",
+    "isInternal": false,
+    "balance": 1500000.00
+  },
+  "timestamp": "2026-05-26T12:00:00"
+}
+```
+
+| Field | Type | Mô tả |
+|-------|------|-------|
+| id | Long | ID user |
+| username | String | Username (VD: `MEM2B4A1D`) |
+| email | String | Email đăng nhập |
+| name | String | Tên hiển thị |
+| role | String | `MEMBER` / `INSTRUCTOR` / `STAFF` / `ADMIN_USER` / `SUPER_ADMIN` |
+| isInternal | Boolean | `true` nếu là nhân sự nội bộ |
+| balance | BigDecimal | Số dư ví hiện tại (đơn vị: VNĐ) |
+
+**Response 404:**
+```json
+{
+  "code": "USER_NOT_FOUND",
+  "message": "User not found with id: 1",
+  "timestamp": "2026-05-26T12:00:00"
+}
+```
+
+> **Gợi ý FE:** Gọi endpoint này ngay sau khi login thành công để lấy `balance` ban đầu. Sau đó lắng nghe WebSocket `/user/queue/wallet` để cập nhật `balance` realtime khi có giao dịch nạp tiền (xem mục 14.4).
+
+---
+
+### Tóm tắt các endpoint `/api/v1/users/me/*`
+
+| Endpoint | Method | Mô tả |
+|----------|--------|-------|
+| `/me/profile` | GET | Thông tin cá nhân + số dư ví |
+| `/me/top-up` | POST | Nạp tiền trực tiếp (legacy) |
+| `/me/enrollments` | GET | Danh sách khóa học đã mua (phân trang) |
+
+
+---
+
+## 17. Admin User Management
+
+### 17.1. Danh sách người dùng (Admin)
+
+**Endpoint:** `GET /api/v1/admin/users`
+
+**Yêu cầu quyền:** `VIEW_USER` (Role `ADMIN_USER`, `SUPER_ADMIN`)
+
+**Query Parameters:**
+| Field | Type | Default | Mô tả |
+|-------|------|---------|-------|
+| keyword | String | (rỗng) | Tìm theo tên hoặc email (LIKE search, case-insensitive) |
+| page | Integer | 0 | 0-indexed |
+| size | Integer | 20 | Số user/trang |
+
+**Response 200:**
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalElements": 50,
+    "totalPages": 3,
+    "page": 0,
+    "size": 20,
+    "items": [
+      {
+        "id": 1,
+        "username": "MEM2B4A1D",
+        "email": "user@example.com",
+        "name": "Nguyễn Văn A",
+        "role": "MEMBER",
+        "isInternal": false,
+        "createdAt": "2026-05-15T15:30:00"
+      }
+    ]
+  },
+  "timestamp": "2026-05-28T10:00:00"
+}
+```
+
+---
+
+### 17.2. Tạo tài khoản (Admin/Staff)
+
+Đã mô tả tại **Section 1.3** (`POST /api/v1/admin/users`).
+
+---
+
+## 18. Course thumbnailUrl
+
+Field `thumbnailUrl` được thêm vào Course để hiển thị ảnh bìa khóa học.
+
+### Thay đổi schema
+
+**Bảng `courses`** — thêm cột:
+```sql
+ALTER TABLE courses ADD COLUMN thumbnail_url VARCHAR(500) NULL;
+```
+
+### Thay đổi API
+
+Field `thumbnailUrl` xuất hiện trong tất cả response liên quan đến Course:
+
+**`GET /api/v1/courses`** — mỗi item trong `items[]`:
+```json
+{
+  "id": 1,
+  "title": "Spring Boot Clean Architecture",
+  "thumbnailUrl": "https://example.com/images/spring-boot.jpg",
+  ...
+}
+```
+
+**`GET /api/v1/courses/{id}`** — trong `data`:
+```json
+{
+  "id": 1,
+  "thumbnailUrl": "https://example.com/images/spring-boot.jpg",
+  ...
+}
+```
+
+**`POST /api/v1/courses`** — request body (tùy chọn):
+```json
+{
+  "title": "...",
+  "thumbnailUrl": "https://example.com/images/course.jpg",
+  ...
+}
+```
+
+**`PUT /api/v1/courses/{id}`** — request body (tùy chọn, null = giữ nguyên):
+```json
+{
+  "title": "...",
+  "thumbnailUrl": "https://example.com/images/course-updated.jpg",
+  ...
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| thumbnailUrl | String | No | URL ảnh (JPEG, PNG, WebP...). Tối đa 500 ký tự. `null` = không có ảnh |
+
+> **Lưu ý FE:** Khi `thumbnailUrl = null`, hiển thị placeholder icon. Khi có URL, hiển thị `<img>` với fallback về placeholder nếu ảnh lỗi.
+
+---
+
+## 19. Instructor Portal
+
+INSTRUCTOR có thể đăng nhập vào Admin Portal với quyền hạn chế theo permission-matrix.
+
+### Quyền của INSTRUCTOR trong Admin Portal
+
+| Tính năng | Được phép |
+|-----------|-----------|
+| Xem dashboard | ✅ |
+| Xem khóa học của mình | ✅ (`GET /api/v1/instructor/courses`) |
+| Tạo khóa học mới | ✅ (`POST /api/v1/courses`) |
+| Sửa khóa học của mình | ✅ (`PUT /api/v1/courses/{id}`) |
+| Xóa khóa học của mình | ✅ (`DELETE /api/v1/courses/{id}`) |
+| Quản lý Section/Lesson | ✅ (chỉ course của mình) |
+| Duyệt/ẩn course | ❌ (cần STAFF/SUPER_ADMIN) |
+| Sửa giá sau publish | ❌ (cần STAFF/SUPER_ADMIN) |
+| Xem danh sách users | ❌ |
+| Quản lý voucher | ❌ |
+| Cộng tiền | ❌ |
+
+### 19.1. Danh sách course của Instructor
+
+**Endpoint:** `GET /api/v1/instructor/courses`
+
+**Yêu cầu quyền:** Role `INSTRUCTOR`
+
+**Query Parameters:** `keyword`, `page`, `size`
+
+**Response 200:** Tương tự `GET /api/v1/admin/courses` nhưng chỉ trả về course của instructor đang đăng nhập (cả published và draft).
+
+---
+
+### 19.2. Chi tiết course của Instructor
+
+**Endpoint:** `GET /api/v1/instructor/courses/{id}`
+
+**Yêu cầu quyền:** Role `INSTRUCTOR` + sở hữu course.
+
+---
+
+## 20. Tổng kết endpoints mới (cập nhật 2026-05-28)
+
+### Admin User Management
+- `GET /api/v1/admin/users` — Danh sách users (phân trang, tìm kiếm) — `ADMIN_USER`, `SUPER_ADMIN`
+
+### Course thumbnailUrl
+- Tất cả Course endpoints đã hỗ trợ field `thumbnailUrl` (nullable)
+
+### Instructor Portal
+- `GET /api/v1/instructor/courses` — Course của instructor (cả draft)
+- `GET /api/v1/instructor/courses/{id}` — Chi tiết course của instructor
+
+### Admin Course Management (đã có, bổ sung tài liệu)
+- `GET /api/v1/admin/courses` — Tất cả courses — `STAFF`, `ADMIN_USER`, `SUPER_ADMIN`
+- `GET /api/v1/admin/courses/pending` — Courses chờ duyệt — `STAFF`, `SUPER_ADMIN`
+- `POST /api/v1/admin/courses/{id}/publish` — Duyệt course — `STAFF`, `SUPER_ADMIN`
+- `POST /api/v1/admin/courses/{id}/unpublish` — Ẩn course — `STAFF`, `SUPER_ADMIN`
+- `PUT /api/v1/admin/courses/{id}/price` — Sửa giá (kể cả priceLocked) — `STAFF`, `SUPER_ADMIN`
+
+### Admin Section/Lesson Management (đã có, bổ sung tài liệu)
+- Tất cả Section/Lesson endpoints đã mô tả tại Section 8 và 9
+- INSTRUCTOR chỉ thao tác được trên course của mình
+- ADMIN_USER **không có quyền** thao tác Section/Lesson

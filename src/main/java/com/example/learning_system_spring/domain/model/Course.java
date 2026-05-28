@@ -23,6 +23,7 @@ public class Course {
     private int enrolledCount;
     private BigDecimal price;
     private Long instructorId;
+    private String thumbnailUrl;
     private boolean published;
     private boolean priceLocked;
     private LocalDateTime publishedAt;
@@ -32,10 +33,9 @@ public class Course {
 
     /**
      * Tạo course mới. Mặc định ẨN (published = false, priceLocked = false).
-     * Course chỉ công khai sau khi admin duyệt qua publish().
      */
-    public static Course create(String title, String description, int maxStudents, BigDecimal price, Long instructorId,
-            List<CourseSection> sections) {
+    public static Course create(String title, String description, int maxStudents, BigDecimal price,
+            Long instructorId, String thumbnailUrl, List<CourseSection> sections) {
         if (maxStudents <= 0) {
             throw new IllegalArgumentException("Max students must be greater than 0");
         }
@@ -46,6 +46,7 @@ public class Course {
                 .price(price != null ? price : BigDecimal.ZERO)
                 .enrolledCount(0)
                 .instructorId(instructorId)
+                .thumbnailUrl(thumbnailUrl)
                 .published(false)
                 .priceLocked(false)
                 .publishedAt(null)
@@ -55,7 +56,7 @@ public class Course {
     }
 
     public static Course reconstitute(Long id, String title, String description, int maxStudents, int enrolledCount,
-            BigDecimal price, Long instructorId, boolean published, boolean priceLocked,
+            BigDecimal price, Long instructorId, String thumbnailUrl, boolean published, boolean priceLocked,
             LocalDateTime publishedAt, Long publishedBy, List<CourseSection> sections) {
         return Course.builder()
                 .id(id)
@@ -65,6 +66,7 @@ public class Course {
                 .price(price != null ? price : BigDecimal.ZERO)
                 .enrolledCount(enrolledCount)
                 .instructorId(instructorId)
+                .thumbnailUrl(thumbnailUrl)
                 .published(published)
                 .priceLocked(priceLocked)
                 .publishedAt(publishedAt)

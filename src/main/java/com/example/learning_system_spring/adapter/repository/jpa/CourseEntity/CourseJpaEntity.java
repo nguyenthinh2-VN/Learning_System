@@ -44,6 +44,9 @@ public class CourseJpaEntity {
     @Column(name = "instructor_id")
     private Long instructorId;
 
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl;
+
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean published = false;
 

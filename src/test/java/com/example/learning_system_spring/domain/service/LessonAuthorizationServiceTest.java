@@ -29,7 +29,7 @@ class LessonAuthorizationServiceTest {
         return Course.reconstitute(
                 1L, "Test Course", "desc", 100, 0,
                 new BigDecimal("500000"), instructorId,
-                false, false, null, null,
+                null, false, false, null, null,
                 List.of());
     }
 

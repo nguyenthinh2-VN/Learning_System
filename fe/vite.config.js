@@ -11,4 +11,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // Fix lỗi "global is not defined" khi dùng sockjs-client trong Vite
+  define: {
+    global: 'globalThis',
+  },
 })
+

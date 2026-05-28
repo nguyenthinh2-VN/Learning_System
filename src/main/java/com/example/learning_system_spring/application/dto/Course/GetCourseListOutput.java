@@ -13,6 +13,7 @@ public record GetCourseListOutput(
         int enrolledCount,
         BigDecimal price,
         Long instructorId,
+        String thumbnailUrl,
         boolean published,
         boolean priceLocked,
         LocalDateTime publishedAt
@@ -26,6 +27,7 @@ public record GetCourseListOutput(
                 course.getEnrolledCount(),
                 course.getPrice(),
                 course.getInstructorId(),
+                course.getThumbnailUrl(),
                 course.isPublished(),
                 course.isPriceLocked(),
                 course.getPublishedAt()

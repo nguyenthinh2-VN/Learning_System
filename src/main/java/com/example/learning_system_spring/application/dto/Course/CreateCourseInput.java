@@ -13,5 +13,6 @@ public record CreateCourseInput(
                 int maxStudents,
                 BigDecimal price,
                 Long requestedInstructorId,
+                String thumbnailUrl,
                 List<CourseSectionDto> sections) {
 }

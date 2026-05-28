@@ -25,7 +25,7 @@ class CourseOwnershipPolicyTest {
     private final Role superAdmin = Role.reconstitute(5L, "SUPER_ADMIN", null);
 
     private Course courseOwnedBy(Long instructorId) {
-        return Course.create("X", "y", 100, BigDecimal.TEN, instructorId, List.of());
+        return Course.create("X", "y", 100, BigDecimal.TEN, instructorId, null, List.of());
     }
 
     @Nested

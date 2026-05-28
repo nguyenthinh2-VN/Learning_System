@@ -51,7 +51,7 @@ class UpdateSectionUseCaseTest {
         // Arrange
         Role instructor = Role.reconstitute(2L, "INSTRUCTOR", null);
         CourseSection existing = CourseSection.reconstitute(10L, "Chương 1 cũ", 1, new ArrayList<>());
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         UpdateSectionInput input = new UpdateSectionInput(10L, 1L, 100L, instructor, "Chương 1 mới", 2);
 
         when(sectionRepository.findById(10L)).thenReturn(Optional.of(existing));
@@ -76,7 +76,7 @@ class UpdateSectionUseCaseTest {
         // Arrange
         Role superAdmin = Role.reconstitute(5L, "SUPER_ADMIN", null);
         CourseSection existing = CourseSection.reconstitute(10L, "Chương 1", 1, new ArrayList<>());
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         UpdateSectionInput input = new UpdateSectionInput(10L, 1L, 500L, superAdmin, "Chương 1 Updated", 1);
 
         when(sectionRepository.findById(10L)).thenReturn(Optional.of(existing));
@@ -127,7 +127,7 @@ class UpdateSectionUseCaseTest {
         // Arrange
         Role instructor = Role.reconstitute(2L, "INSTRUCTOR", null);
         CourseSection existing = CourseSection.reconstitute(10L, "Chương 1", 1, new ArrayList<>());
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         UpdateSectionInput input = new UpdateSectionInput(10L, 1L, 999L, instructor, "Chương 1 mới", 1);
 
         when(sectionRepository.findById(10L)).thenReturn(Optional.of(existing));
@@ -145,7 +145,7 @@ class UpdateSectionUseCaseTest {
         // Arrange
         Role adminUser = Role.reconstitute(4L, "ADMIN_USER", null);
         CourseSection existing = CourseSection.reconstitute(10L, "Chương 1", 1, new ArrayList<>());
-        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, true, true, null, null, java.util.List.of());
+        Course course = Course.reconstitute(1L, "Java 101", "Desc", 50, 0, BigDecimal.ZERO, 100L, null, true, true, null, null, java.util.List.of());
         UpdateSectionInput input = new UpdateSectionInput(10L, 1L, 300L, adminUser, "Chương 1 mới", 1);
 
         when(sectionRepository.findById(10L)).thenReturn(Optional.of(existing));

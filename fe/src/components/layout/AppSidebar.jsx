@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
+import { useWalletWebSocket } from '@/hooks/useWalletWebSocket';
+import '@/styles/brand.css';
+
 import {
   Sidebar,
   SidebarContent,
@@ -29,11 +33,30 @@ import {
   GraduationCap,
 } from 'lucide-react';
 
+function formatBalance(amount) {
+  if (amount === null || amount === undefined) return '---';
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export default function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { publicUser, isPublicAuthenticated, publicLogout } = useAuth();
+  const { publicUser, publicToken, balance, isPublicAuthenticated, publicLogout, updateBalance } = useAuth();
   const [coursesOpen, setCoursesOpen] = useState(true);
+
+  // Kết nối WebSocket — chỉ reconnect khi token thay đổi
+  useWalletWebSocket({
+    token: publicToken,
+    onBalanceUpdate: (newBalance) => updateBalance(newBalance),
+    onToast: (message, type) => {
+      if (type === 'success') toast.success(message);
+      else toast.info(message);
+    },
+  });
 
   const isActive = (path) => location.pathname === path;
 
@@ -55,8 +78,11 @@ export default function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link to="/" />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-foreground text-background">
-                <GraduationCap className="size-4" />
+              <div
+                className="flex aspect-square size-8 items-center justify-center rounded-lg shrink-0"
+                style={{ background: 'var(--brand-gradient-btn)' }}
+              >
+                <GraduationCap className="size-4 text-white" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">LearnSpace</span>
@@ -115,7 +141,7 @@ export default function AppSidebar() {
                       <>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton render={<Link to="/my-courses" />}>
-                            <span>Đang học</span>
+                            <span>Khóa học đã mua</span>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
@@ -153,7 +179,7 @@ export default function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Thông tin cá nhân" render={<Link to="/" />}>
+                  <SidebarMenuButton tooltip="Thông tin cá nhân" render={<Link to="/profile" />}>
                     <User />
                     <span>Thông tin cá nhân</span>
                   </SidebarMenuButton>
@@ -187,14 +213,23 @@ export default function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             {isPublicAuthenticated ? (
-              <SidebarMenuButton size="lg" tooltip={publicUser?.email}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-muted text-foreground font-semibold text-xs">
+              <SidebarMenuButton
+                size="lg"
+                tooltip={`${publicUser?.email} · ${formatBalance(balance)}`}
+                className="h-auto py-2"
+                render={<Link to="/profile" />}
+              >
+                <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-muted text-foreground font-semibold text-xs shrink-0">
                   {publicUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="flex flex-col flex-1 text-left text-sm leading-tight min-w-0">
                   <span className="truncate font-semibold">{publicUser?.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {publicUser?.email}
+                  <span className="truncate text-xs text-muted-foreground">{publicUser?.email}</span>
+                  <span className="truncate text-[11px] mt-0.5 text-emerald-500 font-medium">
+                    {balance !== null ? formatBalance(balance) : '---'}
+                    {/* {publicUser?.role && (
+                      <span className="text-muted-foreground font-normal ml-1">· {publicUser.role}</span>
+                    )} */}
                   </span>
                 </div>
               </SidebarMenuButton>
@@ -204,7 +239,7 @@ export default function AppSidebar() {
                 tooltip="Đăng nhập"
                 render={<Link to="/login" />}
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-foreground text-background">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-foreground text-background shrink-0">
                   <LogIn className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">

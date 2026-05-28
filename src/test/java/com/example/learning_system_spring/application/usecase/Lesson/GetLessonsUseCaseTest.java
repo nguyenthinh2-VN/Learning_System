@@ -50,7 +50,7 @@ class GetLessonsUseCaseTest {
         return Course.reconstitute(
                 COURSE_ID, "Test", "desc", 100, 0,
                 new BigDecimal("500000"), INSTRUCTOR_ID,
-                true, false, null, null,
+                null, true, false, null, null,
                 List.of());
     }
 

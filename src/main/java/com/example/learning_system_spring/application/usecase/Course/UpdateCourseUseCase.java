@@ -70,6 +70,7 @@ public class UpdateCourseUseCase {
                 course.getEnrolledCount(),
                 newPrice,
                 course.getInstructorId(),
+                input.thumbnailUrl() != null ? input.thumbnailUrl() : course.getThumbnailUrl(),
                 course.isPublished(),
                 course.isPriceLocked(),
                 course.getPublishedAt(),
