@@ -22,7 +22,11 @@ public class CourseRepositoryImpl implements CourseRepository {
     private final CourseMapper courseMapper;
 
     private String normalizeKeyword(String keyword) {
-        return keyword == null ? "" : keyword.trim();
+        // Trả về null nếu keyword rỗng — để COALESCE(:keyword, '') = '' hoạt động đúng
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+        return keyword.trim();
     }
 
     private PageResult<Course> toPageResult(Page<CourseJpaEntity> entityPage) {
