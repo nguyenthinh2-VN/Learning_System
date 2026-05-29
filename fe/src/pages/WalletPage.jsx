@@ -1,14 +1,17 @@
 import '@/styles/brand.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import useWalletStore from '@/store/useWalletStore';
 import { useAuth } from '@/context/AuthContext';
+import { getTransactionsApi } from '@/api/wallet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DataTable } from '@/components/ui/data-table';
+import { transactionColumns } from '@/features/wallet/transactionColumns';
 import {
   Wallet,
   Plus,
-  ArrowUpCircle,
   CheckCircle2,
   AlertCircle,
   RefreshCw,
@@ -38,6 +41,40 @@ export default function WalletPage() {
   const [mockRef, setMockRef] = useState('');
   const [mockSuccess, setMockSuccess] = useState(null);
   const [initSuccess, setInitSuccess] = useState(false);
+
+  // ─── Lịch sử giao dịch ────────────────────────────────
+  const PAGE_SIZE = 10;
+  const [txData, setTxData] = useState({ items: [], totalPages: 0, totalElements: 0, page: 0 });
+  const [txLoading, setTxLoading] = useState(true);
+  const [txError, setTxError] = useState('');
+  const [txPage, setTxPage] = useState(0);
+
+  const loadTransactions = async (page) => {
+    setTxLoading(true);
+    setTxError('');
+    try {
+      const res = await getTransactionsApi(page, PAGE_SIZE);
+      setTxData(res.data.data);
+    } catch (e) {
+      setTxError(e?.response?.data?.message || 'Không tải được lịch sử giao dịch.');
+    } finally {
+      setTxLoading(false);
+    }
+  };
+
+  // Tải khi đổi trang
+  useEffect(() => {
+    loadTransactions(txPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [txPage]);
+
+  // Khi số dư đổi (WebSocket WALLET_UPDATED qua AuthContext) → làm mới trang đầu
+  useEffect(() => {
+    if (balance === null) return;
+    if (txPage === 0) loadTransactions(0);
+    else setTxPage(0); // về trang đầu, effect trên sẽ tải lại
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [balance]);
 
   const handleTopUp = async () => {
     const value = parseFloat(amount);
@@ -78,12 +115,12 @@ export default function WalletPage() {
         </p>
       </div>
 
-      {/* Balance Card — gradient xanh-tím, glassmorphism */}
+      {/* Balance Card — gradient emerald-teal-cyan (tông "tiền"), glassmorphism */}
       <div
         className="relative overflow-hidden rounded-2xl p-6"
         style={{
-          background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 60%, #4F46E5 100%)',
-          boxShadow: '0 8px 32px rgba(37, 99, 235, 0.35)',
+          background: 'linear-gradient(135deg, #059669 0%, #0D9488 55%, #0891B2 100%)',
+          boxShadow: '0 8px 32px rgba(13, 148, 136, 0.35)',
         }}
       >
         {/* Blob trang trí — hiệu ứng mờ xuyên */}
@@ -246,13 +283,76 @@ export default function WalletPage() {
         )}
       </div>
 
-      {/* Lich su giao dich placeholder */}
+      {/* Lich su giao dich */}
       <div className="space-y-3">
-        <h2 className="font-semibold">Lịch sử giao dịch</h2>
-        <div className="text-center py-12 border border-dashed rounded-xl text-sm text-muted-foreground">
-          <ArrowUpCircle className="size-8 mx-auto mb-2 opacity-20" />
-          Lịch sử giao dịch sẽ hiển thị ở đây.
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Lịch sử giao dịch</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadTransactions(txPage)}
+            disabled={txLoading}
+          >
+            <RefreshCw className={`size-4 mr-2 ${txLoading ? 'animate-spin' : ''}`} />
+            Làm mới
+          </Button>
         </div>
+
+        {txError ? (
+          <div className="flex items-center justify-between gap-2 text-sm px-4 py-3 rounded-lg bg-red-50 text-red-800 border border-red-200">
+            <span className="flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0 text-red-600" />
+              {txError}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => loadTransactions(txPage)}>
+              Thử lại
+            </Button>
+          </div>
+        ) : txLoading ? (
+          <div className="rounded-xl border p-4 space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="size-7 rounded-full" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <DataTable
+              columns={transactionColumns}
+              data={txData.items}
+              emptyMessage="Chưa có giao dịch nào."
+            />
+            {txData.totalPages > 1 && (
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs text-muted-foreground">
+                  Trang {txData.page + 1}/{txData.totalPages} · {txData.totalElements} giao dịch
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={txPage === 0}
+                    onClick={() => setTxPage((p) => Math.max(0, p - 1))}
+                  >
+                    Trước
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={txData.page + 1 >= txData.totalPages}
+                    onClick={() => setTxPage((p) => p + 1)}
+                  >
+                    Sau
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

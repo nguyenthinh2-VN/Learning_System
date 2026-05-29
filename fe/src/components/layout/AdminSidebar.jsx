@@ -83,10 +83,19 @@ export default function AdminSidebar() {
   const isInstructor = role === 'INSTRUCTOR';
   const canAccess = (item) => !item.roles || item.roles.includes(role);
 
-  const isActive = (url) =>
-    url === '/admin'
-      ? location.pathname === '/admin'
-      : location.pathname.startsWith(url);
+  // Tập hợp tất cả url nav mà role hiện tại thấy được
+  const allUrls = NAV_GROUPS
+    .flatMap((g) => g.items)
+    .filter(canAccess)
+    .map((i) => i.url);
+
+  // Chọn url khớp cụ thể nhất (dài nhất) với pathname hiện tại
+  const matchedUrl = (path) =>
+    allUrls
+      .filter((url) => path === url || path.startsWith(url + '/'))
+      .sort((a, b) => b.length - a.length)[0] ?? null;
+
+  const isActive = (url) => matchedUrl(location.pathname) === url;
 
   const handleLogout = () => {
     adminLogout();
@@ -159,8 +168,8 @@ export default function AdminSidebar() {
             >
               <div className={`flex aspect-square size-8 items-center justify-center rounded-full font-semibold text-xs border shrink-0 ${
                 isInstructor
-                  ? 'bg-gradient-to-br from-emerald-500/30 to-teal-500/30 text-emerald-200 border-emerald-500/30'
-                  : 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30 text-indigo-200 border-indigo-500/30'
+                  ? 'bg-gradient-to-br from-emerald-500/15 to-teal-500/15 text-emerald-700 border-emerald-500/30'
+                  : 'bg-gradient-to-br from-indigo-500/15 to-purple-500/15 text-indigo-700 border-indigo-500/30'
               }`}>
                 {adminUser?.name?.charAt(0)?.toUpperCase() || 'A'}
               </div>
@@ -168,7 +177,7 @@ export default function AdminSidebar() {
                 <span className="truncate font-semibold">{adminUser?.name}</span>
                 <span className="truncate text-xs text-muted-foreground">{adminUser?.email}</span>
                 <span className={`truncate text-[11px] mt-0.5 font-medium ${
-                  isInstructor ? 'text-emerald-400' : 'text-indigo-400'
+                  isInstructor ? 'text-emerald-600' : 'text-indigo-600'
                 }`}>
                   {ROLE_LABELS[role] || role}
                 </span>

@@ -100,4 +100,8 @@ export const deleteVoucherApi = (id) =>
 export const adminTopUpApi = (userId, data) =>
   adminApi.post(`/admin/users/${userId}/top-up`, data);
 
+// Cộng tiền theo username HOẶC email (ô nhập 1 dòng)
+export const adminTopUpByIdentifierApi = (data) =>
+  adminApi.post('/admin/users/top-up', data); // { identifier, amount, note }
+
 export default adminApi;

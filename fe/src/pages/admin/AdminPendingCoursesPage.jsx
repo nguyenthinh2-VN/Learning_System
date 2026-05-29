@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { getPendingCoursesApi, publishCourseApi } from '@/api/adminApi';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
-  CheckCircle2, XCircle, Loader2, RefreshCw, ExternalLink,
+  CheckCircle2, XCircle, Loader2, RefreshCw, Eye,
 } from 'lucide-react';
 
 function formatMoney(amount) {
@@ -16,6 +17,7 @@ function formatMoney(amount) {
 
 export default function AdminPendingCoursesPage() {
   const { adminUser } = useAuth();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -101,8 +103,8 @@ export default function AdminPendingCoursesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Button size="sm" variant="outline" onClick={() => window.open(`/courses/${course.id}`, '_blank')}>
-                      <ExternalLink className="size-3 mr-1" />Xem trước
+                    <Button size="sm" variant="outline" onClick={() => navigate(`/admin/courses/${course.id}/preview`)}>
+                      <Eye className="size-3 mr-1" />Xem trước
                     </Button>
                     <Button
                       size="sm"

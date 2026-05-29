@@ -57,6 +57,7 @@ export function AuthProvider({ children }) {
         name: data.name,
         role: data.role,
         isInternal: data.isInternal,
+        avatarUrl: data.avatarUrl ?? null,
       };
       localStorage.setItem(PUBLIC_USER_KEY, JSON.stringify(userData));
       setPublicUser(userData);

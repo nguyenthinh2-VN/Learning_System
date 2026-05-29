@@ -7,6 +7,7 @@ import com.example.learning_system_spring.application.repository.Course.Enrollme
 import com.example.learning_system_spring.application.repository.User.UserRepository;
 import com.example.learning_system_spring.application.repository.Voucher.VoucherRepository;
 import com.example.learning_system_spring.application.repository.Voucher.VoucherUsageRepository;
+import com.example.learning_system_spring.application.repository.Wallet.WalletTransactionRepository;
 import com.example.learning_system_spring.domain.exception.AlreadyEnrolledException;
 import com.example.learning_system_spring.domain.exception.CourseNotFoundException;
 import com.example.learning_system_spring.domain.exception.CourseNotPublishedException;
@@ -20,6 +21,7 @@ import com.example.learning_system_spring.domain.model.User;
 import com.example.learning_system_spring.domain.model.Voucher.PriceQuote;
 import com.example.learning_system_spring.domain.model.Voucher.Voucher;
 import com.example.learning_system_spring.domain.model.Voucher.VoucherUsage;
+import com.example.learning_system_spring.domain.model.Wallet.WalletTransaction;
 import com.example.learning_system_spring.domain.service.PricingEngine;
 import com.example.learning_system_spring.domain.service.VoucherValidator;
 import com.example.learning_system_spring.infrastructure.service.PurchaseLedgerService;
@@ -52,6 +54,7 @@ public class ApplyVoucherCheckoutUseCase {
     private final EnrollmentRepository enrollmentRepository;
     private final VoucherRepository voucherRepository;
     private final VoucherUsageRepository voucherUsageRepository;
+    private final WalletTransactionRepository walletTransactionRepository;
     private final PricingEngine pricingEngine;
     private final VoucherValidator voucherValidator;
     private final PurchaseLedgerService purchaseLedgerService;
@@ -133,6 +136,10 @@ public class ApplyVoucherCheckoutUseCase {
         Enrollment enrollment = enrollmentRepository.save(
                 Enrollment.create(input.requesterId(), input.courseId(), paidPrice));
 
+        walletTransactionRepository.save(
+                WalletTransaction.createPurchase(input.requesterId(), paidPrice,
+                        "Mua khóa học #" + input.courseId()));
+
         purchaseLedgerService.logPurchase(input.requesterId(), input.courseId(), paidPrice,
                 enrollment.getEnrolledAt());
 
@@ -177,6 +184,12 @@ public class ApplyVoucherCheckoutUseCase {
                 locked.getId(), input.requesterId(), input.courseId(), enrollment.getId(),
                 quote.originalPrice(), quote.discountAmount(), quote.finalPrice());
         voucherUsageRepository.save(usage);
+
+        if (paidPrice.signum() > 0) {
+            walletTransactionRepository.save(
+                    WalletTransaction.createPurchase(input.requesterId(), paidPrice,
+                            "Mua khóa học #" + input.courseId() + " (voucher " + locked.getCode() + ")"));
+        }
 
         purchaseLedgerService.logVoucherApplied(input.requesterId(), input.courseId(), locked.getId(),
                 locked.getCode(), quote.originalPrice(), quote.discountAmount(), quote.finalPrice(),

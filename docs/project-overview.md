@@ -23,7 +23,7 @@ Quy tắc kiến trúc chi tiết: `.claude/rules/spring-clean-architecture.md`
 
 | # | Tính năng | Endpoints | Chi tiết |
 |---|-----------|-----------|---------|
-| 2.1 | Auth & User Management | 3 | `docs/api-docs.md` §1 |
+| 2.1 | Auth & User Management | 4 | `docs/api-docs.md` §1, §17 |
 | 2.2 | Roles & Permissions (RBAC) | — | `docs/permission-matrix.md` |
 | 2.3 | Course Management (CRUD) | 6 | `docs/api-docs.md` §6–7 |
 | 2.4 | Course Approval & Visibility | 7 | `docs/api-docs.md` §10 |
@@ -33,8 +33,11 @@ Quy tắc kiến trúc chi tiết: `.claude/rules/spring-clean-architecture.md`
 | 2.8 | Wallet Top-up + WebSocket | 4 | `docs/api-docs.md` §14 |
 | 2.9 | My Enrollments | 1 | `docs/api-docs.md` §15 |
 | 2.10 | Lesson Access Control | — | Kiểm tra enrollment trước khi trả `contentUrl` |
+| 2.11 | User Profile & Wallet Balance | 1 | `docs/api-docs.md` §16 |
+| 2.12 | Admin User Listing | 1 | `docs/api-docs.md` §17 |
+| 2.13 | Course `thumbnailUrl` | — | `docs/api-docs.md` §18 |
 
-**Tổng: ~35 endpoints.** Xem đầy đủ tại `docs/api-docs.md`.
+**Tổng: ~36 endpoints.** Xem đầy đủ tại `docs/api-docs.md`.
 
 ---
 
@@ -59,6 +62,11 @@ Quy tắc kiến trúc chi tiết: `.claude/rules/spring-clean-architecture.md`
 - Mọi API tài chính dùng `@Lock(LockModeType.PESSIMISTIC_WRITE)`.
 - `wallet_transactions` có UNIQUE `reference_code` — idempotent webhook.
 
+### 3.5. User Profile & Admin User Listing
+- `GET /api/v1/users/me/profile` — trả thông tin cá nhân + `balance` cho FE hiển thị header/navbar; kết hợp WebSocket `/user/queue/wallet` để cập nhật số dư realtime.
+- `GET /api/v1/admin/users` — listing user có phân trang + tìm kiếm (keyword theo tên/email), gate bằng `@PreAuthorize("hasAnyRole('ADMIN_USER','SUPER_ADMIN')")`.
+- Tạo user (`POST /api/v1/admin/users`) gate bằng role `ADMIN_USER`, `SUPER_ADMIN`, `STAFF`.
+
 ---
 
 ## 4. Database Schema
@@ -68,8 +76,8 @@ Chi tiết cột và index: `docs/architecture-directory-tree.md`
 | Bảng | Mô tả |
 |------|-------|
 | `users` | Tài khoản, `balance`, `is_internal` |
-| `roles` / `permissions` / `role_permissions` | RBAC n-n, 19 permissions seed sẵn |
-| `courses` | + 4 cột approval: `published`, `price_locked`, `published_at`, `published_by` |
+| `roles` / `permissions` / `role_permissions` | RBAC n-n, 18 permissions seed sẵn (+ `CREATE_USER` định nghĩa trong matrix nhưng chưa seed) |
+| `courses` | + 4 cột approval: `published`, `price_locked`, `published_at`, `published_by`; + `thumbnail_url` (ảnh bìa) |
 | `course_sections` | Chương học, `order_index` |
 | `course_lessons` | Bài giảng, `content_url`, `order_index` |
 | `enrollments` | Lịch sử mua: `user_id`, `course_id`, `paid_price`, `enrolled_at` |
@@ -123,13 +131,16 @@ SQL migration mới nhất: `docs/sql/wallet_transactions.sql`
 
 ---
 
-## 8. Trạng thái hiện tại (2026-05-26)
+## 8. Trạng thái hiện tại (2026-05-28)
 
-**Đã hoàn thiện trong session hôm nay:**
+**Đã hoàn thiện:**
 - Wallet Top-up (Mock gateway + WebSocket push)
 - Admin top-up endpoint
 - My Enrollments (`GET /api/v1/users/me/enrollments`)
 - Lesson access control (MEMBER phải enrolled mới xem được)
+- User Profile + số dư ví (`GET /api/v1/users/me/profile`)
+- Admin liệt kê người dùng (`GET /api/v1/admin/users` — phân trang + tìm kiếm)
+- Course `thumbnailUrl` (ảnh bìa khóa học)
 
 **Chưa làm (next steps):**
 - Ghép VietQR thật (chỉ cần thêm `VietQrGateway` + `VietQrWebhookController`)
@@ -137,4 +148,4 @@ SQL migration mới nhất: `docs/sql/wallet_transactions.sql`
 - Progress tracking
 - Notification system
 
-Chi tiết thay đổi hôm nay: `docs/changelog.md`
+Chi tiết thay đổi: `docs/changelog.md`

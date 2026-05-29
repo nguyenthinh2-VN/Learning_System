@@ -19,11 +19,11 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="dark bg-background text-foreground">
+    <div className="bg-slate-50 text-foreground">
       <TooltipProvider>
         <SidebarProvider>
           <AdminSidebar />
-          <SidebarInset className="bg-background">
+          <SidebarInset className="bg-slate-50">
             <Outlet />
           </SidebarInset>
         </SidebarProvider>

@@ -3,3 +3,7 @@
 {"event":"VOUCHER_APPLIED","userId":2,"courseId":1,"voucherId":1,"voucherCode":"WELCOME50","originalPrice":500000.00,"discountAmount":200000.00,"finalPrice":300000.00,"enrollmentId":1,"appliedAt":"2026-05-25T13:49:18.178244200"}
 {"event":"PURCHASE_COMPLETED","userId":9,"courseId":1,"paidPrice":0,"timestamp":"2026-05-27T17:00:23.700348600"}
 {"event":"VOUCHER_APPLIED","userId":10,"courseId":1,"voucherId":1,"voucherCode":"WELCOME20","originalPrice":500000.00,"discountAmount":100000.00,"finalPrice":400000.00,"enrollmentId":4,"appliedAt":"2026-05-28T09:18:49.849852600"}
+{"event":"PURCHASE_COMPLETED","userId":2,"courseId":1,"paidPrice":500000.00,"timestamp":"2026-05-29T10:28:30.051465200"}
+{"event":"PURCHASE_COMPLETED","userId":6,"courseId":3,"paidPrice":200000.00,"timestamp":"2026-05-29T11:49:06.131217200"}
+{"event":"PURCHASE_COMPLETED","userId":6,"courseId":1,"paidPrice":500000.00,"timestamp":"2026-05-29T11:49:19.644678600"}
+{"event":"PURCHASE_COMPLETED","userId":6,"courseId":2,"paidPrice":10000.00,"timestamp":"2026-05-29T19:24:17.794949400"}

@@ -26,7 +26,7 @@ Danh sách các vai trò (Roles) trong hệ thống:
 | 8 | `CREATE_LESSON` | Tạo bài giảng trong chương học | [ ] | [x] | [x] | [ ] | [x] |
 | 9 | `EDIT_LESSON` | Sửa / Xóa bài giảng | [ ] | [x] | [x] | [ ] | [x] |
 | 10 | `VIEW_USER` | Xem thông tin người dùng | [ ] | [ ] | [ ] | [x] | [x] |
-| 11 | `CREATE_USER` | Cấp tài khoản mới (Nội bộ/Ngoài) | [ ] | [ ] | [ ] | [x] | [x] |
+| 11 | `CREATE_USER` ⚠️ | Cấp tài khoản mới (Nội bộ/Ngoài) | [ ] | [ ] | [ ] | [x] | [x] |
 | 12 | `EDIT_USER` | Chỉnh sửa thông tin người dùng | [ ] | [ ] | [ ] | [x] | [x] |
 | 13 | `DELETE_USER` | Xóa người dùng | [ ] | [ ] | [ ] | [ ] | [x] |
 | 14 | `MANAGE_ROLE` | Quản lý vai trò và phân quyền | [ ] | [ ] | [ ] | [ ] | [x] |
@@ -37,6 +37,8 @@ Danh sách các vai trò (Roles) trong hệ thống:
 | 19 | `USE_VOUCHER` | Áp dụng voucher khi quote / mua khóa học | [x] | [ ] | [ ] | [ ] | [x] |
 
 > Lưu ý phân quyền:
+> - ⚠️ `CREATE_USER` (#11) là **permission dự kiến** — hiện CHƯA được seed trong DB (`DataInitializer` chỉ seed 18 permissions, không bao gồm `CREATE_USER`). Endpoint tạo tài khoản `POST /api/v1/admin/users` hiện được bảo vệ bằng **role gate** `@PreAuthorize("hasAnyRole('ADMIN_USER','SUPER_ADMIN','STAFF')")` chứ không kiểm tra permission này. Vì là role-gate nên trên thực tế **STAFF cũng tạo được tài khoản** (rộng hơn ma trận `CREATE_USER` ở trên). Khi nào enforce `CREATE_USER` qua permission thật thì cần seed nó vào DB và đồng bộ lại danh sách role được phép.
+> - Hệ thống hiện **chưa enforce authorization qua từng permission** (`hasAuthority(...)`); phân quyền thực tế chạy bằng `@PreAuthorize("hasAnyRole(...)")` + domain policy (`CourseOwnershipPolicy`, `LessonAuthorizationService`, ...). Bảng `permissions` mang tính tài liệu / để dành cho việc enforce sau này.
 > - `INSTRUCTOR` không có `PUBLISH_COURSE` — phải nhờ STAFF/SUPER_ADMIN duyệt course mới publish được.
 > - `INSTRUCTOR` cũng không có `LOCK_COURSE_PRICE` — sau khi course được publish, giá bị khóa, INSTRUCTOR phải nhờ admin sửa giá.
 > - Chỉ `MEMBER` (External / Internal) và `SUPER_ADMIN` có `USE_VOUCHER`. INSTRUCTOR / STAFF / ADMIN_USER không có vì họ không phải đối tượng mua khóa học.
@@ -70,7 +72,7 @@ SELECT * FROM roles;
 -- Bảng users (đã có trường is_internal)
 -- is_internal BOOLEAN DEFAULT FALSE;
 
--- Bảng permissions (19 permissions đã seed)
+-- Bảng permissions (18 permissions đã seed — CREATE_USER CHƯA seed, xem ghi chú ⚠️)
 SELECT * FROM permissions ORDER BY id;
 -- 1  | VIEW_COURSE         | Xem khóa học
 -- 2  | ENROLL_COURSE       | Đăng ký khóa học
@@ -82,15 +84,15 @@ SELECT * FROM permissions ORDER BY id;
 -- 8  | CREATE_LESSON       | Tạo bài giảng trong chương học
 -- 9  | EDIT_LESSON         | Sửa / Xóa bài giảng
 -- 10 | VIEW_USER           | Xem thông tin người dùng
--- 11 | CREATE_USER         | Cấp tài khoản mới (Nội bộ/Ngoài)
--- 12 | EDIT_USER           | Chỉnh sửa thông tin người dùng
--- 13 | DELETE_USER         | Xóa người dùng
--- 14 | MANAGE_ROLE         | Quản lý vai trò và phân quyền
--- 15 | VIEW_REPORT         | Xem báo cáo thống kê
--- 16 | PUBLISH_COURSE      | Duyệt và publish khóa học
--- 17 | LOCK_COURSE_PRICE   | Khóa giá / sửa giá đã khóa
--- 18 | MANAGE_VOUCHER      | Tạo / sửa / xóa / xem voucher
--- 19 | USE_VOUCHER         | Áp dụng voucher khi mua khóa học
+-- (CREATE_USER          | Cấp tài khoản mới — ĐỊNH NGHĨA TRONG MATRIX NHƯNG CHƯA SEED)
+-- 11 | EDIT_USER           | Chỉnh sửa thông tin người dùng
+-- 12 | DELETE_USER         | Xóa người dùng
+-- 13 | MANAGE_ROLE         | Quản lý vai trò và phân quyền
+-- 14 | VIEW_REPORT         | Xem báo cáo thống kê
+-- 15 | PUBLISH_COURSE      | Duyệt và publish khóa học
+-- 16 | LOCK_COURSE_PRICE   | Khóa giá / sửa giá đã khóa
+-- 17 | MANAGE_VOUCHER      | Tạo / sửa / xóa / xem voucher
+-- 18 | USE_VOUCHER         | Áp dụng voucher khi mua khóa học
 
 -- Bảng role_permissions (junction table)
 SELECT r.name AS role, p.name AS permission

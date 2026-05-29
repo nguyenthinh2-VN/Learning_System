@@ -42,6 +42,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/courses/*").permitAll()
                         // WebSocket handshake endpoint
                         .requestMatchers("/ws/**").permitAll()
+                        // Ảnh tĩnh đã upload (avatar...) — công khai, không cần JWT
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         // Webhook endpoints — xác thực bằng secret header, không dùng JWT
                         .requestMatchers("/api/v1/webhook/**").permitAll()
                         .anyRequest().authenticated())

@@ -59,6 +59,25 @@ public class WalletTransaction {
         return tx;
     }
 
+    /** Tạo completed transaction cho giao dịch mua khóa học (tiền ra khỏi ví). */
+    public static WalletTransaction createPurchase(Long userId, BigDecimal amount, String note) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Số tiền mua phải lớn hơn 0");
+        }
+        WalletTransaction tx = new WalletTransaction();
+        tx.userId = userId;
+        tx.referenceCode = generateReferenceCode("BUY");
+        tx.amount = amount;
+        tx.status = TxStatus.COMPLETED;
+        tx.source = TxSource.PURCHASE;
+        tx.note = note;
+        tx.createdAt = LocalDateTime.now();
+        tx.completedAt = LocalDateTime.now();
+        // Purchase tx không cần expiredAt nhưng DB NOT NULL — đặt xa tương lai
+        tx.expiredAt = LocalDateTime.now().plusYears(100);
+        return tx;
+    }
+
     /** Reconstitute từ DB. */
     public static WalletTransaction reconstitute(Long id, Long userId, String referenceCode,
                                                   BigDecimal amount, TxStatus status, TxSource source,
@@ -101,9 +120,13 @@ public class WalletTransaction {
     }
 
     private static String generateReferenceCode() {
-        // "NAP" + 9 ký tự hex uppercase — đủ ngẫu nhiên, không đoán được
+        return generateReferenceCode("NAP");
+    }
+
+    private static String generateReferenceCode(String prefix) {
+        // prefix + 9 ký tự hex uppercase — đủ ngẫu nhiên, không đoán được
         String uuid = UUID.randomUUID().toString().replace("-", "").toUpperCase();
-        return "NAP" + uuid.substring(0, 9);
+        return prefix + uuid.substring(0, 9);
     }
 
     // Getters

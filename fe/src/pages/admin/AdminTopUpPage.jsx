@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { adminTopUpApi } from '@/api/adminApi';
+import { adminTopUpByIdentifierApi } from '@/api/adminApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Wallet, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 function formatMoney(amount) {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount ?? 0);
@@ -15,7 +15,7 @@ function formatMoney(amount) {
 
 export default function AdminTopUpPage() {
   const { adminUser } = useAuth();
-  const [form, setForm] = useState({ userId: '', amount: '', note: '' });
+  const [form, setForm] = useState({ identifier: '', amount: '', note: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
@@ -28,15 +28,15 @@ export default function AdminTopUpPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.userId || !form.amount) { setError('Vui lòng nhập ID người dùng và số tiền.'); return; }
+    if (!form.identifier.trim() || !form.amount) { setError('Vui lòng nhập username/email và số tiền.'); return; }
     const amount = parseFloat(form.amount);
     if (amount <= 0) { setError('Số tiền phải lớn hơn 0.'); return; }
 
     setLoading(true); setError(''); setResult(null);
     try {
-      const res = await adminTopUpApi(form.userId, { amount, note: form.note || undefined });
+      const res = await adminTopUpByIdentifierApi({ identifier: form.identifier.trim(), amount, note: form.note || undefined });
       setResult(res.data.data || res.data);
-      setForm({ userId: '', amount: '', note: '' });
+      setForm({ identifier: '', amount: '', note: '' });
     } catch (err) { setError(err?.response?.data?.message || 'Cộng tiền thất bại.'); }
     finally { setLoading(false); }
   };
@@ -68,9 +68,9 @@ export default function AdminTopUpPage() {
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="topup-userId">ID người dùng *</Label>
-                <Input id="topup-userId" name="userId" type="number" value={form.userId} onChange={handleChange} placeholder="VD: 5" min={1} />
-                <p className="text-xs text-muted-foreground">Nhập ID của người dùng cần cộng tiền</p>
+                <Label htmlFor="topup-identifier">Username hoặc Email *</Label>
+                <Input id="topup-identifier" name="identifier" type="text" value={form.identifier} onChange={handleChange} placeholder="VD: MEM2B4A1D hoặc user@example.com" />
+                <p className="text-xs text-muted-foreground">Nhập username hoặc email của người dùng cần cộng tiền</p>
               </div>
 
               <div className="space-y-1.5">

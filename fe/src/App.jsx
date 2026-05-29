@@ -18,6 +18,7 @@ import AdminOverviewPage from '@/pages/admin/AdminOverviewPage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminCoursesPage from '@/pages/admin/AdminCoursesPage';
 import AdminCourseContentPage from '@/pages/admin/AdminCourseContentPage';
+import AdminCoursePreviewPage from '@/pages/admin/AdminCoursePreviewPage';
 import AdminPendingCoursesPage from '@/pages/admin/AdminPendingCoursesPage';
 import AdminVouchersPage from '@/pages/admin/AdminVouchersPage';
 import AdminTopUpPage from '@/pages/admin/AdminTopUpPage';
@@ -65,6 +66,7 @@ function App() {
             <Route path="/admin/courses" element={<AdminCoursesPage />} />
             <Route path="/admin/courses/:id/content" element={<AdminCourseContentPage />} />
             <Route path="/admin/courses/pending" element={<AdminPendingCoursesPage />} />
+            <Route path="/admin/courses/:id/preview" element={<AdminCoursePreviewPage />} />
             <Route path="/admin/vouchers" element={<AdminVouchersPage />} />
             <Route path="/admin/wallet" element={<AdminTopUpPage />} />
           </Route>

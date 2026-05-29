@@ -1,8 +1,8 @@
 import '@/styles/brand.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { getProfileApi } from '@/api/wallet';
+import { getProfileApi, updateProfileApi, changePasswordApi, uploadAvatarApi } from '@/api/wallet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,9 +10,8 @@ import { Label } from '@/components/ui/label';
 import {
   User, Mail, Shield, Wallet, BookOpen,
   LogIn, RefreshCw, CheckCircle2, AlertCircle,
-  Pencil, X, Save, Lock,
+  Pencil, X, Save, Lock, Camera,
 } from 'lucide-react';
-import api from '@/api/auth';
 
 function formatBalance(amount) {
   if (amount === null || amount === undefined) return '---';
@@ -48,14 +47,10 @@ function EditNameModal({ currentName, onClose, onSaved }) {
     if (!name.trim()) { setError('Tên không được để trống.'); return; }
     setLoading(true);
     try {
-      // Gọi PUT /api/v1/users/me/profile (nếu BE có) hoặc dùng endpoint update name
-      // Hiện tại API docs chưa có endpoint update name → thông báo
-      await new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('API chưa hỗ trợ cập nhật tên. Vui lòng liên hệ admin.')), 300)
-      );
-      onSaved(name.trim());
+      const res = await updateProfileApi({ name: name.trim() });
+      onSaved(res.data.data);
     } catch (err) {
-      setError(err.message || 'Cập nhật thất bại.');
+      setError(err?.response?.data?.message || 'Cập nhật thất bại.');
     } finally { setLoading(false); }
   };
 
@@ -118,7 +113,7 @@ function ChangePasswordModal({ onClose }) {
     if (form.newPassword !== form.confirmPassword) { setError('Mật khẩu xác nhận không khớp.'); return; }
     setLoading(true);
     try {
-      await api.put('/users/me/password', {
+      await changePasswordApi({
         currentPassword: form.currentPassword,
         newPassword: form.newPassword,
       });
@@ -215,13 +210,16 @@ function InfoRow({ icon: Icon, label, value, mono = false, action }) {
 // ─── Main Page ────────────────────────────────────────────
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { isPublicAuthenticated } = useAuth();
+  const { isPublicAuthenticated, fetchProfile } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [showEditName, setShowEditName] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+  const fileInputRef = useRef(null);
 
   const loadProfile = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -235,6 +233,37 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB
+
+  const handleAvatarSelected = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // reset để chọn lại cùng file vẫn trigger
+    if (!file) return;
+
+    setAvatarError('');
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      setAvatarError('Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.');
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      setAvatarError('Ảnh vượt quá 2MB. Vui lòng chọn ảnh nhỏ hơn.');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const res = await uploadAvatarApi(file);
+      setProfile(res.data.data);
+      // Đồng bộ context để sidebar/header tự cập nhật avatar ngay (không cần F5)
+      fetchProfile();
+    } catch (err) {
+      setAvatarError(err?.response?.data?.message || 'Tải ảnh lên thất bại.');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -306,11 +335,45 @@ export default function ProfilePage() {
         >
           <div className="flex items-center gap-5">
             {/* Avatar */}
-            <div
-              className="size-20 rounded-full flex items-center justify-center text-3xl font-extrabold text-white shrink-0 shadow-lg"
-              style={{ background: 'var(--brand-gradient-btn)' }}
-            >
-              {profile.name?.charAt(0)?.toUpperCase() || 'U'}
+            <div className="relative shrink-0">
+              {profile.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={profile.name}
+                  className="size-20 rounded-full object-cover shadow-lg bg-white"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                />
+              ) : null}
+              <div
+                className="size-20 rounded-full items-center justify-center text-3xl font-extrabold text-white shadow-lg"
+                style={{
+                  background: 'var(--brand-gradient-btn)',
+                  display: profile.avatarUrl ? 'none' : 'flex',
+                }}
+              >
+                {profile.name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+
+              {/* Upload overlay button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                title="Đổi ảnh đại diện"
+                className="absolute -bottom-1 -right-1 size-8 rounded-full flex items-center justify-center shadow-md border-2 border-white transition-transform hover:scale-105 disabled:opacity-70"
+                style={{ background: 'var(--brand-primary)' }}
+              >
+                {uploadingAvatar
+                  ? <RefreshCw className="size-4 text-white animate-spin" />
+                  : <Camera className="size-4 text-white" />}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarSelected}
+              />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -338,7 +401,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 {roleColor && (
                   <span
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border leading-none"
                     style={{ background: roleColor.bg, color: roleColor.text, borderColor: roleColor.border }}
                   >
                     {ROLE_LABELS[profile.role] || profile.role}
@@ -346,8 +409,8 @@ export default function ProfilePage() {
                 )}
                 {profile.isInternal && (
                   <span
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border"
-                    style={{ background: '#EFF6FF', color: '#2563EB', borderColor: '#BFDBFE' }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border leading-none"
+                    style={{ background: '#ECFDF5', color: '#FF0000', borderColor: '#A7F3D0' }}
                   >
                     <CheckCircle2 className="size-3" />Nội bộ
                   </span>
@@ -355,6 +418,13 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Avatar upload error / hint */}
+      {avatarError && (
+        <div className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg bg-red-50 text-red-600 border border-red-200">
+          <AlertCircle className="size-4 shrink-0" /><span>{avatarError}</span>
         </div>
       )}
 
@@ -464,8 +534,10 @@ export default function ProfilePage() {
         <EditNameModal
           currentName={profile?.name}
           onClose={() => setShowEditName(false)}
-          onSaved={(newName) => {
-            setProfile((p) => ({ ...p, name: newName }));
+          onSaved={(updatedProfile) => {
+            setProfile((p) => ({ ...p, ...updatedProfile }));
+            // Đồng bộ context để sidebar/header cập nhật tên ngay
+            fetchProfile();
             setShowEditName(false);
           }}
         />

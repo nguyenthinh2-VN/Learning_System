@@ -1,8 +1,9 @@
-package com.example.learning_system_spring.application.usecase.User;
+package com.example.learning_system_spring.application.usecase.user;
 
 import com.example.learning_system_spring.application.dto.PageResult;
 import com.example.learning_system_spring.application.dto.User.MyEnrollmentOutput;
 import com.example.learning_system_spring.application.repository.Course.EnrollmentRepository;
+import com.example.learning_system_spring.application.usecase.User.GetMyEnrollmentsUseCase;
 import com.example.learning_system_spring.domain.model.Enrollment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

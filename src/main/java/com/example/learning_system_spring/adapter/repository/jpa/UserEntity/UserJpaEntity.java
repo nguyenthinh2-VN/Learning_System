@@ -43,6 +43,9 @@ public class UserJpaEntity {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -61,7 +64,7 @@ public class UserJpaEntity {
     }
 
     public User toDomain() {
-        return User.reconstitute(id, username, email, password, name, role.toDomain(), isInternal, balance, createdAt, updatedAt);
+        return User.reconstitute(id, username, email, password, name, role.toDomain(), isInternal, balance, avatarUrl, createdAt, updatedAt);
     }
 
     public static UserJpaEntity fromDomain(User user) {
@@ -74,6 +77,7 @@ public class UserJpaEntity {
         e.role = RoleJpaEntity.fromDomain(user.getRole());
         e.isInternal = user.isInternal();
         e.balance = user.getBalance();
+        e.avatarUrl = user.getAvatarUrl();
         e.createdAt = user.getCreatedAt();
         e.updatedAt = user.getUpdatedAt();
         return e;

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { quoteApi, purchaseApi } from '@/api/wallet';
 import useCourseDetailStore from '@/store/useCourseDetailStore';
-import useWalletStore from '@/store/useWalletStore';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,12 +27,21 @@ function formatMoney(amount) {
   }).format(amount);
 }
 
+// Số dư ví: null/undefined → '---' (tránh hiển thị "NaN đ")
+function formatBalance(amount) {
+  if (amount == null) return '---';
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export default function PurchaseConfirmPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { publicUser } = useAuth();
+  const { publicUser, balance, fetchProfile } = useAuth();
   const { currentCourse, fetchCourseDetail, cache } = useCourseDetailStore();
-  const { balance, deduct } = useWalletStore();
 
   const [voucherInput, setVoucherInput] = useState('');
   const [quote, setQuote] = useState(null);        // preview giá từ server
@@ -61,6 +69,14 @@ export default function PurchaseConfirmPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentCourse?.id]);
+
+  // Nạp số dư ví nếu chưa có (vd: mở tab trực tiếp / refresh)
+  useEffect(() => {
+    if (balance == null) {
+      fetchProfile();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleQuote = async (code) => {
     setQuoteLoading(true);
@@ -96,8 +112,8 @@ export default function PurchaseConfirmPage() {
         Number(id),
         quote?.voucherApplied ? voucherInput.trim().toUpperCase() : undefined
       );
-      const data = res.data.data;
-      deduct(data.paidPrice); // trừ balance local
+      void res;
+      await fetchProfile(); // đồng bộ lại số dư từ BE sau khi mua
       setPurchaseSuccess(true);
     } catch (err) {
       const msg = err?.response?.data?.message || 'Mua khóa học thất bại. Vui lòng thử lại.';
@@ -112,7 +128,7 @@ export default function PurchaseConfirmPage() {
   const originalPrice = quote?.originalPrice ?? course?.price ?? 0;
   const discountAmount = quote?.discountAmount ?? 0;
   const hasDiscount = discountAmount > 0;
-  const insufficientBalance = balance < finalPrice;
+  const insufficientBalance = balance != null && balance < finalPrice;
 
   // ── Success screen ────────────────────────────────────────────────────────
   if (purchaseSuccess) {
@@ -269,7 +285,7 @@ export default function PurchaseConfirmPage() {
         </div>
         <div className="text-right">
           <p className={`font-semibold text-sm ${insufficientBalance ? 'text-red-600' : ''}`}>
-            {formatMoney(balance)}
+            {formatBalance(balance)}
           </p>
           {insufficientBalance && (
             <p className="text-xs text-red-500 mt-0.5">

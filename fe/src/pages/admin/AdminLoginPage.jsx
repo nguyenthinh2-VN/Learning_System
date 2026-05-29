@@ -91,8 +91,8 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="dark">
-      <div className="h-screen flex items-center justify-center bg-background px-4">
+    <div>
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50 px-4">
         <div className="w-full max-w-sm">
           {/* Brand */}
           <div className="mb-8 text-center">

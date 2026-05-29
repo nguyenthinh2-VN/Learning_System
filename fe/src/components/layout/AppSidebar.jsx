@@ -219,8 +219,21 @@ export default function AppSidebar() {
                 className="h-auto py-2"
                 render={<Link to="/profile" />}
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-muted text-foreground font-semibold text-xs shrink-0">
-                  {publicUser?.name?.charAt(0)?.toUpperCase() || 'U'}
+                <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-muted text-foreground font-semibold text-xs shrink-0 overflow-hidden">
+                  {publicUser?.avatarUrl ? (
+                    <img
+                      src={publicUser.avatarUrl}
+                      alt={publicUser?.name || 'avatar'}
+                      className="size-full object-cover"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                    />
+                  ) : null}
+                  <span
+                    className="size-full items-center justify-center"
+                    style={{ display: publicUser?.avatarUrl ? 'none' : 'flex' }}
+                  >
+                    {publicUser?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
                 </div>
                 <div className="flex flex-col flex-1 text-left text-sm leading-tight min-w-0">
                   <span className="truncate font-semibold">{publicUser?.name}</span>

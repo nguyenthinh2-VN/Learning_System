@@ -56,4 +56,20 @@ public class AdminTopUpUseCase {
                 savedTx.getReferenceCode()
         );
     }
+
+    /**
+     * Cộng tiền theo username HOẶC email (ô nhập 1 dòng từ FE).
+     * Phân giải identifier ra user rồi tái dùng luồng cộng tiền theo id
+     * (đã có pessimistic lock + audit + tính idempotent referenceCode).
+     */
+    @Transactional
+    public AdminTopUpOutput execute(String identifier, BigDecimal amount, String note) {
+        if (identifier == null || identifier.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập username hoặc email");
+        }
+        String key = identifier.trim();
+        User resolved = userRepository.findByUsernameOrEmail(key, key)
+                .orElseThrow(() -> new UserNotFoundException(key));
+        return execute(resolved.getId(), amount, note);
+    }
 }

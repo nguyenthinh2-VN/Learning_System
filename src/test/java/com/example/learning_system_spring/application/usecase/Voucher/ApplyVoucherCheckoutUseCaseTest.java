@@ -69,6 +69,7 @@ class ApplyVoucherCheckoutUseCaseTest {
     @Mock private EnrollmentRepository enrollmentRepository;
     @Mock private VoucherRepository voucherRepository;
     @Mock private VoucherUsageRepository voucherUsageRepository;
+    @Mock private com.example.learning_system_spring.application.repository.Wallet.WalletTransactionRepository walletTransactionRepository;
     @Mock private PurchaseLedgerService purchaseLedgerService;
 
     private final PricingEngine pricingEngine = new PricingEngine();
@@ -84,6 +85,7 @@ class ApplyVoucherCheckoutUseCaseTest {
         useCase = new ApplyVoucherCheckoutUseCase(
                 userRepository, courseRepository, enrollmentRepository,
                 voucherRepository, voucherUsageRepository,
+                walletTransactionRepository,
                 pricingEngine, voucherValidator,
                 purchaseLedgerService);
     }
@@ -209,6 +211,8 @@ class ApplyVoucherCheckoutUseCaseTest {
             assertThat(out.finalPrice()).isEqualByComparingTo("0");
             assertThat(out.voucherApplied()).isFalse();
             verify(voucherUsageRepository, never()).save(any());
+            // paidPrice = 0 → KHÔNG ghi giao dịch ví
+            verify(walletTransactionRepository, never()).save(any());
         }
 
         @Test
@@ -280,6 +284,14 @@ class ApplyVoucherCheckoutUseCaseTest {
             assertThat(user.getBalance()).isEqualByComparingTo("500000");  // 1tr − 500k
             verify(voucherUsageRepository, never()).save(any());
             verify(purchaseLedgerService).logPurchase(eq(5L), eq(1L), any(), any());
+
+            // Ghi giao dịch tiền ra (PURCHASE) vào lịch sử ví
+            ArgumentCaptor<com.example.learning_system_spring.domain.model.Wallet.WalletTransaction> txCaptor =
+                    ArgumentCaptor.forClass(com.example.learning_system_spring.domain.model.Wallet.WalletTransaction.class);
+            verify(walletTransactionRepository).save(txCaptor.capture());
+            assertThat(txCaptor.getValue().getSource())
+                    .isEqualTo(com.example.learning_system_spring.domain.model.Wallet.TxSource.PURCHASE);
+            assertThat(txCaptor.getValue().getAmount()).isEqualByComparingTo("500000");
         }
 
         @Test

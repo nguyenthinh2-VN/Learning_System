@@ -38,3 +38,7 @@ npm-debug.log
 yarn-error.log
 .npm
 .yarn
+
+### Uploaded user files (avatars, ...) ###
+/uploads/
+uploads/

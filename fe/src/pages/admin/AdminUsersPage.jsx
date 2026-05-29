@@ -223,7 +223,7 @@ export default function AdminUsersPage() {
         </div>
 
         {successMsg && (
-          <div className="flex items-center gap-2 text-sm px-4 py-3 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <div className="flex items-center gap-2 text-sm px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
             <CheckCircle2 className="size-4" /><span>{successMsg}</span>
           </div>
         )}
@@ -257,7 +257,9 @@ export default function AdminUsersPage() {
               {users.map((user) => (
                 <div key={user.id} className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-muted/20 transition-colors">
                   <div className="col-span-1">
-                    <span className="text-xs text-muted-foreground font-mono">{user.id}</span>
+                    <span className="inline-flex items-center justify-center min-w-7 px-2 py-0.5 rounded-md text-xs font-semibold font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      {user.id}
+                    </span>
                   </div>
                   <div className="col-span-3">
                     <p className="text-sm font-medium truncate">{user.name}</p>
@@ -274,7 +276,7 @@ export default function AdminUsersPage() {
                   <div className="col-span-1">
                     <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                       user.isInternal
-                        ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30'
+                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                         : 'bg-muted text-muted-foreground'
                     }`}>
                       {user.isInternal ? 'Nội bộ' : 'Ngoài'}

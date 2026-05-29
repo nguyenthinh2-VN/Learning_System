@@ -1,6 +1,7 @@
 package com.example.learning_system_spring.adapter.controller;
 
 import com.example.learning_system_spring.adapter.dto.request.CreateUserRequest;
+import com.example.learning_system_spring.adapter.dto.request.Wallet.AdminTopUpByIdentifierRequest;
 import com.example.learning_system_spring.adapter.dto.request.Wallet.AdminTopUpRequest;
 import com.example.learning_system_spring.adapter.dto.response.ApiResponse;
 import com.example.learning_system_spring.adapter.dto.response.RegisterResponse;
@@ -12,10 +13,7 @@ import com.example.learning_system_spring.application.dto.Wallet.AdminTopUpOutpu
 import com.example.learning_system_spring.application.usecase.User.AdminCreateUserUseCase;
 import com.example.learning_system_spring.application.usecase.User.GetUsersUseCase;
 import com.example.learning_system_spring.application.usecase.Wallet.AdminTopUpUseCase;
-import com.example.learning_system_spring.infrastructure.config.JwtService;
 import com.example.learning_system_spring.infrastructure.service.WalletNotificationService;
-import io.jsonwebtoken.Claims;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +29,6 @@ public class AdminUserController {
     private final AdminTopUpUseCase adminTopUpUseCase;
     private final GetUsersUseCase getUsersUseCase;
     private final WalletNotificationService walletNotificationService;
-    private final JwtService jwtService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN_USER', 'SUPER_ADMIN')")
@@ -52,7 +49,7 @@ public class AdminUserController {
     }
 
     /**
-     * Admin cộng tiền thủ công cho user bất kỳ.
+     * Admin cộng tiền thủ công cho user bất kỳ (theo userId — giữ cho tương thích ngược).
      * Sau khi cộng tiền, push WebSocket event tới FE của user đó.
      */
     @PostMapping("/{userId}/top-up")
@@ -64,6 +61,31 @@ public class AdminUserController {
         AdminTopUpOutput output = adminTopUpUseCase.execute(userId, request.amount(), request.note());
 
         // Push WebSocket tới FE của user được cộng tiền
+        walletNotificationService.pushWalletUpdated(
+                output.username(),
+                output.userId(),
+                output.newBalance(),
+                output.addedAmount(),
+                "ADMIN",
+                output.referenceCode(),
+                output.note()
+        );
+
+        return ResponseEntity.ok(ApiResponse.success("Cộng tiền thành công", output));
+    }
+
+    /**
+     * Admin cộng tiền thủ công theo username HOẶC email (ô nhập 1 dòng — dễ nhớ hơn userId).
+     * Phân giải identifier ra user rồi cộng tiền. Push WebSocket sau khi cộng.
+     */
+    @PostMapping("/top-up")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<AdminTopUpOutput>> adminTopUpByIdentifier(
+            @Valid @RequestBody AdminTopUpByIdentifierRequest request) {
+
+        AdminTopUpOutput output = adminTopUpUseCase.execute(
+                request.identifier(), request.amount(), request.note());
+
         walletNotificationService.pushWalletUpdated(
                 output.username(),
                 output.userId(),

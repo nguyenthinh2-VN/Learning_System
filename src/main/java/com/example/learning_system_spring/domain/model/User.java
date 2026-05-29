@@ -18,6 +18,7 @@ public class User {
     private Role role;
     private boolean isInternal;
     private BigDecimal balance;
+    private String avatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -62,8 +63,53 @@ public class User {
         return user;
     }
 
+    /**
+     * Overload có avatarUrl — dùng khi tái dựng từ DB (UserJpaEntity).
+     * Overload cũ (không avatarUrl) giữ nguyên cho code/test hiện hữu; avatarUrl mặc định null.
+     */
+    public static User reconstitute(Long id, String username, String email, String password, String name,
+                                     Role role, boolean isInternal, BigDecimal balance, String avatarUrl,
+                                     LocalDateTime createdAt, LocalDateTime updatedAt) {
+        User user = reconstitute(id, username, email, password, name, role, isInternal, balance, createdAt, updatedAt);
+        user.avatarUrl = avatarUrl;
+        return user;
+    }
+
     public boolean passwordMatches(String rawPassword) {
         return this.password.equals(rawPassword);
+    }
+
+    /**
+     * Đổi họ tên hiển thị. Tên rỗng/trắng bị từ chối.
+     */
+    public void changeName(String newName) {
+        if (newName == null || newName.isBlank()) {
+            throw new IllegalArgumentException("Name must not be blank");
+        }
+        this.name = newName.trim();
+    }
+
+    /**
+     * Cập nhật avatar.
+     * - null  = giữ nguyên (no-op).
+     * - ""    = xóa avatar (về null).
+     * - chuỗi = set giá trị mới (đã trim).
+     */
+    public void changeAvatar(String newAvatarUrl) {
+        if (newAvatarUrl != null) {
+            this.avatarUrl = newAvatarUrl.isBlank() ? null : newAvatarUrl.trim();
+        }
+    }
+
+    /**
+     * Đặt lại mật khẩu. CHỈ nhận mật khẩu ĐÃ được encode ở tầng application.
+     * Domain không biết tới thuật toán hash (PasswordEncoder là hạ tầng).
+     */
+    public void changePassword(String newEncodedPassword) {
+        if (newEncodedPassword == null || newEncodedPassword.isBlank()) {
+            throw new IllegalArgumentException("Password must not be blank");
+        }
+        this.password = newEncodedPassword;
     }
 
     public void addBalance(BigDecimal amount) {
@@ -91,6 +137,7 @@ public class User {
     public Role getRole() { return role; }
     public boolean isInternal() { return isInternal; }
     public BigDecimal getBalance() { return balance; }
+    public String getAvatarUrl() { return avatarUrl; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

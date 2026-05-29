@@ -12,6 +12,10 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
 server:
   port: 8080
 logging:
@@ -40,3 +44,9 @@ wallet:
   topup:
     min-amount: 10000
     pending-ttl-minutes: 15
+
+# Local file storage (avatar, ...)
+storage:
+  local:
+    base-dir: ./uploads
+  public-base-url: http://localhost:8080

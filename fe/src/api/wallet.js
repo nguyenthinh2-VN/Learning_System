@@ -8,9 +8,43 @@ import api from './auth';
  * Lấy thông tin cá nhân + số dư ví
  * GET /api/v1/users/me/profile
  * Quyền: Đăng nhập (mọi role)
- * @returns {{ id, username, email, name, role, isInternal, balance }}
+ * @returns {{ id, username, email, name, role, isInternal, balance, avatarUrl }}
  */
 export const getProfileApi = () => api.get('/users/me/profile');
+
+/**
+ * Cập nhật thông tin cá nhân (name, avatarUrl)
+ * PUT /api/v1/users/me/profile
+ * Quyền: Đăng nhập — chỉ sửa của chính mình
+ * @param {{ name: string, avatarUrl?: string }} data
+ *   avatarUrl: null/undefined = giữ nguyên, "" = xóa avatar
+ */
+export const updateProfileApi = (data) =>
+  api.put('/users/me/profile', data);
+
+/**
+ * Đổi mật khẩu
+ * PUT /api/v1/users/me/password
+ * Quyền: Đăng nhập
+ * @param {{ currentPassword: string, newPassword: string }} data
+ */
+export const changePasswordApi = (data) =>
+  api.put('/users/me/password', data);
+
+/**
+ * Upload ảnh đại diện (multipart). Chỉ JPEG/PNG/WebP, tối đa 2MB.
+ * POST /api/v1/users/me/avatar
+ * Quyền: Đăng nhập
+ * @param {File} file
+ * @returns profile mới (kèm avatarUrl)
+ */
+export const uploadAvatarApi = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.post('/users/me/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
 
 // ═══════════════════════════════════════════
 // WALLET TOP-UP API (Section 14)
@@ -34,6 +68,17 @@ export const initTopUpApi = (amount) =>
  */
 export const mockWebhookApi = (referenceCode) =>
   api.post(`/webhook/mock?ref=${referenceCode}`);
+
+/**
+ * Lịch sử giao dịch ví của chính mình (phân trang, mới nhất trước)
+ * GET /api/v1/users/me/transactions?page&size
+ * Quyền: Đăng nhập
+ * @param {number} page - mặc định 0
+ * @param {number} size - mặc định 20, [1, 100]
+ * @returns PageResult<{ id, referenceCode, amount, direction, status, source, note, createdAt, completedAt }>
+ */
+export const getTransactionsApi = (page = 0, size = 20) =>
+  api.get('/users/me/transactions', { params: { page, size } });
 
 // ═══════════════════════════════════════════
 // PURCHASE API
