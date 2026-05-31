@@ -60,12 +60,19 @@ Base URL: `http://localhost:8080/api/v1`
 ### Enrollment — [enrollment.md](./enrollment.md)
 - `GET /api/v1/users/me/enrollments` - Danh sách khóa học đã mua (phân trang)
 
+### Lesson Progress — [progress.md](./progress.md)
+- `POST /api/v1/courses/{courseId}/lessons/{lessonId}/complete` - Đánh dấu lesson đã học
+- `DELETE /api/v1/courses/{courseId}/lessons/{lessonId}/complete` - Bỏ đánh dấu (học lại)
+- `GET /api/v1/courses/{courseId}/progress` - Tiến độ tổng quan (% hoàn thành)
+
 ### User Profile & Admin User Management — [user.md](./user.md)
 - `GET /api/v1/users/me/profile` - Thông tin cá nhân + số dư ví
 - `PUT /api/v1/users/me/profile` - Cập nhật `name` / `avatarUrl`
 - `PUT /api/v1/users/me/password` - Đổi mật khẩu
 - `POST /api/v1/users/me/avatar` - Upload ảnh đại diện (multipart, JPEG/PNG/WebP, ≤ 2MB)
 - `GET /api/v1/admin/users` - Danh sách users (phân trang, tìm kiếm)
+- `PUT /api/v1/admin/users/{id}` - Admin sửa `name` / `roleName` / `isInternal`
+- `PATCH /api/v1/admin/users/{id}/status` - Admin khóa / mở khóa tài khoản
 
 ---
 

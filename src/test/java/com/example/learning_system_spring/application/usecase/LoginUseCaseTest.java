@@ -4,6 +4,7 @@ import com.example.learning_system_spring.application.dto.Auth.LoginInput;
 import com.example.learning_system_spring.application.dto.Auth.LoginOutput;
 import com.example.learning_system_spring.application.repository.User.UserRepository;
 import com.example.learning_system_spring.application.usecase.Auth.LoginUseCase;
+import com.example.learning_system_spring.domain.exception.AccountDisabledException;
 import com.example.learning_system_spring.domain.exception.InvalidCredentialsException;
 import com.example.learning_system_spring.domain.model.Role;
 import com.example.learning_system_spring.domain.model.User;
@@ -85,5 +86,21 @@ class LoginUseCaseTest {
 
         // Act & Assert
         assertThrows(InvalidCredentialsException.class, () -> loginUseCase.execute(input));
+    }
+
+    @Test
+    void execute_DisabledAccount_ThrowsException() {
+        // Arrange
+        LoginInput input = new LoginInput("MEM123", "password");
+        Role memberRole = Role.reconstitute(1L, "MEMBER", "Học viên");
+        User user = User.reconstitute(1L, "MEM123", "user@test.com", "encodedPassword", "Test User",
+                memberRole, false, java.math.BigDecimal.ZERO, null, false,
+                LocalDateTime.now(), LocalDateTime.now());
+
+        when(userRepository.findByUsernameOrEmail("MEM123", "MEM123")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password", "encodedPassword")).thenReturn(true);
+
+        // Act & Assert — đúng mật khẩu nhưng tài khoản bị khóa
+        assertThrows(AccountDisabledException.class, () -> loginUseCase.execute(input));
     }
 }

@@ -11,6 +11,7 @@ public record UserListResponse(
         String name,
         String role,
         boolean isInternal,
+        boolean enabled,
         LocalDateTime createdAt
 ) {
     public static UserListResponse from(UserListOutput output) {
@@ -21,6 +22,7 @@ public record UserListResponse(
                 output.name(),
                 output.role(),
                 output.isInternal(),
+                output.enabled(),
                 output.createdAt()
         );
     }

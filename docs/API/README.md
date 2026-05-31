@@ -20,8 +20,9 @@ Tài liệu API được tách theo từng mục để dễ tra cứu và tránh
 | 8 | [voucher.md](./voucher.md) | Voucher Pricing & Management |
 | 9 | [enrollment.md](./enrollment.md) | My Enrollments & Lesson Access Control |
 | 10 | [user.md](./user.md) | User Profile, Admin User Management |
-| 11 | [testing.md](./testing.md) | Testing với Postman/Insomnia |
-| 12 | [endpoints-summary.md](./endpoints-summary.md) | Tổng kết toàn bộ endpoints |
+| 11 | [progress.md](./progress.md) | Lesson Progress (đánh dấu hoàn thành, % tiến độ) |
+| 12 | [testing.md](./testing.md) | Testing với Postman/Insomnia |
+| 13 | [endpoints-summary.md](./endpoints-summary.md) | Tổng kết toàn bộ endpoints |
 
 ---
 
@@ -47,6 +48,7 @@ Tất cả lỗi trả về format thống nhất:
 | 400 | `INVALID_FILE_TYPE` | Định dạng file upload không được hỗ trợ |
 | 400 | `FILE_TOO_LARGE` | File upload vượt quá kích thước cho phép |
 | 401 | `INVALID_CREDENTIALS` | Email hoặc mật khẩu sai |
+| 403 | `ACCOUNT_DISABLED` | Tài khoản đã bị khóa |
 | 404 | `USER_NOT_FOUND` | Không tìm thấy user |
 | 409 | `EMAIL_ALREADY_EXISTS` | Email đã được đăng ký |
 | 500 | `INTERNAL_ERROR` | Lỗi hệ thống |

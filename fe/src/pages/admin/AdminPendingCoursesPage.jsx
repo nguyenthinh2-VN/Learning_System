@@ -8,6 +8,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
   CheckCircle2, XCircle, Loader2, RefreshCw, Eye,
 } from 'lucide-react';
+import { getRoleTextClass } from '@/lib/roleColors';
 
 function formatMoney(amount) {
   return new Intl.NumberFormat('vi-VN', {
@@ -54,7 +55,7 @@ export default function AdminPendingCoursesPage() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <span className="text-sm font-medium">Chờ duyệt</span>
-        <span className="text-xs text-muted-foreground ml-auto">{adminUser?.name}</span>
+        <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
       <div className="p-6 max-w-6xl mx-auto space-y-6">

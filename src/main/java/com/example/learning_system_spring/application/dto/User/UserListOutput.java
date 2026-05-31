@@ -9,5 +9,6 @@ public record UserListOutput(
         String name,
         String role,
         boolean isInternal,
+        boolean enabled,
         LocalDateTime createdAt
 ) {}

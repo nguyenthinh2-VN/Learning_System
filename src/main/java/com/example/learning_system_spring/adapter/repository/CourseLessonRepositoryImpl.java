@@ -53,4 +53,14 @@ public class CourseLessonRepositoryImpl implements CourseLessonRepository {
     public boolean existsBySectionIdAndOrderIndex(Long sectionId, int orderIndex) {
         return jpaLessonRepository.existsBySectionIdAndOrderIndex(sectionId, orderIndex);
     }
+
+    @Override
+    public long countByCourseId(Long courseId) {
+        return jpaLessonRepository.countByCourseId(courseId);
+    }
+
+    @Override
+    public boolean existsByIdAndCourseId(Long lessonId, Long courseId) {
+        return jpaLessonRepository.existsByIdAndCourseId(lessonId, courseId);
+    }
 }

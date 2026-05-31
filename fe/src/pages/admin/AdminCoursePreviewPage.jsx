@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { getRoleTextClass } from '@/lib/roleColors';
 import {
   Users, BookOpen, ChevronDown, ArrowLeft, Calendar,
   PlayCircle, Loader2, CheckCircle2, Eye, Video,
@@ -91,7 +92,7 @@ export default function AdminCoursePreviewPage() {
         </button>
         <span className="text-muted-foreground">/</span>
         <span className="text-sm font-medium truncate max-w-xs">{course?.title || `Course #${id}`}</span>
-        <span className="text-xs text-muted-foreground ml-auto">{adminUser?.name}</span>
+        <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
       <div className="p-6 max-w-4xl mx-auto space-y-6">

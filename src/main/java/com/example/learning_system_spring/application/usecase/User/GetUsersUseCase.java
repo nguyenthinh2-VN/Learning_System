@@ -23,6 +23,7 @@ public class GetUsersUseCase {
                         user.getName(),
                         user.getRole().getName(),
                         user.isInternal(),
+                        user.isEnabled(),
                         user.getCreatedAt()
                 ));
     }

@@ -44,7 +44,75 @@ Danh sách các vai trò (Roles) trong hệ thống:
 > - Chỉ `MEMBER` (External / Internal) và `SUPER_ADMIN` có `USE_VOUCHER`. INSTRUCTOR / STAFF / ADMIN_USER không có vì họ không phải đối tượng mua khóa học.
 > - `MEMBER` Internal (`is_internal = TRUE`) được mua khóa học với giá 0đ, voucher bị bỏ qua khi mua. Chỉ External Member dùng voucher mới có ý nghĩa.
 
-## Quyền mở rộng (có thể thêm sau)
+## Ánh xạ Chức năng → Quyền sử dụng (theo endpoint thực tế)
+
+Bảng dưới liệt kê **quyền thực tế đang enforce** trên từng chức năng. Vì hệ thống hiện dùng **role-gate** (`@PreAuthorize("hasAnyRole(...)")`) + domain policy thay vì `hasAuthority(permission)`, cột "Cơ chế enforce" ghi rõ role nào được phép. Cột "Permission (matrix)" là permission khái niệm tương ứng ở bảng trên (mang tính tài liệu).
+
+### Auth & Tài khoản cá nhân (self-service)
+
+| Chức năng | Endpoint | Role được phép | Permission (matrix) | Ghi chú |
+|-----------|----------|----------------|---------------------|---------|
+| Đăng ký | `POST /api/v1/auth/register` | (public) | — | Tài khoản mới luôn là MEMBER |
+| Đăng nhập | `POST /api/v1/auth/login` | (public) | — | User bị khóa (`enabled = false`) → 403 `ACCOUNT_DISABLED` |
+| Xem thông tin cá nhân + số dư | `GET /api/v1/users/me/profile` | Mọi role đã đăng nhập | — | Chỉ trả về của chính mình (JWT `userId`) |
+| Sửa thông tin cá nhân (name, avatarUrl) | `PUT /api/v1/users/me/profile` | Mọi role đã đăng nhập | — | KHÔNG sửa được email/username/role/isInternal/balance |
+| Đổi mật khẩu | `PUT /api/v1/users/me/password` | Mọi role đã đăng nhập | — | Yêu cầu đúng `currentPassword` |
+| Upload ảnh đại diện | `POST /api/v1/users/me/avatar` | Mọi role đã đăng nhập | — | JPEG/PNG/WebP, ≤ 2MB |
+
+### Ví & Giao dịch
+
+| Chức năng | Endpoint | Role được phép | Permission (matrix) | Ghi chú |
+|-----------|----------|----------------|---------------------|---------|
+| Nạp tiền (legacy) | `POST /api/v1/users/me/top-up` | Mọi role đã đăng nhập | — | |
+| Khởi tạo nạp tiền (QR/mock) | `POST /api/v1/wallet/top-up/init` | Mọi role đã đăng nhập | — | |
+| Mock webhook (dev) | `POST /api/v1/webhook/mock` | (public, chỉ active khi `payment.provider=mock`) | — | |
+| Admin cộng tiền thủ công | `POST /api/v1/admin/users/{userId}/top-up`, `POST /api/v1/admin/users/top-up` | `SUPER_ADMIN` | — | |
+| Lịch sử giao dịch của tôi | `GET /api/v1/users/me/transactions` | Mọi role đã đăng nhập | — | Chỉ giao dịch của chính mình (CREDIT nạp + DEBIT mua) |
+| Mua khóa học | `POST /api/v1/courses/{id}/purchase` | Mọi role đã đăng nhập | `USE_VOUCHER` (khi gửi voucherCode) | Internal Member 0đ; INSTRUCTOR/STAFF/ADMIN_USER gửi voucher → 403 |
+| Quote giá (preview voucher) | `POST /api/v1/courses/{id}/quote` | MEMBER, SUPER_ADMIN (nếu gửi voucherCode) | `USE_VOUCHER` | |
+
+### Khóa học / Section / Lesson
+
+| Chức năng | Endpoint | Role được phép | Permission (matrix) | Ghi chú |
+|-----------|----------|----------------|---------------------|---------|
+| Xem danh sách / chi tiết course (public) | `GET /api/v1/courses`, `GET /api/v1/courses/{id}` | (public) | `VIEW_COURSE` | Chỉ trả course `published = true` |
+| Tạo khóa học | `POST /api/v1/courses` | INSTRUCTOR, STAFF, ADMIN_USER, SUPER_ADMIN | `CREATE_COURSE` | Mặc định ẩn, chờ duyệt |
+| Sửa khóa học | `PUT /api/v1/courses/{id}` | INSTRUCTOR (của mình), STAFF, ADMIN_USER, SUPER_ADMIN | `EDIT_COURSE` | INSTRUCTOR không sửa giá khi `priceLocked` (`COURSE_PRICE_LOCKED`) |
+| Xóa khóa học | `DELETE /api/v1/courses/{id}` | INSTRUCTOR (của mình), STAFF, ADMIN_USER, SUPER_ADMIN | `DELETE_COURSE` | |
+| Tạo / Sửa / Xóa Section | `.../sections` (POST/PUT/DELETE) | INSTRUCTOR (course của mình), STAFF, SUPER_ADMIN | `CREATE_SECTION`, `EDIT_SECTION` | ADMIN_USER KHÔNG có quyền |
+| Tạo / Sửa / Xóa Lesson | `.../lessons` (POST/PUT/DELETE) | INSTRUCTOR (course của mình), STAFF, SUPER_ADMIN | `CREATE_LESSON`, `EDIT_LESSON` | ADMIN_USER KHÔNG có quyền |
+| Xem lesson (nội dung trả phí) | `GET .../lessons` | SUPER_ADMIN, STAFF; INSTRUCTOR (chủ sở hữu); MEMBER (đã enrolled) | — | ADMIN_USER → 403; MEMBER chưa mua → 403 (`LESSON_ACCESS_DENIED`) |
+
+### Duyệt khóa học (Course Approval)
+
+| Chức năng | Endpoint | Role được phép | Permission (matrix) | Ghi chú |
+|-----------|----------|----------------|---------------------|---------|
+| Danh sách course chờ duyệt | `GET /api/v1/admin/courses/pending` | STAFF, SUPER_ADMIN | `PUBLISH_COURSE` | |
+| Toàn bộ course (admin) | `GET /api/v1/admin/courses` | STAFF, SUPER_ADMIN | `PUBLISH_COURSE` | |
+| Duyệt / Ẩn course | `POST .../publish`, `POST .../unpublish` | STAFF, SUPER_ADMIN | `PUBLISH_COURSE` | |
+| Sửa giá (kể cả priceLocked) | `PUT /api/v1/admin/courses/{id}/price` | STAFF, SUPER_ADMIN | `LOCK_COURSE_PRICE` | |
+| Course của Instructor (cả draft) | `GET /api/v1/instructor/courses`, `.../{id}` | INSTRUCTOR (của mình) | — | |
+
+### Quản trị người dùng (Admin)
+
+| Chức năng | Endpoint | Role được phép | Permission (matrix) | Ghi chú |
+|-----------|----------|----------------|---------------------|---------|
+| Danh sách users | `GET /api/v1/admin/users` | ADMIN_USER, SUPER_ADMIN | `VIEW_USER` | |
+| Tạo tài khoản | `POST /api/v1/admin/users` | ADMIN_USER, SUPER_ADMIN, **STAFF** | `CREATE_USER` ⚠️ | Role-gate rộng hơn matrix (STAFF tạo được) |
+| Sửa user (name, role, isInternal) | `PUT /api/v1/admin/users/{id}` | ADMIN_USER, SUPER_ADMIN | `EDIT_USER` | Không tự đổi role mình; ADMIN_USER không sửa SUPER_ADMIN |
+| Khóa / Mở khóa tài khoản | `PATCH /api/v1/admin/users/{id}/status` | ADMIN_USER, SUPER_ADMIN | `EDIT_USER` | Không tự khóa mình; ADMIN_USER không khóa SUPER_ADMIN |
+
+### Voucher (Admin)
+
+| Chức năng | Endpoint | Role được phép | Permission (matrix) | Ghi chú |
+|-----------|----------|----------------|---------------------|---------|
+| Tạo / Sửa / Xóa / Xem voucher | `/api/v1/admin/vouchers` (CRUD) | STAFF, SUPER_ADMIN | `MANAGE_VOUCHER` | |
+
+> Quy ước cột "Role được phép":
+> - "Mọi role đã đăng nhập" = endpoint thuộc nhánh `anyRequest().authenticated()`, không gắn role gate; chỉ cần JWT hợp lệ. Logic "chỉ của chính mình" được enforce trong use case bằng `userId` lấy từ JWT.
+> - "(của mình)" / "(chủ sở hữu)" / "(đã enrolled)" = role gate cho phép vào, nhưng domain policy (`CourseOwnershipPolicy`, `LessonAuthorizationService`) raise 403 nếu không thỏa điều kiện sở hữu / enrollment.
+
+
 
 Các quyền dưới đây có thể được thêm vào hệ thống sau này khi cần:
 

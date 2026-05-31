@@ -20,6 +20,7 @@ import {
   ChevronDown, ChevronRight, Plus, Pencil, Trash2, Loader2,
   Check, X, ArrowLeft, BookOpen, Video, AlertCircle, GripVertical,
 } from 'lucide-react';
+import { getRoleTextClass } from '@/lib/roleColors';
 
 // ─── Inline Edit Input ────────────────────────────────────
 function InlineEdit({ value, onSave, onCancel, placeholder = '' }) {
@@ -401,7 +402,7 @@ export default function AdminCourseContentPage() {
         </Link>
         <span className="text-muted-foreground">/</span>
         <span className="text-sm font-medium truncate max-w-xs">{course?.title || `Course #${courseId}`}</span>
-        <span className="text-xs text-muted-foreground ml-auto">{adminUser?.name}</span>
+        <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
       <div className="p-6 max-w-4xl mx-auto space-y-6">

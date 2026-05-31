@@ -16,4 +16,10 @@ interface JpaCourseLessonRepository extends JpaRepository<CourseLessonJpaEntity,
     
     @Query("SELECT COUNT(l) > 0 FROM CourseLessonJpaEntity l WHERE l.section.id = :sectionId AND l.orderIndex = :orderIndex")
     boolean existsBySectionIdAndOrderIndex(@Param("sectionId") Long sectionId, @Param("orderIndex") int orderIndex);
+
+    @Query("SELECT COUNT(l) FROM CourseLessonJpaEntity l WHERE l.section.course.id = :courseId")
+    long countByCourseId(@Param("courseId") Long courseId);
+
+    @Query("SELECT COUNT(l) > 0 FROM CourseLessonJpaEntity l WHERE l.id = :lessonId AND l.section.course.id = :courseId")
+    boolean existsByIdAndCourseId(@Param("lessonId") Long lessonId, @Param("courseId") Long courseId);
 }

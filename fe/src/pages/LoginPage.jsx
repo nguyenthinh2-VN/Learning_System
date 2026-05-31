@@ -23,6 +23,12 @@ export default function LoginPage() {
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Thông báo khi bị đẩy về do token hết hạn (?expired=1)
+  const expired = new URLSearchParams(window.location.search).get('expired') === '1';
+  const [notice, setNotice] = useState(
+    expired ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.' : ''
+  );
+
   const validate = () => {
     const errs = {};
     if (!form.identifier.trim()) errs.identifier = 'Vui lòng nhập email hoặc tên đăng nhập.';
@@ -35,6 +41,7 @@ export default function LoginPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
     setApiError('');
+    setNotice('');
   };
 
   const handleSubmit = async (e) => {
@@ -66,15 +73,10 @@ export default function LoginPage() {
       // Gọi profile API để lấy balance ngay sau khi có token
       await fetchProfile();
 
-      // Redirect theo role
-      const role = data.role;
-      if (role === 'INSTRUCTOR') {
-        navigate('/instructor');
-      } else if (['STAFF', 'ADMIN_USER', 'SUPER_ADMIN'].includes(role)) {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      // Đăng nhập ở website public → quay lại trang trước đó (nếu bị đẩy ra do hết hạn)
+      // hoặc về trang chủ. Mọi role đều có thể duyệt website học viên.
+      const redirect = new URLSearchParams(window.location.search).get('redirect');
+      navigate(redirect ? decodeURIComponent(redirect) : '/');
     } catch (err) {
       const msg = err?.response?.data?.message;
       if (err?.response?.status === 401) {
@@ -107,6 +109,16 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} noValidate>
             <CardContent className="space-y-4">
+              {/* Session expired / info notice */}
+              {notice && (
+                <div
+                  role="status"
+                  className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2"
+                >
+                  {notice}
+                </div>
+              )}
+
               {/* API Error */}
               {apiError && (
                 <div

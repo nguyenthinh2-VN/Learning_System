@@ -278,6 +278,7 @@ curl -X POST http://localhost:8080/api/v1/users/me/avatar \
         "name": "Nguyễn Văn A",
         "role": "MEMBER",
         "isInternal": false,
+        "enabled": true,
         "createdAt": "2026-05-15T15:30:00"
       }
     ]
@@ -286,8 +287,141 @@ curl -X POST http://localhost:8080/api/v1/users/me/avatar \
 }
 ```
 
+> `enabled = false` nghĩa là tài khoản đã bị khóa (không đăng nhập được).
+
 ---
 
 ### 17.2. Tạo tài khoản (Admin/Staff)
 
 Đã mô tả tại [auth.md](./auth.md) mục 1.3 (`POST /api/v1/admin/users`).
+
+---
+
+### 17.3. Cập nhật thông tin người dùng (Admin)
+
+**Endpoint:** `PUT /api/v1/admin/users/{id}`
+
+**Yêu cầu quyền:** Role `ADMIN_USER` hoặc `SUPER_ADMIN`.
+
+Cho phép admin sửa `name`, `roleName`, `isInternal` của một user. Các field `null` = giữ nguyên giá trị cũ.
+
+> **Không** sửa được `email` / `username` (định danh đăng nhập) và `balance` (dùng luồng top-up) qua endpoint này.
+
+**Request Body:**
+```json
+{
+  "name": "Tên mới",
+  "roleName": "INSTRUCTOR",
+  "isInternal": true
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| name | String | No | 1–200 ký tự; null = giữ nguyên |
+| roleName | String | No | Tên Role hợp lệ (MEMBER, INSTRUCTOR, STAFF, ADMIN_USER, SUPER_ADMIN); null = giữ nguyên |
+| isInternal | Boolean | No | null = giữ nguyên |
+
+**Response 200:**
+```json
+{
+  "status": 200,
+  "message": "Cập nhật người dùng thành công",
+  "data": {
+    "id": 10,
+    "username": "GV7F81A2",
+    "email": "gv@example.com",
+    "name": "Tên mới",
+    "role": "INSTRUCTOR",
+    "isInternal": true,
+    "enabled": true,
+    "createdAt": "2026-05-18T10:30:00"
+  },
+  "timestamp": "2026-05-30T10:00:00"
+}
+```
+
+**Quy tắc bảo mật:**
+- Admin **không** được tự đổi vai trò của chính mình → `400 BAD_REQUEST`.
+- `ADMIN_USER` **không** được chỉnh sửa tài khoản `SUPER_ADMIN` → `400 BAD_REQUEST`.
+
+**Response 404 (User không tồn tại):**
+```json
+{
+  "code": "USER_NOT_FOUND",
+  "message": "Không tìm thấy người dùng với ID: 99",
+  "timestamp": "2026-05-30T10:00:00"
+}
+```
+
+**Response 400 (Role không tồn tại / vi phạm quy tắc):**
+```json
+{
+  "code": "BAD_REQUEST",
+  "message": "Không tìm thấy vai trò: GHOST",
+  "timestamp": "2026-05-30T10:00:00"
+}
+```
+
+---
+
+### 17.4. Khóa / Mở khóa tài khoản (Admin)
+
+**Endpoint:** `PATCH /api/v1/admin/users/{id}/status`
+
+**Yêu cầu quyền:** Role `ADMIN_USER` hoặc `SUPER_ADMIN`.
+
+Khóa tài khoản (`enabled = false`) sẽ chặn user đó **đăng nhập mới**. Token JWT đã phát hành trước đó vẫn còn hiệu lực tới khi hết hạn (24h) — đây là giới hạn của JWT stateless.
+
+**Request Body:**
+```json
+{
+  "enabled": false
+}
+```
+
+| Field | Type | Required | Mô tả |
+|-------|------|----------|-------|
+| enabled | Boolean | Yes | `false` = khóa, `true` = mở khóa |
+
+**Response 200:**
+```json
+{
+  "status": 200,
+  "message": "Đã khóa tài khoản",
+  "data": {
+    "id": 10,
+    "username": "GV7F81A2",
+    "email": "gv@example.com",
+    "name": "Tên mới",
+    "role": "INSTRUCTOR",
+    "isInternal": true,
+    "enabled": false,
+    "createdAt": "2026-05-18T10:30:00"
+  },
+  "timestamp": "2026-05-30T10:00:00"
+}
+```
+
+**Quy tắc bảo mật:**
+- Admin **không** được tự khóa tài khoản của chính mình → `400 BAD_REQUEST`.
+- `ADMIN_USER` **không** được khóa tài khoản `SUPER_ADMIN` → `400 BAD_REQUEST`.
+
+**Khi user bị khóa cố đăng nhập** (`POST /api/v1/auth/login`):
+```json
+{
+  "code": "ACCOUNT_DISABLED",
+  "message": "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.",
+  "timestamp": "2026-05-30T10:00:00"
+}
+```
+
+---
+
+### Mã lỗi (Admin User Management)
+
+| HTTP Status | Error Code | Mô tả |
+|-------------|-----------|-------|
+| 404 | `USER_NOT_FOUND` | Không tìm thấy user |
+| 400 | `BAD_REQUEST` | Role không tồn tại / vi phạm quy tắc tự-sửa / ADMIN_USER thao tác SUPER_ADMIN |
+| 403 | `ACCOUNT_DISABLED` | Tài khoản bị khóa (khi đăng nhập) |

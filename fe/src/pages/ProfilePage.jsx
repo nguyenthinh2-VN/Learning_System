@@ -12,6 +12,8 @@ import {
   LogIn, RefreshCw, CheckCircle2, AlertCircle,
   Pencil, X, Save, Lock, Camera,
 } from 'lucide-react';
+import { ROLE_LABELS, ROLE_COLORS, ROLE_COLOR_FALLBACK } from '@/lib/roleColors';
+
 
 function formatBalance(amount) {
   if (amount === null || amount === undefined) return '---';
@@ -19,22 +21,6 @@ function formatBalance(amount) {
     style: 'currency', currency: 'VND', maximumFractionDigits: 0,
   }).format(amount);
 }
-
-const ROLE_LABELS = {
-  MEMBER: 'Học viên',
-  INSTRUCTOR: 'Giảng viên',
-  STAFF: 'Nhân viên',
-  ADMIN_USER: 'Quản lý',
-  SUPER_ADMIN: 'Quản trị viên',
-};
-
-const ROLE_COLORS = {
-  MEMBER:      { bg: '#EFF6FF', text: '#2563EB', border: '#BFDBFE' },
-  INSTRUCTOR:  { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' },
-  STAFF:       { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A' },
-  ADMIN_USER:  { bg: '#F5F3FF', text: '#7C3AED', border: '#DDD6FE' },
-  SUPER_ADMIN: { bg: '#FEF2F2', text: '#DC2626', border: '#FECACA' },
-};
 
 // ─── Edit Name Modal ──────────────────────────────────────
 function EditNameModal({ currentName, onClose, onSaved }) {
@@ -287,7 +273,7 @@ export default function ProfilePage() {
     );
   }
 
-  const roleColor = profile ? (ROLE_COLORS[profile.role] || { bg: '#F1F5F9', text: '#64748B', border: '#E2E8F0' }) : null;
+  const roleColor = profile ? (ROLE_COLORS[profile.role] || ROLE_COLOR_FALLBACK) : null;
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">

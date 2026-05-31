@@ -25,13 +25,7 @@ import {
   ClipboardCheck,
   GraduationCap,
 } from 'lucide-react';
-
-const ROLE_LABELS = {
-  INSTRUCTOR: 'Giảng viên',
-  STAFF: 'Nhân viên',
-  ADMIN_USER: 'Quản lý',
-  SUPER_ADMIN: 'Quản trị viên',
-};
+import { ROLE_LABELS, getRoleTextClass } from '@/lib/roleColors';
 
 /**
  * Ma trận phân quyền theo permission-matrix.md
@@ -176,9 +170,7 @@ export default function AdminSidebar() {
               <div className="flex flex-col flex-1 text-left text-sm leading-tight min-w-0">
                 <span className="truncate font-semibold">{adminUser?.name}</span>
                 <span className="truncate text-xs text-muted-foreground">{adminUser?.email}</span>
-                <span className={`truncate text-[11px] mt-0.5 font-medium ${
-                  isInstructor ? 'text-emerald-600' : 'text-indigo-600'
-                }`}>
+                <span className={`truncate text-[11px] mt-0.5 font-medium ${getRoleTextClass(role)}`}>
                   {ROLE_LABELS[role] || role}
                 </span>
               </div>

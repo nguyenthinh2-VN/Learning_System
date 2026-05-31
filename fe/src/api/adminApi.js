@@ -17,6 +17,27 @@ adminApi.interceptors.request.use((config) => {
   return config;
 });
 
+// Token admin hết hạn / không hợp lệ (401) → xóa phiên admin, về /admin/login.
+// Bỏ qua /auth/** để lỗi sai mật khẩu vẫn hiển thị trên form đăng nhập admin.
+adminApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const url = error?.config?.url || '';
+    const isAuthCall = url.includes('/auth/');
+    const hasSession = !!localStorage.getItem('adminToken');
+
+    if (status === 401 && hasSession && !isAuthCall) {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      if (!window.location.pathname.startsWith('/admin/login')) {
+        window.location.href = '/admin/login?expired=1';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ─── Auth ───────────────────────────────────────────────
 export const adminLoginApi = (credentials) =>
   adminApi.post('/auth/login', credentials);
@@ -27,6 +48,12 @@ export const createUserApi = (data) =>
 
 export const getUsersApi = (params = {}) =>
   adminApi.get('/admin/users', { params });
+
+export const adminUpdateUserApi = (id, data) =>
+  adminApi.put(`/admin/users/${id}`, data); // { name?, roleName?, isInternal? }
+
+export const adminSetUserStatusApi = (id, enabled) =>
+  adminApi.patch(`/admin/users/${id}/status`, { enabled });
 
 // ─── Courses ────────────────────────────────────────────
 export const getAdminCoursesApi = (params = {}) =>

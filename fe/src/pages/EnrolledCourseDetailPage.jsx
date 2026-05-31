@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useCourseDetailStore from '@/store/useCourseDetailStore';
+import { getCourseProgressApi, markLessonCompleteApi, unmarkLessonCompleteApi } from '@/api/course';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft, ArrowRight, PlayCircle, BookOpen,
-  ChevronDown, CheckCircle2,
+  ChevronDown, CheckCircle2, Circle, Loader2,
 } from 'lucide-react';
 
 function VideoPlayer({ url }) {
@@ -66,12 +67,29 @@ export default function EnrolledCourseDetailPage() {
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const [openSections, setOpenSections] = useState({});
 
+  // Tiến độ học
+  const [completedIds, setCompletedIds] = useState(new Set());
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [markBusy, setMarkBusy] = useState(false);
+
+  const loadProgress = useCallback(async (cid) => {
+    try {
+      const res = await getCourseProgressApi(cid);
+      const data = res.data.data;
+      setCompletedIds(new Set(data.completedLessonIds || []));
+      setProgressPercent(data.progressPercent ?? 0);
+    } catch {
+      // tiến độ không tải được không nên chặn việc học — bỏ qua lỗi mềm
+    }
+  }, []);
+
   useEffect(() => {
     if (courseId) {
       fetchEnrolledDetail(Number(courseId));
       setCurrentLessonIndex(0);
+      loadProgress(Number(courseId));
     }
-  }, [courseId, fetchEnrolledDetail]);
+  }, [courseId, fetchEnrolledDetail, loadProgress]);
 
   // Flatten tất cả lessons từ tất cả sections
   const sortedSections = currentCourse?.sections
@@ -87,6 +105,44 @@ export default function EnrolledCourseDetailPage() {
 
   const currentLesson = flatLessons[currentLessonIndex] ?? null;
   const totalLessons = flatLessons.length;
+  const isCurrentDone = currentLesson != null && completedIds.has(currentLesson.id);
+
+  const toggleComplete = useCallback(async () => {
+    if (!currentLesson?.id || markBusy) return;
+    const cid = Number(courseId);
+    const lessonId = currentLesson.id;
+    const wasDone = completedIds.has(lessonId);
+    setMarkBusy(true);
+    try {
+      if (wasDone) {
+        await unmarkLessonCompleteApi(cid, lessonId);
+      } else {
+        await markLessonCompleteApi(cid, lessonId);
+      }
+      await loadProgress(cid);
+    } catch {
+      // bỏ qua — giữ nguyên trạng thái nếu lỗi
+    } finally {
+      setMarkBusy(false);
+    }
+  }, [courseId, currentLesson, completedIds, markBusy, loadProgress]);
+
+  // Đánh dấu hoàn thành bài hiện tại (chỉ mark, không bỏ đánh dấu) — dùng khi bấm "Bài tiếp"
+  const markCurrentDone = useCallback(async () => {
+    if (!currentLesson?.id) return;
+    const lessonId = currentLesson.id;
+    if (completedIds.has(lessonId)) return; // đã xong thì thôi
+    const cid = Number(courseId);
+    // Optimistic: cập nhật ngay để UI mượt, rồi đồng bộ lại từ server
+    setCompletedIds((prev) => new Set(prev).add(lessonId));
+    try {
+      await markLessonCompleteApi(cid, lessonId);
+      await loadProgress(cid);
+    } catch {
+      // lỗi → reload lại trạng thái thật
+      loadProgress(cid);
+    }
+  }, [courseId, currentLesson, completedIds, loadProgress]);
 
   const goToLesson = useCallback((idx) => {
     if (idx >= 0 && idx < totalLessons) {
@@ -152,7 +208,20 @@ export default function EnrolledCourseDetailPage() {
         <ArrowLeft className="size-4" /> Khóa học của tôi
       </button>
 
-      <h1 className="text-xl font-bold mb-6 leading-tight">{currentCourse.title}</h1>
+      <h1 className="text-xl font-bold mb-3 leading-tight">{currentCourse.title}</h1>
+
+      {/* Progress bar */}
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full bg-emerald-500 transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        <span className="text-xs font-medium text-muted-foreground tabular-nums shrink-0">
+          {progressPercent}% hoàn thành
+        </span>
+      </div>
 
       {/* ── Main layout: [Video + nav] | [Sidebar] ──────────────────── */}
       <div className="grid lg:grid-cols-3 gap-6">
@@ -171,6 +240,29 @@ export default function EnrolledCourseDetailPage() {
                 {currentLesson?.title ?? 'Chưa chọn bài học'}
               </h2>
             </div>
+
+            {/* Đánh dấu hoàn thành */}
+            {currentLesson && (
+              <Button
+                size="sm"
+                onClick={toggleComplete}
+                disabled={markBusy}
+                className={`gap-1.5 w-full sm:w-auto border ${
+                  isCurrentDone
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
+                }`}
+              >
+                {markBusy ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : isCurrentDone ? (
+                  <CheckCircle2 className="size-4" />
+                ) : (
+                  <Circle className="size-4" />
+                )}
+                {isCurrentDone ? 'Đã hoàn thành — bỏ đánh dấu' : 'Đánh dấu đã học'}
+              </Button>
+            )}
 
             <div className="flex items-center justify-between">
               <Button
@@ -191,7 +283,7 @@ export default function EnrolledCourseDetailPage() {
                 variant="outline"
                 size="sm"
                 disabled={currentLessonIndex >= totalLessons - 1}
-                onClick={() => goToLesson(currentLessonIndex + 1)}
+                onClick={() => { markCurrentDone(); goToLesson(currentLessonIndex + 1); }}
                 className="gap-1.5"
               >
                 Bài tiếp <ArrowRight className="size-4" />
@@ -246,7 +338,7 @@ export default function EnrolledCourseDetailPage() {
                         sectionLessons.map((lesson, lIdx) => {
                           const flatIdx = sectionStartIdx + lIdx;
                           const isActive = flatIdx === currentLessonIndex;
-                          const isDone = flatIdx < currentLessonIndex;
+                          const isDone = completedIds.has(lesson.id);
 
                           return (
                             <button
@@ -259,7 +351,7 @@ export default function EnrolledCourseDetailPage() {
                               }`}
                             >
                               {isDone ? (
-                                <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
+                                <CheckCircle2 className={`size-3.5 shrink-0 ${isActive ? 'text-emerald-300' : 'text-emerald-500'}`} />
                               ) : isActive ? (
                                 <PlayCircle className="size-3.5 shrink-0" />
                               ) : (

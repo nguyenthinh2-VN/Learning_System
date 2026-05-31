@@ -8,13 +8,7 @@ import {
   Users, BookOpen, ClipboardCheck, Ticket, TrendingUp, Wallet,
   ArrowRight, Loader2, ShieldCheck, GraduationCap,
 } from 'lucide-react';
-
-const ROLE_LABELS = {
-  INSTRUCTOR: 'Giảng viên',
-  STAFF: 'Nhân viên',
-  ADMIN_USER: 'Quản lý',
-  SUPER_ADMIN: 'Quản trị viên',
-};
+import { ROLE_LABELS, getRoleBadgeClass, getRoleTextClass } from '@/lib/roleColors';
 
 function StatCard({ icon: Icon, label, value, sub, loading: isLoading }) {
   return (
@@ -119,14 +113,10 @@ export default function AdminOverviewPage() {
           {isInstructor ? 'Instructor Portal' : 'Admin Portal'}
         </span>
         <div className="ml-auto flex items-center gap-2">
-          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${
-            isInstructor
-              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-              : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
-          }`}>
-            {role}
+          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${getRoleBadgeClass(role)}`}>
+            {ROLE_LABELS[role] || role}
           </span>
-          <span className="text-xs text-muted-foreground">{adminUser?.name}</span>
+          <span className={`text-xs font-medium ${getRoleTextClass(role)}`}>{adminUser?.name}</span>
         </div>
       </header>
 

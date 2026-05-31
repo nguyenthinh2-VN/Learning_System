@@ -3,6 +3,7 @@ package com.example.learning_system_spring.application.usecase.Auth;
 import com.example.learning_system_spring.application.dto.Auth.LoginInput;
 import com.example.learning_system_spring.application.dto.Auth.LoginOutput;
 import com.example.learning_system_spring.application.repository.User.UserRepository;
+import com.example.learning_system_spring.domain.exception.AccountDisabledException;
 import com.example.learning_system_spring.domain.exception.InvalidCredentialsException;
 import com.example.learning_system_spring.domain.model.User;
 import com.example.learning_system_spring.infrastructure.config.JwtService;
@@ -25,6 +26,10 @@ public class LoginUseCase {
 
         if (!passwordEncoder.matches(input.password(), user.getPassword())) {
             throw new InvalidCredentialsException();
+        }
+
+        if (!user.isEnabled()) {
+            throw new AccountDisabledException();
         }
 
         String accessToken = jwtService.generateToken(

@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { getRoleTextClass } from '@/lib/roleColors';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
   CheckCircle2, XCircle, Loader2, Search, DollarSign,
@@ -23,7 +24,7 @@ function formatMoney(amount) {
 }
 
 const STATUS_CONFIG = {
-  PUBLISHED: { label: 'Đã xuất bản', variant: 'default' },
+  PUBLISHED: { label: 'Đã xuất bản', variant: 'secondary', className: 'bg-emerald-100 text-emerald-700' },
   DRAFT: { label: 'Bản nháp', variant: 'secondary' },
   PENDING_REVIEW: { label: 'Chờ duyệt', variant: 'outline' },
 };
@@ -272,7 +273,7 @@ export default function AdminCoursesPage() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <span className="text-sm font-medium">Quản lý khóa học</span>
-        <span className="text-xs text-muted-foreground ml-auto">{adminUser?.name}</span>
+        <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
       <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -358,7 +359,7 @@ export default function AdminCoursesPage() {
                       <p className="text-xs text-muted-foreground mt-0.5">ID: {course.id}</p>
                     </div>
                     <div className="col-span-2">
-                      <Badge variant={st.variant}>{st.label}</Badge>
+                      <Badge variant={st.variant} className={st.className}>{st.label}</Badge>
                     </div>
                     <div className="col-span-2">
                       <p className="text-sm font-medium">{course.priceLocked ? '🔒 ' : ''}{formatMoney(course.price)}</p>

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Ticket, Plus, X, Loader2, RefreshCw, Pencil, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { getRoleTextClass } from '@/lib/roleColors';
 
 function formatMoney(amount) {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount ?? 0);
@@ -232,7 +233,7 @@ export default function AdminVouchersPage() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <span className="text-sm font-medium">Quản lý voucher</span>
-        <span className="text-xs text-muted-foreground ml-auto">{adminUser?.name}</span>
+        <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
       <div className="p-6 max-w-6xl mx-auto space-y-6">

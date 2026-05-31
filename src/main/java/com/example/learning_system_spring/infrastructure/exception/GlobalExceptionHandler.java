@@ -160,6 +160,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.INVALID_PASSWORD, ex.getMessage()));
     }
 
+    @ExceptionHandler(AccountDisabledException.class)
+    public ResponseEntity<ErrorResponse> handleAccountDisabled(AccountDisabledException ex) {
+        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCOUNT_DISABLED, ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidFileTypeException.class)
     public ResponseEntity<ErrorResponse> handleInvalidFileType(InvalidFileTypeException ex) {
         return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.INVALID_FILE_TYPE, ex.getMessage()));

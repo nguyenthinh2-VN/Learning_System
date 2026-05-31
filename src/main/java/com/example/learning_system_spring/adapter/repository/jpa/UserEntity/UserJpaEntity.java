@@ -46,6 +46,9 @@ public class UserJpaEntity {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean enabled = true;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -64,7 +67,7 @@ public class UserJpaEntity {
     }
 
     public User toDomain() {
-        return User.reconstitute(id, username, email, password, name, role.toDomain(), isInternal, balance, avatarUrl, createdAt, updatedAt);
+        return User.reconstitute(id, username, email, password, name, role.toDomain(), isInternal, balance, avatarUrl, enabled, createdAt, updatedAt);
     }
 
     public static UserJpaEntity fromDomain(User user) {
@@ -78,6 +81,7 @@ public class UserJpaEntity {
         e.isInternal = user.isInternal();
         e.balance = user.getBalance();
         e.avatarUrl = user.getAvatarUrl();
+        e.enabled = user.isEnabled();
         e.createdAt = user.getCreatedAt();
         e.updatedAt = user.getUpdatedAt();
         return e;

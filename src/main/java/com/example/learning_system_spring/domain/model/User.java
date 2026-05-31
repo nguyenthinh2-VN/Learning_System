@@ -19,6 +19,7 @@ public class User {
     private boolean isInternal;
     private BigDecimal balance;
     private String avatarUrl;
+    private boolean enabled = true;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -75,6 +76,18 @@ public class User {
         return user;
     }
 
+    /**
+     * Overload đầy đủ có avatarUrl + enabled — dùng khi tái dựng từ DB (UserJpaEntity).
+     */
+    public static User reconstitute(Long id, String username, String email, String password, String name,
+                                     Role role, boolean isInternal, BigDecimal balance, String avatarUrl,
+                                     boolean enabled, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        User user = reconstitute(id, username, email, password, name, role, isInternal, balance, createdAt, updatedAt);
+        user.avatarUrl = avatarUrl;
+        user.enabled = enabled;
+        return user;
+    }
+
     public boolean passwordMatches(String rawPassword) {
         return this.password.equals(rawPassword);
     }
@@ -112,6 +125,37 @@ public class User {
         this.password = newEncodedPassword;
     }
 
+    /**
+     * Đổi role (admin thao tác). Role mới không được null.
+     */
+    public void changeRole(Role newRole) {
+        if (newRole == null) {
+            throw new IllegalArgumentException("Role must not be null");
+        }
+        this.role = newRole;
+    }
+
+    /**
+     * Bật/tắt cờ nội bộ (admin thao tác).
+     */
+    public void setInternalFlag(boolean internal) {
+        this.isInternal = internal;
+    }
+
+    /**
+     * Khóa tài khoản — chặn đăng nhập mới.
+     */
+    public void disable() {
+        this.enabled = false;
+    }
+
+    /**
+     * Mở khóa tài khoản.
+     */
+    public void enable() {
+        this.enabled = true;
+    }
+
     public void addBalance(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Top-up amount must be greater than zero");
@@ -138,6 +182,7 @@ public class User {
     public boolean isInternal() { return isInternal; }
     public BigDecimal getBalance() { return balance; }
     public String getAvatarUrl() { return avatarUrl; }
+    public boolean isEnabled() { return enabled; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

@@ -42,3 +42,30 @@ export const updateCourseApi = (id, data) => api.put(`/courses/${id}`, data);
  */
 export const deleteCourseApi = (id) => api.delete(`/courses/${id}`);
 
+// ═══════════════════════════════════════════
+// LESSON PROGRESS API (Theo dõi tiến độ học)
+// ═══════════════════════════════════════════
+
+/**
+ * Đánh dấu một lesson đã hoàn thành.
+ * POST /api/v1/courses/{courseId}/lessons/{lessonId}/complete
+ * Quyền: MEMBER (đã enrolled) / INSTRUCTOR (owner) / STAFF / SUPER_ADMIN
+ */
+export const markLessonCompleteApi = (courseId, lessonId) =>
+  api.post(`/courses/${courseId}/lessons/${lessonId}/complete`);
+
+/**
+ * Bỏ đánh dấu hoàn thành (học lại).
+ * DELETE /api/v1/courses/{courseId}/lessons/{lessonId}/complete
+ */
+export const unmarkLessonCompleteApi = (courseId, lessonId) =>
+  api.delete(`/courses/${courseId}/lessons/${lessonId}/complete`);
+
+/**
+ * Tiến độ tổng quan của khóa học cho người gọi.
+ * GET /api/v1/courses/{courseId}/progress
+ * @returns {{ courseId, totalLessons, completedLessons, progressPercent, completedLessonIds }}
+ */
+export const getCourseProgressApi = (courseId) =>
+  api.get(`/courses/${courseId}/progress`);
+

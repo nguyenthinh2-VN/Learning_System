@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getProfileApi } from '@/api/wallet';
+import { isJwtExpired } from '@/lib/jwt';
 
 const AuthContext = createContext(null);
 
@@ -8,10 +9,23 @@ const PUBLIC_USER_KEY = 'publicUser';
 const ADMIN_TOKEN_KEY = 'adminToken';
 const ADMIN_USER_KEY = 'adminUser';
 
+/** Đọc token từ localStorage; nếu đã hết hạn thì xóa luôn và trả về null. */
+function readValidToken(tokenKey, userKey) {
+  const token = localStorage.getItem(tokenKey);
+  if (token && isJwtExpired(token)) {
+    localStorage.removeItem(tokenKey);
+    localStorage.removeItem(userKey);
+    return null;
+  }
+  return token || null;
+}
+
 export function AuthProvider({ children }) {
   // ─── Public (Website học viên) ──────────────────────────
   const [publicUser, setPublicUser] = useState(() => {
     try {
+      // Nếu token đã hết hạn → không khôi phục user
+      if (!readValidToken(PUBLIC_TOKEN_KEY, PUBLIC_USER_KEY)) return null;
       const stored = localStorage.getItem(PUBLIC_USER_KEY);
       return stored ? JSON.parse(stored) : null;
     } catch {
@@ -20,7 +34,7 @@ export function AuthProvider({ children }) {
   });
 
   const [publicToken, setPublicToken] = useState(() =>
-    localStorage.getItem(PUBLIC_TOKEN_KEY) || null
+    readValidToken(PUBLIC_TOKEN_KEY, PUBLIC_USER_KEY)
   );
 
   // Số dư ví — nguồn sự thật duy nhất, cập nhật qua fetchProfile hoặc WebSocket
@@ -75,9 +89,20 @@ export function AuthProvider({ children }) {
     setBalance(newBalance);
   }, []);
 
-  // Tự động gọi fetchProfile khi app load nếu đã có token (F5, mở tab mới)
+  // Khi app load: nếu token public đã hết hạn → đăng xuất + chuyển về login.
+  // Nếu còn hạn → fetch profile để lấy balance (F5, mở tab mới).
   useEffect(() => {
-    if (publicToken) {
+    const token = localStorage.getItem(PUBLIC_TOKEN_KEY);
+    if (token && isJwtExpired(token)) {
+      publicLogout();
+      if (!window.location.pathname.startsWith('/login')
+          && !window.location.pathname.startsWith('/admin')) {
+        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/login?expired=1&redirect=${redirect}`;
+      }
+      return;
+    }
+    if (token) {
       fetchProfile();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,6 +113,7 @@ export function AuthProvider({ children }) {
   // ─── Admin (Portal quản trị — token tách biệt) ─────────
   const [adminUser, setAdminUser] = useState(() => {
     try {
+      if (!readValidToken(ADMIN_TOKEN_KEY, ADMIN_USER_KEY)) return null;
       const stored = localStorage.getItem(ADMIN_USER_KEY);
       return stored ? JSON.parse(stored) : null;
     } catch {
@@ -96,7 +122,7 @@ export function AuthProvider({ children }) {
   });
 
   const [adminToken, setAdminToken] = useState(() =>
-    localStorage.getItem(ADMIN_TOKEN_KEY) || null
+    readValidToken(ADMIN_TOKEN_KEY, ADMIN_USER_KEY)
   );
 
   const adminLogin = useCallback((userData, token) => {
@@ -111,6 +137,19 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(ADMIN_USER_KEY);
     setAdminToken(null);
     setAdminUser(null);
+  }, []);
+
+  // Khi app load trong khu vực /admin: nếu token admin hết hạn → đăng xuất + về /admin/login.
+  useEffect(() => {
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    if (token && isJwtExpired(token)) {
+      adminLogout();
+      if (window.location.pathname.startsWith('/admin')
+          && !window.location.pathname.startsWith('/admin/login')) {
+        window.location.href = '/admin/login?expired=1';
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isAdminAuthenticated = !!adminToken;

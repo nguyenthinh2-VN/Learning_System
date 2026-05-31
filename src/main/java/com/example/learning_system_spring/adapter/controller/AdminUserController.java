@@ -1,19 +1,28 @@
 package com.example.learning_system_spring.adapter.controller;
 
 import com.example.learning_system_spring.adapter.dto.request.CreateUserRequest;
+import com.example.learning_system_spring.adapter.dto.request.User.AdminUpdateUserRequest;
+import com.example.learning_system_spring.adapter.dto.request.User.AdminUpdateUserStatusRequest;
 import com.example.learning_system_spring.adapter.dto.request.Wallet.AdminTopUpByIdentifierRequest;
 import com.example.learning_system_spring.adapter.dto.request.Wallet.AdminTopUpRequest;
+import com.example.learning_system_spring.adapter.dto.response.AdminUserDetailResponse;
 import com.example.learning_system_spring.adapter.dto.response.ApiResponse;
 import com.example.learning_system_spring.adapter.dto.response.RegisterResponse;
 import com.example.learning_system_spring.adapter.dto.response.UserListResponse;
 import com.example.learning_system_spring.application.dto.Auth.RegisterOutput;
 import com.example.learning_system_spring.application.dto.PageResult;
+import com.example.learning_system_spring.application.dto.User.AdminUserDetailOutput;
 import com.example.learning_system_spring.application.dto.User.UserListOutput;
 import com.example.learning_system_spring.application.dto.Wallet.AdminTopUpOutput;
 import com.example.learning_system_spring.application.usecase.User.AdminCreateUserUseCase;
+import com.example.learning_system_spring.application.usecase.User.AdminSetUserStatusUseCase;
+import com.example.learning_system_spring.application.usecase.User.AdminUpdateUserUseCase;
 import com.example.learning_system_spring.application.usecase.User.GetUsersUseCase;
 import com.example.learning_system_spring.application.usecase.Wallet.AdminTopUpUseCase;
+import com.example.learning_system_spring.infrastructure.config.JwtService;
 import com.example.learning_system_spring.infrastructure.service.WalletNotificationService;
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +37,15 @@ public class AdminUserController {
     private final AdminCreateUserUseCase adminCreateUserUseCase;
     private final AdminTopUpUseCase adminTopUpUseCase;
     private final GetUsersUseCase getUsersUseCase;
+    private final AdminUpdateUserUseCase adminUpdateUserUseCase;
+    private final AdminSetUserStatusUseCase adminSetUserStatusUseCase;
     private final WalletNotificationService walletNotificationService;
+    private final JwtService jwtService;
+
+    private Claims getClaims(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        return jwtService.parseToken(token);
+    }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN_USER', 'SUPER_ADMIN')")
@@ -46,6 +63,46 @@ public class AdminUserController {
     public ResponseEntity<ApiResponse<RegisterResponse>> createUser(@Valid @RequestBody CreateUserRequest req) {
         RegisterOutput output = adminCreateUserUseCase.execute(req.toInput());
         return ResponseEntity.status(201).body(ApiResponse.created(RegisterResponse.from(output)));
+    }
+
+    /**
+     * Admin cập nhật thông tin user: name, roleName, isInternal (field null = giữ nguyên).
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN_USER', 'SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<AdminUserDetailResponse>> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminUpdateUserRequest req,
+            HttpServletRequest request) {
+
+        Claims claims = getClaims(request);
+        Long requesterId = claims.get("userId", Long.class);
+        String requesterRole = claims.get("role", String.class);
+
+        AdminUserDetailOutput output = adminUpdateUserUseCase.execute(
+                req.toInput(id, requesterId, requesterRole));
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật người dùng thành công",
+                AdminUserDetailResponse.from(output)));
+    }
+
+    /**
+     * Admin khóa / mở khóa tài khoản user.
+     */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN_USER', 'SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<AdminUserDetailResponse>> setUserStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminUpdateUserStatusRequest req,
+            HttpServletRequest request) {
+
+        Claims claims = getClaims(request);
+        Long requesterId = claims.get("userId", Long.class);
+        String requesterRole = claims.get("role", String.class);
+
+        AdminUserDetailOutput output = adminSetUserStatusUseCase.execute(
+                req.toInput(id, requesterId, requesterRole));
+        String msg = output.enabled() ? "Đã mở khóa tài khoản" : "Đã khóa tài khoản";
+        return ResponseEntity.ok(ApiResponse.success(msg, AdminUserDetailResponse.from(output)));
     }
 
     /**
