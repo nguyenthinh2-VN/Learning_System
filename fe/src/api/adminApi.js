@@ -123,6 +123,17 @@ export const updateVoucherApi = (id, data) =>
 export const deleteVoucherApi = (id) =>
   adminApi.delete(`/admin/vouchers/${id}`);
 
+// ─── Reports & Transactions (SUPER_ADMIN) ───────────────
+// Giao dịch toàn hệ thống (lọc + phân trang)
+// params: { keyword, source, status, direction, from, to, page, size }
+export const getAdminTransactionsApi = (params = {}) =>
+  adminApi.get('/admin/transactions', { params });
+
+// Báo cáo doanh thu (số liệu tổng + chuỗi thời gian)
+// params: { granularity: 'DAY'|'MONTH', from, to }
+export const getRevenueReportApi = (params = {}) =>
+  adminApi.get('/admin/reports/revenue', { params });
+
 // ─── Admin Top-up ───────────────────────────────────────
 export const adminTopUpApi = (userId, data) =>
   adminApi.post(`/admin/users/${userId}/top-up`, data);

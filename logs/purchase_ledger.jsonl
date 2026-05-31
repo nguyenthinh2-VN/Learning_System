@@ -7,3 +7,5 @@
 {"event":"PURCHASE_COMPLETED","userId":6,"courseId":3,"paidPrice":200000.00,"timestamp":"2026-05-29T11:49:06.131217200"}
 {"event":"PURCHASE_COMPLETED","userId":6,"courseId":1,"paidPrice":500000.00,"timestamp":"2026-05-29T11:49:19.644678600"}
 {"event":"PURCHASE_COMPLETED","userId":6,"courseId":2,"paidPrice":10000.00,"timestamp":"2026-05-29T19:24:17.794949400"}
+{"event":"PURCHASE_COMPLETED","userId":2,"courseId":3,"paidPrice":200000.00,"timestamp":"2026-05-31T11:13:45.655042900"}
+{"event":"PURCHASE_COMPLETED","userId":2,"courseId":2,"paidPrice":1000000.00,"timestamp":"2026-05-31T11:14:18.214225"}

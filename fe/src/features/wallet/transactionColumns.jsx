@@ -99,3 +99,36 @@ export const transactionColumns = [
     },
   },
 ];
+
+// ─── Cột phụ tái dùng ──────────────────────────────────────
+const userColumn = {
+  accessorKey: 'username',
+  header: 'Người dùng',
+  cell: ({ row }) => (
+    <div className="min-w-0">
+      <p className="text-sm font-medium truncate">{row.original.username ?? '—'}</p>
+      <p className="text-xs text-muted-foreground truncate">{row.original.email ?? ''}</p>
+    </div>
+  ),
+};
+
+const refColumn = {
+  accessorKey: 'referenceCode',
+  header: 'Mã tham chiếu',
+  cell: ({ row }) => (
+    <code className="text-xs font-mono text-muted-foreground">{row.original.referenceCode}</code>
+  ),
+};
+
+/**
+ * Biến thể cột cho trang admin xem giao dịch toàn hệ thống:
+ * Thời gian · Người dùng · Loại · Trạng thái · Mã tham chiếu · Số tiền.
+ */
+export const adminTransactionColumns = [
+  transactionColumns[0], // createdAt
+  userColumn,
+  transactionColumns[1], // source + note
+  transactionColumns[2], // status
+  refColumn,
+  transactionColumns[3], // amount
+];

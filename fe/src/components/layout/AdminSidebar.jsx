@@ -20,6 +20,7 @@ import {
   BookOpen,
   Ticket,
   Wallet,
+  Receipt,
   LogOut,
   ShieldCheck,
   ClipboardCheck,
@@ -62,6 +63,8 @@ const NAV_GROUPS = [
     items: [
       // MANAGE_VOUCHER: STAFF, SUPER_ADMIN
       { title: 'Voucher', url: '/admin/vouchers', icon: Ticket, roles: ['STAFF', 'SUPER_ADMIN'] },
+      // Giao dịch toàn hệ thống: chỉ SUPER_ADMIN
+      { title: 'Giao dịch', url: '/admin/transactions', icon: Receipt, roles: ['SUPER_ADMIN'] },
       // Cộng tiền: chỉ SUPER_ADMIN
       { title: 'Cộng tiền', url: '/admin/wallet', icon: Wallet, roles: ['SUPER_ADMIN'] },
     ],

@@ -155,7 +155,7 @@ function CourseFormModal({ course, onClose, onSave }) {
             <Label>URL ảnh thumbnail</Label>
             <Input name="thumbnailUrl" value={form.thumbnailUrl} onChange={handleChange} placeholder="https://example.com/image.jpg" />
             {form.thumbnailUrl && (
-              <img src={form.thumbnailUrl} alt="preview" className="mt-2 h-24 w-full object-cover rounded-lg border border-border" onError={(e) => e.target.style.display='none'} />
+              <img src={form.thumbnailUrl} alt="preview" className="mt-2 h-24 w-full object-contain p-2 rounded-lg border border-border bg-muted/30" onError={(e) => e.target.style.display='none'} />
             )}
           </div>
 
