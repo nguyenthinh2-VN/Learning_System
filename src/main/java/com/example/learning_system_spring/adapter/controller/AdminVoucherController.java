@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -42,6 +43,7 @@ public class AdminVoucherController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('MANAGE_VOUCHER')")
     public ResponseEntity<?> create(@Valid @RequestBody CreateVoucherRequest req, HttpServletRequest request) {
         Claims claims = getClaims(request);
         Long requesterId = claims.get("userId", Long.class);
@@ -65,6 +67,7 @@ public class AdminVoucherController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('MANAGE_VOUCHER')")
     public ResponseEntity<?> update(@PathVariable Long id,
                                     @Valid @RequestBody UpdateVoucherRequest req,
                                     HttpServletRequest request) {
@@ -90,6 +93,7 @@ public class AdminVoucherController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('MANAGE_VOUCHER')")
     public ResponseEntity<?> delete(@PathVariable Long id, HttpServletRequest request) {
         Claims claims = getClaims(request);
         Long requesterId = claims.get("userId", Long.class);
@@ -104,6 +108,7 @@ public class AdminVoucherController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('MANAGE_VOUCHER')")
     public ResponseEntity<?> list(@RequestParam(defaultValue = "0") int page,
                                   @RequestParam(defaultValue = "10") int size,
                                   HttpServletRequest request) {

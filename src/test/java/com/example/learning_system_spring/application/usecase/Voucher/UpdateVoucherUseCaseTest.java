@@ -4,7 +4,6 @@ import com.example.learning_system_spring.application.dto.Voucher.UpdateVoucherI
 import com.example.learning_system_spring.application.dto.Voucher.VoucherOutput;
 import com.example.learning_system_spring.application.repository.Voucher.VoucherRepository;
 import com.example.learning_system_spring.application.repository.Voucher.VoucherUsageRepository;
-import com.example.learning_system_spring.domain.exception.CourseAccessDeniedException;
 import com.example.learning_system_spring.domain.exception.VoucherCodeAlreadyExistsException;
 import com.example.learning_system_spring.domain.exception.VoucherImmutableFieldException;
 import com.example.learning_system_spring.domain.exception.VoucherNotFoundException;
@@ -54,7 +53,6 @@ class UpdateVoucherUseCaseTest {
     private UpdateVoucherUseCase useCase;
 
     private final Role staffRole  = Role.reconstitute(3L, "STAFF", null);
-    private final Role memberRole = Role.reconstitute(1L, "MEMBER", null);
 
     /** Voucher hợp lệ dùng làm base cho các test. */
     private Voucher existingVoucher() {
@@ -81,25 +79,8 @@ class UpdateVoucherUseCaseTest {
     // ─────────────────────────────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("Authorization")
+    @DisplayName("Authorization (moved to controller)")
     class Authorization {
-
-        @Test
-        @DisplayName("MEMBER → CourseAccessDeniedException (không có quyền MANAGE_VOUCHER)")
-        void memberDenied() {
-            assertThatThrownBy(() -> useCase.execute(validSoftInput(memberRole)))
-                    .isInstanceOf(CourseAccessDeniedException.class);
-            verify(voucherRepository, never()).findById(any());
-        }
-
-        @Test
-        @DisplayName("FIX-C: role null → CourseAccessDeniedException (không còn NPE)")
-        void nullRoleReturnsFalseNotNpe() {
-            assertThatThrownBy(() -> useCase.execute(validSoftInput(null)))
-                    .isInstanceOf(CourseAccessDeniedException.class)
-                    .isNotInstanceOf(NullPointerException.class);
-            verify(voucherRepository, never()).findById(any());
-        }
 
         @Test
         @DisplayName("STAFF → được phép thực thi")

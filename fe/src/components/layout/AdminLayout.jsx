@@ -1,4 +1,5 @@
 import { Outlet, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import AdminSidebar from './AdminSidebar';
@@ -8,7 +9,14 @@ import { useAuth } from '@/context/AuthContext';
 const ADMIN_ROLES = ['INSTRUCTOR', 'STAFF', 'ADMIN_USER', 'SUPER_ADMIN'];
 
 export default function AdminLayout() {
-  const { isAdminAuthenticated, adminUser } = useAuth();
+  const { isAdminAuthenticated, adminUser, refreshAdminPermissions } = useAuth();
+
+  // Đồng bộ permissions động mỗi khi vào portal (quyền có thể đã đổi sau lần login trước).
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      refreshAdminPermissions();
+    }
+  }, [isAdminAuthenticated, refreshAdminPermissions]);
 
   if (!isAdminAuthenticated) {
     return <Navigate to="/admin/login" replace />;

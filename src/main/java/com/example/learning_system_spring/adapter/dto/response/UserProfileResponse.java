@@ -3,6 +3,7 @@ package com.example.learning_system_spring.adapter.dto.response;
 import com.example.learning_system_spring.application.dto.User.UserProfileOutput;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record UserProfileResponse(
         Long id,
@@ -12,7 +13,8 @@ public record UserProfileResponse(
         String role,
         boolean isInternal,
         BigDecimal balance,
-        String avatarUrl
+        String avatarUrl,
+        List<String> permissions
 ) {
     public static UserProfileResponse from(UserProfileOutput output) {
         return new UserProfileResponse(
@@ -23,7 +25,8 @@ public record UserProfileResponse(
                 output.role(),
                 output.isInternal(),
                 output.balance(),
-                output.avatarUrl()
+                output.avatarUrl(),
+                output.permissions()
         );
     }
 }

@@ -52,10 +52,12 @@ public class WalletTransaction {
         tx.status = TxStatus.COMPLETED;
         tx.source = source;
         tx.note = note;
-        tx.createdAt = LocalDateTime.now();
-        tx.completedAt = LocalDateTime.now();
-        // Admin tx không cần expiredAt nhưng DB NOT NULL — đặt xa tương lai
-        tx.expiredAt = LocalDateTime.now().plusYears(100);
+        LocalDateTime now = LocalDateTime.now();
+        tx.createdAt = now;
+        tx.completedAt = now;
+        // Giao dịch đã COMPLETED không có khái niệm hết hạn (expiredAt chỉ dùng cho PENDING).
+        // Đặt = thời điểm tạo để không tràn giới hạn cột TIMESTAMP của DB.
+        tx.expiredAt = now;
         return tx;
     }
 
@@ -71,10 +73,11 @@ public class WalletTransaction {
         tx.status = TxStatus.COMPLETED;
         tx.source = TxSource.PURCHASE;
         tx.note = note;
-        tx.createdAt = LocalDateTime.now();
-        tx.completedAt = LocalDateTime.now();
-        // Purchase tx không cần expiredAt nhưng DB NOT NULL — đặt xa tương lai
-        tx.expiredAt = LocalDateTime.now().plusYears(100);
+        LocalDateTime now = LocalDateTime.now();
+        tx.createdAt = now;
+        tx.completedAt = now;
+        // Giao dịch đã COMPLETED không có khái niệm hết hạn (expiredAt chỉ dùng cho PENDING).
+        tx.expiredAt = now;
         return tx;
     }
 

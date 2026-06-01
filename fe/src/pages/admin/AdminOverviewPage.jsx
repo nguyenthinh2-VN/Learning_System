@@ -9,6 +9,7 @@ import {
   ArrowRight, Loader2, ShieldCheck, GraduationCap, ShoppingCart, Receipt,
 } from 'lucide-react';
 import { ROLE_LABELS, getRoleBadgeClass, getRoleTextClass } from '@/lib/roleColors';
+import { hasPermission } from '@/lib/permissions';
 import RevenueChart from '@/features/wallet/RevenueChart';
 
 const fmtMoney = (a) =>
@@ -96,13 +97,15 @@ export default function AdminOverviewPage() {
   const isInstructor = role === 'INSTRUCTOR';
 
   const isSuperAdmin = role === 'SUPER_ADMIN';
+  // Gate theo permission động (không hard-code role) — granting VIEW_REVENUE cho role khác sẽ có hiệu lực.
+  const canViewRevenue = hasPermission(adminUser, 'VIEW_REVENUE');
 
   const [stats, setStats] = useState({ courses: null, pending: null, vouchers: null });
   const [loading, setLoading] = useState(true);
 
-  // Doanh thu — chỉ SUPER_ADMIN
+  // Doanh thu — ai có VIEW_REVENUE
   const [revenue, setRevenue] = useState(null);
-  const [revenueLoading, setRevenueLoading] = useState(isSuperAdmin);
+  const [revenueLoading, setRevenueLoading] = useState(canViewRevenue);
   const [granularity, setGranularity] = useState('DAY');
 
   useEffect(() => {
@@ -138,9 +141,9 @@ export default function AdminOverviewPage() {
     fetchStats();
   }, [role, isInstructor]);
 
-  // Doanh thu theo granularity (chỉ SUPER_ADMIN)
+  // Doanh thu theo granularity (ai có VIEW_REVENUE)
   useEffect(() => {
-    if (!isSuperAdmin) return;
+    if (!canViewRevenue) return;
     let cancelled = false;
     const fetchRevenue = async () => {
       setRevenueLoading(true);
@@ -155,9 +158,9 @@ export default function AdminOverviewPage() {
     };
     fetchRevenue();
     return () => { cancelled = true; };
-  }, [isSuperAdmin, granularity]);
+  }, [canViewRevenue, granularity]);
 
-  // Quick actions theo role
+  // Quick actions theo role/permission
   const quickActions = isInstructor
     ? [
         { to: '/admin/courses', icon: BookOpen, title: 'Khóa học của tôi', desc: 'Xem và quản lý khóa học', tone: 'indigo' },
@@ -167,9 +170,12 @@ export default function AdminOverviewPage() {
         { to: '/admin/courses/pending', icon: ClipboardCheck, title: 'Duyệt khóa học', desc: 'Xem danh sách chờ duyệt', tone: 'amber', roles: ['STAFF', 'SUPER_ADMIN'] },
         { to: '/admin/courses', icon: BookOpen, title: 'Quản lý khóa học', desc: 'Tất cả khóa học hệ thống', tone: 'indigo' },
         { to: '/admin/vouchers', icon: Ticket, title: 'Quản lý voucher', desc: 'Tạo và quản lý mã giảm giá', tone: 'violet', roles: ['STAFF', 'SUPER_ADMIN'] },
-        { to: '/admin/transactions', icon: Receipt, title: 'Giao dịch hệ thống', desc: 'Xem mọi giao dịch của người dùng', tone: 'sky', roles: ['SUPER_ADMIN'] },
-        { to: '/admin/wallet', icon: Wallet, title: 'Cộng tiền thủ công', desc: 'Cộng tiền vào ví người dùng', tone: 'emerald', roles: ['SUPER_ADMIN'] },
-      ].filter((a) => !a.roles || a.roles.includes(role));
+        { to: '/admin/transactions', icon: Receipt, title: 'Giao dịch hệ thống', desc: 'Xem mọi giao dịch của người dùng', tone: 'sky', permission: 'VIEW_TRANSACTION' },
+        { to: '/admin/wallet', icon: Wallet, title: 'Cộng tiền thủ công', desc: 'Cộng tiền vào ví người dùng', tone: 'emerald', permission: 'MANAGE_WALLET' },
+      ].filter((a) => {
+        if (a.permission) return hasPermission(adminUser, a.permission);
+        return !a.roles || a.roles.includes(role);
+      });
 
   return (
     <div className="min-h-screen">
@@ -217,7 +223,7 @@ export default function AdminOverviewPage() {
           {['STAFF', 'SUPER_ADMIN'].includes(role) && (
             <StatCard icon={Ticket} tone="violet" label="Voucher" value={stats.vouchers} loading={loading} />
           )}
-          {isSuperAdmin ? (
+          {canViewRevenue ? (
             <>
               {/* Doanh thu — card nổi bật gradient emerald */}
               <div className="relative overflow-hidden rounded-xl p-5 text-white shadow-lg shadow-emerald-500/20 bg-gradient-to-br from-emerald-500 to-teal-600 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/30">
@@ -255,13 +261,13 @@ export default function AdminOverviewPage() {
             </>
           ) : (
             !isInstructor && (
-              <StatCard icon={TrendingUp} tone="emerald" label="Doanh thu" value="—" sub="Chỉ Quản trị viên" loading={false} />
+              <StatCard icon={TrendingUp} tone="emerald" label="Doanh thu" value="—" sub="Cần quyền xem doanh thu" loading={false} />
             )
           )}
         </div>
 
-        {/* Revenue Chart — chỉ SUPER_ADMIN */}
-        {isSuperAdmin && (
+        {/* Revenue Chart — ai có VIEW_REVENUE */}
+        {canViewRevenue && (
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
