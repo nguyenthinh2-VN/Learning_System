@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { initTopUpApi, mockWebhookApi } from '@/api/wallet';
+import { initTopUpApi, mockWebhookApi, cancelTopUpApi } from '@/api/wallet';
 
 /**
  * Wallet Store — chỉ dùng cho trạng thái UI của luồng nạp tiền.
@@ -14,6 +14,9 @@ const useWalletStore = create((set) => ({
   // Trạng thái mock webhook (dev only)
   mockLoading: false,
   mockError: null,
+
+  // Trạng thái huỷ giao dịch
+  cancelLoading: false,
 
   /**
    * Khởi tạo nạp tiền — gọi POST /api/v1/wallet/top-up/init
@@ -56,6 +59,23 @@ const useWalletStore = create((set) => ({
 
   /** Reset trạng thái sau khi đóng form nạp tiền */
   resetTopUp: () => set({ topUpLoading: false, topUpError: null, topUpResult: null }),
+
+  /**
+   * Huỷ giao dịch nạp tiền đang chờ (đóng tab/đổi ý).
+   * Gọi POST /api/v1/wallet/top-up/{ref}/cancel — chỉ huỷ PENDING của chính mình.
+   * @param {string} referenceCode
+   */
+  cancelTopUp: async (referenceCode) => {
+    set({ cancelLoading: true });
+    try {
+      const res = await cancelTopUpApi(referenceCode);
+      set({ cancelLoading: false, topUpResult: null });
+      return res.data?.data;
+    } catch (err) {
+      set({ cancelLoading: false });
+      throw err;
+    }
+  },
 }));
 
 export default useWalletStore;

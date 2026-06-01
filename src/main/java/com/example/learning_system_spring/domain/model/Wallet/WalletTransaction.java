@@ -114,6 +114,29 @@ public class WalletTransaction {
         this.note = note;
     }
 
+    /**
+     * Hết hạn giao dịch — gọi từ job dọn dẹp khi PENDING đã quá expiredAt.
+     * Idempotent: chỉ tác động lên PENDING.
+     */
+    public void expire() {
+        if (this.status != TxStatus.PENDING) {
+            throw new IllegalStateException("Chỉ có thể hết hạn giao dịch đang PENDING");
+        }
+        this.status = TxStatus.EXPIRED;
+    }
+
+    /**
+     * Người dùng chủ động huỷ giao dịch đang chờ (đóng tab/đổi ý).
+     * Chỉ huỷ được khi còn PENDING; đã COMPLETED/EXPIRED/FAILED thì không.
+     */
+    public void cancel() {
+        if (this.status != TxStatus.PENDING) {
+            throw new IllegalStateException("Chỉ có thể huỷ giao dịch đang chờ xử lý");
+        }
+        this.status = TxStatus.FAILED;
+        this.note = "Người dùng huỷ giao dịch";
+    }
+
     public boolean isPending() {
         return this.status == TxStatus.PENDING;
     }

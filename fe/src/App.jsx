@@ -7,6 +7,7 @@ import HomePage from '@/pages/HomePage';
 import CourseDetailPage from '@/pages/CourseDetailPage';
 import PurchaseConfirmPage from '@/pages/PurchaseConfirmPage';
 import WalletPage from '@/pages/WalletPage';
+import WalletVnpayReturnPage from '@/pages/WalletVnpayReturnPage';
 import MyCoursesPage from '@/pages/MyCoursesPage';
 import EnrolledCourseDetailPage from '@/pages/EnrolledCourseDetailPage';
 import ProfilePage from '@/pages/ProfilePage';
@@ -47,6 +48,7 @@ function App() {
             <Route path="/courses/:id" element={<CourseDetailPage />} />
             <Route path="/courses/:id/purchase" element={<PurchaseConfirmPage />} />
             <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/wallet/vnpay-return" element={<WalletVnpayReturnPage />} />
             <Route path="/my-courses" element={<MyCoursesPage />} />
             <Route path="/my-courses/:courseId" element={<EnrolledCourseDetailPage />} />
             <Route path="/profile" element={<ProfilePage />} />

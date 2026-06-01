@@ -40,6 +40,15 @@ public class WalletTransactionRepositoryImpl implements WalletTransactionReposit
     }
 
     @Override
+    public List<WalletTransaction> findExpiredPending(java.time.LocalDateTime now, int limit) {
+        return jpaRepo.findByStatusAndExpiredAtBefore(
+                        TxStatus.PENDING, now, PageRequest.of(0, limit))
+                .stream()
+                .map(WalletTransactionJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public PageResult<WalletTransaction> findByUserId(Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<WalletTransactionJpaEntity> jpaPage = jpaRepo.findByUserId(userId, pageable);

@@ -17,8 +17,9 @@ function getToastMessage(data) {
   switch (data.source) {
     case 'MOCK': return `[Dev] Nap tien thanh cong: +${amount}`;
     case 'VIETQR': return `Nap tien thanh cong: +${amount}`;
-    case 'ADMIN': return `Tai khoan duoc cong tien: +${amount}`;
-    default: return `So du vi da duoc cap nhat: +${amount}`;
+    case 'VNPAY': return `Nạp tiền qua VNPAY thành công: +${amount}`;
+    case 'ADMIN': return `Tài khoản được cộng tiền: +${amount}`;
+    default: return `Số dư đã được cập nhật: +${amount}`;
   }
 }
 
