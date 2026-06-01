@@ -29,5 +29,8 @@ public class CreateCourseRequest {
 
     private Long requestedInstructorId;
 
+    /** Miễn phí cho thành viên nội bộ (user.isInternal). Mặc định false. */
+    private boolean freeForInternal;
+
     private List<CourseSectionDto> sections;
 }

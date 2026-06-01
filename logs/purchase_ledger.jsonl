@@ -10,3 +10,4 @@
 {"event":"PURCHASE_COMPLETED","userId":2,"courseId":3,"paidPrice":200000.00,"timestamp":"2026-05-31T11:13:45.655042900"}
 {"event":"PURCHASE_COMPLETED","userId":2,"courseId":2,"paidPrice":1000000.00,"timestamp":"2026-05-31T11:14:18.214225"}
 {"event":"PURCHASE_COMPLETED","userId":13,"courseId":1,"paidPrice":0,"timestamp":"2026-06-01T11:18:17.831787700"}
+{"event":"PURCHASE_COMPLETED","userId":2,"courseId":4,"paidPrice":100000.00,"timestamp":"2026-06-01T15:13:18.731509700"}

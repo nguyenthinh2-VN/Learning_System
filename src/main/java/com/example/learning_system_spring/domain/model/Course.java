@@ -28,6 +28,8 @@ public class Course {
     private boolean priceLocked;
     private LocalDateTime publishedAt;
     private Long publishedBy;
+    /** Nếu true: thành viên nội bộ (user.isInternal) được học miễn phí khóa này. */
+    private boolean freeForInternal;
     @Builder.Default
     private List<CourseSection> sections = new ArrayList<>();
 
@@ -35,7 +37,7 @@ public class Course {
      * Tạo course mới. Mặc định ẨN (published = false, priceLocked = false).
      */
     public static Course create(String title, String description, int maxStudents, BigDecimal price,
-            Long instructorId, String thumbnailUrl, List<CourseSection> sections) {
+            Long instructorId, String thumbnailUrl, boolean freeForInternal, List<CourseSection> sections) {
         if (maxStudents <= 0) {
             throw new IllegalArgumentException("Max students must be greater than 0");
         }
@@ -49,15 +51,22 @@ public class Course {
                 .thumbnailUrl(thumbnailUrl)
                 .published(false)
                 .priceLocked(false)
+                .freeForInternal(freeForInternal)
                 .publishedAt(null)
                 .publishedBy(null)
                 .sections(sections != null ? new ArrayList<>(sections) : new ArrayList<>())
                 .build();
     }
 
+    /** Overload tương thích ngược — freeForInternal mặc định false. */
+    public static Course create(String title, String description, int maxStudents, BigDecimal price,
+            Long instructorId, String thumbnailUrl, List<CourseSection> sections) {
+        return create(title, description, maxStudents, price, instructorId, thumbnailUrl, false, sections);
+    }
+
     public static Course reconstitute(Long id, String title, String description, int maxStudents, int enrolledCount,
             BigDecimal price, Long instructorId, String thumbnailUrl, boolean published, boolean priceLocked,
-            LocalDateTime publishedAt, Long publishedBy, List<CourseSection> sections) {
+            boolean freeForInternal, LocalDateTime publishedAt, Long publishedBy, List<CourseSection> sections) {
         return Course.builder()
                 .id(id)
                 .title(title)
@@ -69,10 +78,19 @@ public class Course {
                 .thumbnailUrl(thumbnailUrl)
                 .published(published)
                 .priceLocked(priceLocked)
+                .freeForInternal(freeForInternal)
                 .publishedAt(publishedAt)
                 .publishedBy(publishedBy)
                 .sections(sections != null ? new ArrayList<>(sections) : new ArrayList<>())
                 .build();
+    }
+
+    /** Overload tương thích ngược — freeForInternal mặc định false. */
+    public static Course reconstitute(Long id, String title, String description, int maxStudents, int enrolledCount,
+            BigDecimal price, Long instructorId, String thumbnailUrl, boolean published, boolean priceLocked,
+            LocalDateTime publishedAt, Long publishedBy, List<CourseSection> sections) {
+        return reconstitute(id, title, description, maxStudents, enrolledCount, price, instructorId, thumbnailUrl,
+                published, priceLocked, false, publishedAt, publishedBy, sections);
     }
 
     public boolean isFull() {

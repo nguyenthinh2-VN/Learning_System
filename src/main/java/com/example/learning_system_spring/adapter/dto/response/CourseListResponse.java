@@ -31,6 +31,7 @@ public class CourseListResponse {
         private String thumbnailUrl;
         private boolean published;
         private boolean priceLocked;
+        private boolean freeForInternal;
         private LocalDateTime publishedAt;
     }
 
@@ -47,6 +48,7 @@ public class CourseListResponse {
                         .thumbnailUrl(output.thumbnailUrl())
                         .published(output.published())
                         .priceLocked(output.priceLocked())
+                        .freeForInternal(output.freeForInternal())
                         .publishedAt(output.publishedAt())
                         .build())
                 .toList();

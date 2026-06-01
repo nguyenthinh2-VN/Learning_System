@@ -28,7 +28,7 @@ function formatDate(dateStr) {
 export default function CourseDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isPublicAuthenticated } = useAuth();
+  const { isPublicAuthenticated, publicUser } = useAuth();
   const { currentCourse, loading, error, fetchCourseDetail, invalidateCache } = useCourseDetailStore();
   const { isEnrolled, fetchEnrollments, initialized: enrollInitialized } = useEnrollmentStore();
 
@@ -195,6 +195,13 @@ export default function CourseDetailPage() {
             )}
           </div>
           <p className="text-2xl font-bold">{formatPrice(currentCourse.price)}</p>
+          {currentCourse.freeForInternal && (
+            <Badge className="bg-sky-100 text-sky-800 border-sky-200 hover:bg-sky-100 w-fit">
+              {publicUser?.isInternal
+                ? 'Miễn phí cho bạn (thành viên nội bộ)'
+                : 'Miễn phí cho thành viên nội bộ'}
+            </Badge>
+          )}
           {renderActionButton()}
           <p className="text-xs text-muted-foreground text-center">
             {isFull ? 'Không còn chỗ trống' : `Còn ${spotsLeft} chỗ trống`}

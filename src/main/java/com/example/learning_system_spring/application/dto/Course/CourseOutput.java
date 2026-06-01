@@ -18,6 +18,7 @@ public record CourseOutput(
                 String thumbnailUrl,
                 boolean published,
                 boolean priceLocked,
+                boolean freeForInternal,
                 LocalDateTime publishedAt,
                 Long publishedBy,
                 List<CourseSectionDto> sections) {
@@ -46,6 +47,7 @@ public record CourseOutput(
                                 course.getThumbnailUrl(),
                                 course.isPublished(),
                                 course.isPriceLocked(),
+                                course.isFreeForInternal(),
                                 course.getPublishedAt(),
                                 course.getPublishedBy(),
                                 sectionDtos);

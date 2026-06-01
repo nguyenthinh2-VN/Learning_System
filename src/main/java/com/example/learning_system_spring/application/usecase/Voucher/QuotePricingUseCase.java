@@ -49,8 +49,9 @@ public class QuotePricingUseCase {
 
         BigDecimal originalPrice = course.getPrice() != null ? course.getPrice() : BigDecimal.ZERO;
 
-        // Internal member → luôn 0đ, bỏ qua voucher.
-        if (input.isInternal()) {
+        // Internal member + course bật "miễn phí cho nội bộ" → 0đ, bỏ qua voucher.
+        // Nếu user nội bộ nhưng course KHÔNG bật cờ → tính giá bình thường như mọi người.
+        if (input.isInternal() && course.isFreeForInternal()) {
             PriceQuote quote = new PriceQuote(originalPrice, originalPrice, BigDecimal.ZERO, false, null, null);
             return QuotePricingOutput.from(quote, true);
         }

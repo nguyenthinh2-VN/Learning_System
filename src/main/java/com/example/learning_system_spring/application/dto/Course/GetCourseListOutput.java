@@ -16,6 +16,7 @@ public record GetCourseListOutput(
         String thumbnailUrl,
         boolean published,
         boolean priceLocked,
+        boolean freeForInternal,
         LocalDateTime publishedAt
 ) {
     public static GetCourseListOutput from(Course course) {
@@ -30,6 +31,7 @@ public record GetCourseListOutput(
                 course.getThumbnailUrl(),
                 course.isPublished(),
                 course.isPriceLocked(),
+                course.isFreeForInternal(),
                 course.getPublishedAt()
         );
     }

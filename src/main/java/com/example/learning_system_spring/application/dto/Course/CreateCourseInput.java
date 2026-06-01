@@ -14,5 +14,6 @@ public record CreateCourseInput(
                 BigDecimal price,
                 Long requestedInstructorId,
                 String thumbnailUrl,
+                boolean freeForInternal,
                 List<CourseSectionDto> sections) {
 }
