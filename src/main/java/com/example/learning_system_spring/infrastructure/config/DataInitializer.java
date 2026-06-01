@@ -38,48 +38,48 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Seeded 5 roles: MEMBER, INSTRUCTOR, STAFF, ADMIN_USER, SUPER_ADMIN");
     }
 
+    /**
+     * Seed permissions theo ma trận phân quyền (docs/permission-matrix.md).
+     * Idempotent theo từng permission: chỉ insert permission nào CHƯA tồn tại,
+     * nhờ vậy DB đã seed trước đó vẫn nhận được các permission mới khi khởi động lại.
+     */
     private void initPermissions() {
-        Long count = em.createQuery("SELECT COUNT(p) FROM PermissionJpaEntity p", Long.class).getSingleResult();
-        if (count > 0) return;
+        // 18 permission gốc
+        seedPermission("VIEW_COURSE", "Xem khóa học");
+        seedPermission("ENROLL_COURSE", "Đăng ký khóa học");
+        seedPermission("CREATE_COURSE", "Tạo khóa học mới");
+        seedPermission("EDIT_COURSE", "Chỉnh sửa khóa học");
+        seedPermission("DELETE_COURSE", "Xóa khóa học");
+        seedPermission("CREATE_SECTION", "Tạo chương học trong khóa học");
+        seedPermission("EDIT_SECTION", "Sửa / Xóa chương học");
+        seedPermission("CREATE_LESSON", "Tạo bài giảng trong chương học");
+        seedPermission("EDIT_LESSON", "Sửa / Xóa bài giảng");
+        seedPermission("VIEW_USER", "Xem thông tin người dùng");
+        seedPermission("EDIT_USER", "Chỉnh sửa người dùng");
+        seedPermission("DELETE_USER", "Xóa người dùng");
+        seedPermission("MANAGE_ROLE", "Quản lý phân quyền");
+        seedPermission("VIEW_REPORT", "Xem báo cáo thống kê");
+        seedPermission("PUBLISH_COURSE", "Duyệt và publish khóa học");
+        seedPermission("LOCK_COURSE_PRICE", "Khóa giá / sửa giá đã khóa");
+        seedPermission("MANAGE_VOUCHER", "Tạo / sửa / xóa / xem voucher");
+        seedPermission("USE_VOUCHER", "Áp dụng voucher khi mua khóa học");
 
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("VIEW_COURSE", "Xem khóa học")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("ENROLL_COURSE", "Đăng ký khóa học")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("CREATE_COURSE", "Tạo khóa học mới")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("EDIT_COURSE", "Chỉnh sửa khóa học")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("DELETE_COURSE", "Xóa khóa học")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("CREATE_SECTION", "Tạo chương học trong khóa học")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("EDIT_SECTION", "Sửa / Xóa chương học")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("CREATE_LESSON", "Tạo bài giảng trong chương học")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("EDIT_LESSON", "Sửa / Xóa bài giảng")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("VIEW_USER", "Xem thông tin người dùng")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("EDIT_USER", "Chỉnh sửa người dùng")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("DELETE_USER", "Xóa người dùng")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("MANAGE_ROLE", "Quản lý phân quyền")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("VIEW_REPORT", "Xem báo cáo thống kê")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("PUBLISH_COURSE", "Duyệt và publish khóa học")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("LOCK_COURSE_PRICE", "Khóa giá / sửa giá đã khóa")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("MANAGE_VOUCHER", "Tạo / sửa / xóa / xem voucher")));
-        em.persist(PermissionJpaEntity.fromDomain(Permission.create("USE_VOUCHER", "Áp dụng voucher khi mua khóa học")));
-
-        log.info("Seeded 18 permissions");
+        // Permission bổ sung (matrix #11, #20–#24) — chuẩn bị cho phân quyền động
+        seedPermission("CREATE_USER", "Cấp tài khoản mới (nội bộ/ngoài)");
+        seedPermission("VIEW_LESSON", "Xem nội dung bài giảng đã trả phí");
+        seedPermission("TRACK_PROGRESS", "Đánh dấu hoàn thành & xem tiến độ học");
+        seedPermission("VIEW_TRANSACTION", "Xem giao dịch toàn hệ thống");
+        seedPermission("VIEW_REVENUE", "Xem báo cáo doanh thu");
+        seedPermission("MANAGE_WALLET", "Admin cộng tiền thủ công vào ví user");
     }
 
     private void assignPermissionsToRoles() {
-        // Kiểm tra xem đã gán permission chưa
-        Long count = em.createQuery("SELECT COUNT(rp) FROM RolePermissionJpaEntity rp", Long.class).getSingleResult();
-        if (count > 0) return;
-
         // Lấy tất cả roles
-        RoleJpaEntity memberRole = em.createQuery("SELECT r FROM RoleJpaEntity r WHERE r.name = 'MEMBER'", RoleJpaEntity.class)
-                .getSingleResult();
-        RoleJpaEntity instructorRole = em.createQuery("SELECT r FROM RoleJpaEntity r WHERE r.name = 'INSTRUCTOR'", RoleJpaEntity.class)
-                .getSingleResult();
-        RoleJpaEntity staffRole = em.createQuery("SELECT r FROM RoleJpaEntity r WHERE r.name = 'STAFF'", RoleJpaEntity.class)
-                .getSingleResult();
-        RoleJpaEntity adminUserRole = em.createQuery("SELECT r FROM RoleJpaEntity r WHERE r.name = 'ADMIN_USER'", RoleJpaEntity.class)
-                .getSingleResult();
-        RoleJpaEntity superAdminRole = em.createQuery("SELECT r FROM RoleJpaEntity r WHERE r.name = 'SUPER_ADMIN'", RoleJpaEntity.class)
-                .getSingleResult();
+        RoleJpaEntity memberRole = getRole("MEMBER");
+        RoleJpaEntity instructorRole = getRole("INSTRUCTOR");
+        RoleJpaEntity staffRole = getRole("STAFF");
+        RoleJpaEntity adminUserRole = getRole("ADMIN_USER");
+        RoleJpaEntity superAdminRole = getRole("SUPER_ADMIN");
 
         // Lấy tất cả permissions
         PermissionJpaEntity viewCourse = getPermission("VIEW_COURSE");
@@ -100,13 +100,22 @@ public class DataInitializer implements CommandLineRunner {
         PermissionJpaEntity lockCoursePrice = getPermission("LOCK_COURSE_PRICE");
         PermissionJpaEntity manageVoucher = getPermission("MANAGE_VOUCHER");
         PermissionJpaEntity useVoucher = getPermission("USE_VOUCHER");
+        PermissionJpaEntity createUser = getPermission("CREATE_USER");
+        PermissionJpaEntity viewLesson = getPermission("VIEW_LESSON");
+        PermissionJpaEntity trackProgress = getPermission("TRACK_PROGRESS");
+        PermissionJpaEntity viewTransaction = getPermission("VIEW_TRANSACTION");
+        PermissionJpaEntity viewRevenue = getPermission("VIEW_REVENUE");
+        PermissionJpaEntity manageWallet = getPermission("MANAGE_WALLET");
 
         // Gán permission theo ma trận phân quyền
-        // MEMBER: VIEW_COURSE, USE_VOUCHER (chỉ MEMBER được áp dụng voucher khi mua khóa)
+        // MEMBER: VIEW_COURSE, USE_VOUCHER, VIEW_LESSON, TRACK_PROGRESS
         assignPermission(memberRole, viewCourse);
         assignPermission(memberRole, useVoucher);
-        
-        // INSTRUCTOR: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, CREATE_SECTION, EDIT_SECTION, CREATE_LESSON, EDIT_LESSON, VIEW_REPORT
+        assignPermission(memberRole, viewLesson);
+        assignPermission(memberRole, trackProgress);
+
+        // INSTRUCTOR: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, CREATE_SECTION, EDIT_SECTION,
+        //             CREATE_LESSON, EDIT_LESSON, VIEW_REPORT, VIEW_LESSON, TRACK_PROGRESS
         assignPermission(instructorRole, viewCourse);
         assignPermission(instructorRole, createCourse);
         assignPermission(instructorRole, editCourse);
@@ -116,9 +125,12 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(instructorRole, createLesson);
         assignPermission(instructorRole, editLesson);
         assignPermission(instructorRole, viewReport);
-        
-        // STAFF: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, CREATE_SECTION, EDIT_SECTION, CREATE_LESSON, EDIT_LESSON,
-        //        PUBLISH_COURSE, LOCK_COURSE_PRICE, MANAGE_VOUCHER
+        assignPermission(instructorRole, viewLesson);
+        assignPermission(instructorRole, trackProgress);
+
+        // STAFF: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, CREATE_SECTION, EDIT_SECTION,
+        //        CREATE_LESSON, EDIT_LESSON, PUBLISH_COURSE, LOCK_COURSE_PRICE, MANAGE_VOUCHER,
+        //        VIEW_LESSON, TRACK_PROGRESS
         assignPermission(staffRole, viewCourse);
         assignPermission(staffRole, createCourse);
         assignPermission(staffRole, editCourse);
@@ -130,15 +142,18 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(staffRole, publishCourse);
         assignPermission(staffRole, lockCoursePrice);
         assignPermission(staffRole, manageVoucher);
-        
-        // ADMIN_USER: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, VIEW_USER, EDIT_USER
+        assignPermission(staffRole, viewLesson);
+        assignPermission(staffRole, trackProgress);
+
+        // ADMIN_USER: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, VIEW_USER, EDIT_USER, CREATE_USER
         assignPermission(adminUserRole, viewCourse);
         assignPermission(adminUserRole, createCourse);
         assignPermission(adminUserRole, editCourse);
         assignPermission(adminUserRole, deleteCourse);
         assignPermission(adminUserRole, viewUser);
         assignPermission(adminUserRole, editUser);
-        
+        assignPermission(adminUserRole, createUser);
+
         // SUPER_ADMIN: Tất cả permissions
         assignPermission(superAdminRole, viewCourse);
         assignPermission(superAdminRole, enrollCourse);
@@ -158,8 +173,32 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(superAdminRole, lockCoursePrice);
         assignPermission(superAdminRole, manageVoucher);
         assignPermission(superAdminRole, useVoucher);
+        assignPermission(superAdminRole, createUser);
+        assignPermission(superAdminRole, viewLesson);
+        assignPermission(superAdminRole, trackProgress);
+        assignPermission(superAdminRole, viewTransaction);
+        assignPermission(superAdminRole, viewRevenue);
+        assignPermission(superAdminRole, manageWallet);
 
         log.info("Assigned permissions to roles according to permission matrix");
+    }
+
+    /** Insert permission nếu chưa tồn tại (idempotent theo name). */
+    private void seedPermission(String name, String description) {
+        Long count = em.createQuery(
+                        "SELECT COUNT(p) FROM PermissionJpaEntity p WHERE p.name = :name", Long.class)
+                .setParameter("name", name)
+                .getSingleResult();
+        if (count == 0) {
+            em.persist(PermissionJpaEntity.fromDomain(Permission.create(name, description)));
+            log.info("Seeded permission: {}", name);
+        }
+    }
+
+    private RoleJpaEntity getRole(String name) {
+        return em.createQuery("SELECT r FROM RoleJpaEntity r WHERE r.name = :name", RoleJpaEntity.class)
+                .setParameter("name", name)
+                .getSingleResult();
     }
 
     private PermissionJpaEntity getPermission(String name) {
@@ -168,14 +207,23 @@ public class DataInitializer implements CommandLineRunner {
                 .getSingleResult();
     }
 
+    /**
+     * Gán permission cho role nếu cặp (role, permission) chưa tồn tại (idempotent).
+     * Dùng native query vì constructor entity là protected.
+     */
     private void assignPermission(RoleJpaEntity role, PermissionJpaEntity permission) {
-        // Tạo RolePermissionJpaEntity thông qua reflection hoặc tạo entity mới
-        // Vì constructor protected, chúng ta cần tạo entity theo cách khác
-        // Sử dụng native query để insert trực tiếp
-        em.createNativeQuery(
-                "INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)")
+        Number existing = (Number) em.createNativeQuery(
+                        "SELECT COUNT(*) FROM role_permissions WHERE role_id = ? AND permission_id = ?")
                 .setParameter(1, role.getId())
                 .setParameter(2, permission.getId())
-                .executeUpdate();
-    }   
+                .getSingleResult();
+
+        if (existing.longValue() == 0) {
+            em.createNativeQuery(
+                            "INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)")
+                    .setParameter(1, role.getId())
+                    .setParameter(2, permission.getId())
+                    .executeUpdate();
+        }
+    }
 }

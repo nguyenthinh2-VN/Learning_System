@@ -9,6 +9,7 @@ import com.example.learning_system_spring.domain.exception.InvalidCredentialsExc
 import com.example.learning_system_spring.domain.model.Role;
 import com.example.learning_system_spring.domain.model.User;
 import com.example.learning_system_spring.infrastructure.config.JwtService;
+import com.example.learning_system_spring.infrastructure.config.PermissionCacheService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -33,6 +35,9 @@ class LoginUseCaseTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private PermissionCacheService permissionCacheService;
 
     @InjectMocks
     private LoginUseCase loginUseCase;
@@ -53,6 +58,7 @@ class LoginUseCaseTest {
         when(userRepository.findByUsernameOrEmail("MEM123", "MEM123")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "encodedPassword")).thenReturn(true);
         when(jwtService.generateToken(1L, "MEM123", "user@test.com", "MEMBER", false)).thenReturn("mockToken");
+        when(permissionCacheService.getPermissions("MEMBER")).thenReturn(Set.of("VIEW_COURSE", "USE_VOUCHER"));
 
         // Act
         LoginOutput output = loginUseCase.execute(input);
@@ -61,6 +67,7 @@ class LoginUseCaseTest {
         assertNotNull(output);
         assertEquals("mockToken", output.accessToken());
         assertEquals("MEM123", output.username());
+        assertTrue(output.permissions().contains("VIEW_COURSE"));
     }
 
     @Test

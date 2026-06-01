@@ -12,9 +12,10 @@ public record LoginOutput(
     String role,
     boolean isInternal,
     String accessToken,
-    LocalDateTime lastLogin
+    LocalDateTime lastLogin,
+    java.util.List<String> permissions
 ) {
-    public static LoginOutput from(User user, String accessToken) {
+    public static LoginOutput from(User user, String accessToken, java.util.List<String> permissions) {
         return new LoginOutput(
             user.getId(),
             user.getUsername(),
@@ -23,7 +24,8 @@ public record LoginOutput(
             user.getRole().getName(),
             user.isInternal(),
             accessToken,
-            LocalDateTime.now()
+            LocalDateTime.now(),
+            permissions
         );
     }
 }

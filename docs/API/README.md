@@ -12,6 +12,7 @@ Tài liệu API được tách theo từng mục để dễ tra cứu và tránh
 |---|------|----------|
 | 1 | [auth.md](./auth.md) | Đăng ký, đăng nhập, JWT token |
 | 2 | [roles-permissions.md](./roles-permissions.md) | Roles & Permissions, Database Schema |
+| 2b | [roles-permissions-management.md](./roles-permissions-management.md) | Phân quyền động (Dynamic RBAC): gán/gỡ permission cho role |
 | 3 | [course.md](./course.md) | Course Management (CRUD), thumbnailUrl |
 | 4 | [course-approval.md](./course-approval.md) | Duyệt course, publish/unpublish, Instructor Portal |
 | 5 | [section.md](./section.md) | Course Section Management |
@@ -50,8 +51,11 @@ Tất cả lỗi trả về format thống nhất:
 | 400 | `FILE_TOO_LARGE` | File upload vượt quá kích thước cho phép |
 | 401 | `INVALID_CREDENTIALS` | Email hoặc mật khẩu sai |
 | 403 | `ACCOUNT_DISABLED` | Tài khoản đã bị khóa |
+| 403 | `ACCESS_DENIED` | Không có quyền thực hiện hành động |
 | 404 | `USER_NOT_FOUND` | Không tìm thấy user |
+| 404 | `ROLE_NOT_FOUND` | Không tìm thấy role |
+| 404 | `PERMISSION_NOT_FOUND` | Không tìm thấy permission |
 | 409 | `EMAIL_ALREADY_EXISTS` | Email đã được đăng ký |
 | 500 | `INTERNAL_ERROR` | Lỗi hệ thống |
 
-> Mã lỗi theo từng domain (Section, Lesson, Course Approval, Voucher) được liệt kê ở cuối mỗi file con tương ứng.
+> Mã lỗi theo từng domain (Section, Lesson, Course Approval, Voucher, Phân quyền động) được liệt kê ở cuối mỗi file con tương ứng.

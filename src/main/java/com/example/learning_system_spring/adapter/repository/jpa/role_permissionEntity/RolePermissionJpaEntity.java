@@ -21,4 +21,11 @@ public class RolePermissionJpaEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "permission_id", nullable = false)
     private PermissionJpaEntity permission;
+
+    public static RolePermissionJpaEntity link(RoleJpaEntity role, PermissionJpaEntity permission) {
+        RolePermissionJpaEntity e = new RolePermissionJpaEntity();
+        e.role = role;
+        e.permission = permission;
+        return e;
+    }
 }

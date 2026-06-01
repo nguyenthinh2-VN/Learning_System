@@ -12,12 +12,13 @@ public record LoginResponse(
     String role,
     boolean isInternal,
     String accessToken,
-    LocalDateTime lastLogin
+    LocalDateTime lastLogin,
+    java.util.List<String> permissions
 ) {
     public static LoginResponse from(LoginOutput output) {
         return new LoginResponse(
             output.id(), output.username(), output.email(), output.name(), output.role(), output.isInternal(),
-            output.accessToken(), output.lastLogin()
+            output.accessToken(), output.lastLogin(), output.permissions()
         );
     }
 }

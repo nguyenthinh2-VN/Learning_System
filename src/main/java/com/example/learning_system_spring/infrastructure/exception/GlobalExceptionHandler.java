@@ -33,6 +33,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.COURSE_NOT_FOUND, ex.getMessage()));
     }
 
+    @ExceptionHandler(RoleNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRoleNotFound(RoleNotFoundException ex) {
+        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.ROLE_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PermissionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePermissionNotFound(PermissionNotFoundException ex) {
+        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.PERMISSION_NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProtectedRoleException.class)
+    public ResponseEntity<ErrorResponse> handleProtectedRole(ProtectedRoleException ex) {
+        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.PROTECTED_ROLE, ex.getMessage()));
+    }
+
     @ExceptionHandler(CourseAccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleCourseAccessDenied(CourseAccessDeniedException ex) {
         return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, ex.getMessage()));
