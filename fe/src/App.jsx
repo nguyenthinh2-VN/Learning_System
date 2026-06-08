@@ -11,6 +11,7 @@ import WalletVnpayReturnPage from '@/pages/WalletVnpayReturnPage';
 import MyCoursesPage from '@/pages/MyCoursesPage';
 import EnrolledCourseDetailPage from '@/pages/EnrolledCourseDetailPage';
 import ProfilePage from '@/pages/ProfilePage';
+import ProgressPage from '@/pages/ProgressPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import DashboardGate from '@/pages/dashboard/DashboardGate';
@@ -51,6 +52,7 @@ function App() {
             <Route path="/wallet/vnpay-return" element={<WalletVnpayReturnPage />} />
             <Route path="/my-courses" element={<MyCoursesPage />} />
             <Route path="/my-courses/:courseId" element={<EnrolledCourseDetailPage />} />
+            <Route path="/progress" element={<ProgressPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
 
