@@ -3,6 +3,7 @@ package com.example.learning_system_spring.application.dto.User;
 import com.example.learning_system_spring.domain.model.User;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record UserProfileOutput(
         Long id,
@@ -12,9 +13,14 @@ public record UserProfileOutput(
         String role,
         boolean isInternal,
         BigDecimal balance,
-        String avatarUrl
+        String avatarUrl,
+        List<String> permissions
 ) {
     public static UserProfileOutput from(User user) {
+        return from(user, List.of());
+    }
+
+    public static UserProfileOutput from(User user, List<String> permissions) {
         return new UserProfileOutput(
                 user.getId(),
                 user.getUsername(),
@@ -23,7 +29,8 @@ public record UserProfileOutput(
                 user.getRole().getName(),
                 user.isInternal(),
                 user.getBalance(),
-                user.getAvatarUrl()
+                user.getAvatarUrl(),
+                permissions == null ? List.of() : permissions
         );
     }
 }

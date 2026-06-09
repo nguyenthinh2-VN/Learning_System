@@ -52,10 +52,12 @@ public class WalletTransaction {
         tx.status = TxStatus.COMPLETED;
         tx.source = source;
         tx.note = note;
-        tx.createdAt = LocalDateTime.now();
-        tx.completedAt = LocalDateTime.now();
-        // Admin tx không cần expiredAt nhưng DB NOT NULL — đặt xa tương lai
-        tx.expiredAt = LocalDateTime.now().plusYears(100);
+        LocalDateTime now = LocalDateTime.now();
+        tx.createdAt = now;
+        tx.completedAt = now;
+        // Giao dịch đã COMPLETED không có khái niệm hết hạn (expiredAt chỉ dùng cho PENDING).
+        // Đặt = thời điểm tạo để không tràn giới hạn cột TIMESTAMP của DB.
+        tx.expiredAt = now;
         return tx;
     }
 
@@ -71,10 +73,11 @@ public class WalletTransaction {
         tx.status = TxStatus.COMPLETED;
         tx.source = TxSource.PURCHASE;
         tx.note = note;
-        tx.createdAt = LocalDateTime.now();
-        tx.completedAt = LocalDateTime.now();
-        // Purchase tx không cần expiredAt nhưng DB NOT NULL — đặt xa tương lai
-        tx.expiredAt = LocalDateTime.now().plusYears(100);
+        LocalDateTime now = LocalDateTime.now();
+        tx.createdAt = now;
+        tx.completedAt = now;
+        // Giao dịch đã COMPLETED không có khái niệm hết hạn (expiredAt chỉ dùng cho PENDING).
+        tx.expiredAt = now;
         return tx;
     }
 
@@ -109,6 +112,29 @@ public class WalletTransaction {
         this.status = TxStatus.COMPLETED;
         this.completedAt = LocalDateTime.now();
         this.note = note;
+    }
+
+    /**
+     * Hết hạn giao dịch — gọi từ job dọn dẹp khi PENDING đã quá expiredAt.
+     * Idempotent: chỉ tác động lên PENDING.
+     */
+    public void expire() {
+        if (this.status != TxStatus.PENDING) {
+            throw new IllegalStateException("Chỉ có thể hết hạn giao dịch đang PENDING");
+        }
+        this.status = TxStatus.EXPIRED;
+    }
+
+    /**
+     * Người dùng chủ động huỷ giao dịch đang chờ (đóng tab/đổi ý).
+     * Chỉ huỷ được khi còn PENDING; đã COMPLETED/EXPIRED/FAILED thì không.
+     */
+    public void cancel() {
+        if (this.status != TxStatus.PENDING) {
+            throw new IllegalStateException("Chỉ có thể huỷ giao dịch đang chờ xử lý");
+        }
+        this.status = TxStatus.FAILED;
+        this.note = "Người dùng huỷ giao dịch";
     }
 
     public boolean isPending() {

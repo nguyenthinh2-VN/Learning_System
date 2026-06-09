@@ -27,17 +27,21 @@ jwt:
   expiration: 86400000
 
 # Payment Gateway
-# "mock" = dev mode (dùng POST /api/v1/webhook/mock?ref=... để test)
-# "vietqr" = production (cần điền thông tin ngân hàng bên dưới)
+# "mock"  = dev mode (dùng POST /api/v1/webhook/mock?ref=... để test)
+# "vnpay" = VNPay sandbox/production (điền credential bên dưới)
 payment:
-  provider: mock
+  provider: vnpay
 
-# Chỉ dùng khi payment.provider=vietqr
-vietqr:
-  bank-id: MB
-  account-no: 1234567890
-  account-name: CONG TY TNHH MTV ThinhDev
-  webhook-secret: change-me-in-production
+# Chỉ dùng khi payment.provider=vnpay.
+# Đăng ký sandbox tại https://sandbox.vnpayment.vn để lấy tmn-code + hash-secret.
+vnpay:
+  tmn-code: K88M3Q7U
+  hash-secret: FKDTB85IYTA013UJQ70IKAX4FCW9368D
+  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:5173/wallet/vnpay-return
+  ipn-url: http://localhost:8080/api/v1/webhook/vnpay-ipn   # production: thay bằng URL public/ngrok
+  complete-mode: RETURN    # DEV=RETURN (không cần ngrok); PRODUCTION=IPN
+  ttl-minutes: 15
 
 # Wallet config
 wallet:

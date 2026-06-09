@@ -4,7 +4,6 @@ import com.example.learning_system_spring.application.dto.Voucher.CreateVoucherI
 import com.example.learning_system_spring.application.dto.Voucher.DeleteVoucherInput;
 import com.example.learning_system_spring.application.dto.Voucher.VoucherOutput;
 import com.example.learning_system_spring.application.repository.Voucher.VoucherRepository;
-import com.example.learning_system_spring.domain.exception.CourseAccessDeniedException;
 import com.example.learning_system_spring.domain.exception.VoucherCodeAlreadyExistsException;
 import com.example.learning_system_spring.domain.exception.VoucherNotFoundException;
 import com.example.learning_system_spring.domain.model.Role;
@@ -50,7 +49,6 @@ class CreateAndDeleteVoucherUseCaseTest {
     @InjectMocks
     private CreateVoucherUseCase createUseCase;
 
-    private final Role memberRole = Role.reconstitute(1L, "MEMBER", null);
     private final Role staffRole = Role.reconstitute(3L, "STAFF", null);
     private final Role superAdminRole = Role.reconstitute(5L, "SUPER_ADMIN", null);
 
@@ -63,21 +61,8 @@ class CreateAndDeleteVoucherUseCaseTest {
     }
 
     @Nested
-    @DisplayName("CreateVoucherUseCase — authorization")
+    @DisplayName("CreateVoucherUseCase — authorization (moved to controller)")
     class CreateAuthorization {
-
-        @Test
-        @DisplayName("MEMBER → CourseAccessDenied")
-        void memberDenied() {
-            CreateVoucherInput input = new CreateVoucherInput(
-                    5L, memberRole, "TEST", VoucherType.PERCENT, new BigDecimal("10"),
-                    VoucherScope.ALL_COURSES,
-                    LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1),
-                    null, null, null, null, null);
-
-            assertThatThrownBy(() -> createUseCase.execute(input))
-                    .isInstanceOf(CourseAccessDeniedException.class);
-        }
 
         @Test
         @DisplayName("STAFF → cho phép")
@@ -112,19 +97,6 @@ class CreateAndDeleteVoucherUseCaseTest {
                     null, null, null, null, null);
 
             createUseCase.execute(input);
-        }
-
-        @Test
-        @DisplayName("Bug-C: role null → NullPointerException (escapes to controller)")
-        void nullRoleNpe() {
-            CreateVoucherInput input = new CreateVoucherInput(
-                    5L, null, "TEST", VoucherType.PERCENT, new BigDecimal("10"),
-                    VoucherScope.ALL_COURSES,
-                    LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1),
-                    null, null, null, null, null);
-
-            assertThatThrownBy(() -> createUseCase.execute(input))
-                    .isInstanceOf(NullPointerException.class);
         }
     }
 
@@ -321,14 +293,6 @@ class CreateAndDeleteVoucherUseCaseTest {
             assertThatThrownBy(() -> deleteUseCase.execute(
                     new DeleteVoucherInput(99L, 5L, staffRole)))
                     .isInstanceOf(VoucherNotFoundException.class);
-        }
-
-        @Test
-        @DisplayName("MEMBER → CourseAccessDenied")
-        void memberDenied() {
-            assertThatThrownBy(() -> deleteUseCase.execute(
-                    new DeleteVoucherInput(10L, 5L, memberRole)))
-                    .isInstanceOf(CourseAccessDeniedException.class);
         }
 
         @Test

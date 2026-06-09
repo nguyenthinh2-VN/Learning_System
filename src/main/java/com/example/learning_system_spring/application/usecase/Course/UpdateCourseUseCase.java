@@ -73,6 +73,7 @@ public class UpdateCourseUseCase {
                 input.thumbnailUrl() != null ? input.thumbnailUrl() : course.getThumbnailUrl(),
                 course.isPublished(),
                 course.isPriceLocked(),
+                input.freeForInternal(),
                 course.getPublishedAt(),
                 course.getPublishedBy(),
                 domainSections);

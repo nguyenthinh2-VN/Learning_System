@@ -22,5 +22,11 @@ interface JpaWalletTransactionRepository extends JpaRepository<WalletTransaction
             @Param("ref") String referenceCode,
             @Param("status") TxStatus status);
 
+    @Query("SELECT t FROM WalletTransactionJpaEntity t WHERE t.status = :status AND t.expiredAt < :now ORDER BY t.expiredAt ASC")
+    java.util.List<WalletTransactionJpaEntity> findByStatusAndExpiredAtBefore(
+            @Param("status") TxStatus status,
+            @Param("now") java.time.LocalDateTime now,
+            Pageable pageable);
+
     Page<WalletTransactionJpaEntity> findByUserId(Long userId, Pageable pageable);
 }

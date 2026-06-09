@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "code-review-graph": {
-      "command": "C:\\Users\\Duc Thinh\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python312\\Scripts\\code-review-graph.exe",
-      "args": ["serve"],
+      "command": "C:\\Users\\THINH\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\code-review-graph.exe",
+      "args": ["mcp"],
       "disabled": false,
       "autoApprove": []
     },

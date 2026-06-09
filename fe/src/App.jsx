@@ -7,9 +7,11 @@ import HomePage from '@/pages/HomePage';
 import CourseDetailPage from '@/pages/CourseDetailPage';
 import PurchaseConfirmPage from '@/pages/PurchaseConfirmPage';
 import WalletPage from '@/pages/WalletPage';
+import WalletVnpayReturnPage from '@/pages/WalletVnpayReturnPage';
 import MyCoursesPage from '@/pages/MyCoursesPage';
 import EnrolledCourseDetailPage from '@/pages/EnrolledCourseDetailPage';
 import ProfilePage from '@/pages/ProfilePage';
+import ProgressPage from '@/pages/ProgressPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import DashboardGate from '@/pages/dashboard/DashboardGate';
@@ -23,6 +25,7 @@ import AdminPendingCoursesPage from '@/pages/admin/AdminPendingCoursesPage';
 import AdminVouchersPage from '@/pages/admin/AdminVouchersPage';
 import AdminTopUpPage from '@/pages/admin/AdminTopUpPage';
 import AdminTransactionsPage from '@/pages/admin/AdminTransactionsPage';
+import AdminPermissionsPage from '@/pages/admin/AdminPermissionsPage';
 
 function InstructorPlaceholder() {
   return (
@@ -46,8 +49,10 @@ function App() {
             <Route path="/courses/:id" element={<CourseDetailPage />} />
             <Route path="/courses/:id/purchase" element={<PurchaseConfirmPage />} />
             <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/wallet/vnpay-return" element={<WalletVnpayReturnPage />} />
             <Route path="/my-courses" element={<MyCoursesPage />} />
             <Route path="/my-courses/:courseId" element={<EnrolledCourseDetailPage />} />
+            <Route path="/progress" element={<ProgressPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
 
@@ -71,6 +76,7 @@ function App() {
             <Route path="/admin/vouchers" element={<AdminVouchersPage />} />
             <Route path="/admin/wallet" element={<AdminTopUpPage />} />
             <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
+            <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
           </Route>
 
           {/* Instructor portal (sẽ build sau) */}

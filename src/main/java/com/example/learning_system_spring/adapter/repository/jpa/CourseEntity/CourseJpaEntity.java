@@ -53,6 +53,9 @@ public class CourseJpaEntity {
     @Column(name = "price_locked", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean priceLocked = false;
 
+    @Column(name = "free_for_internal", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean freeForInternal = false;
+
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 

@@ -84,8 +84,9 @@ public class ApplyVoucherCheckoutUseCase {
 
         BigDecimal originalPrice = course.getPrice() != null ? course.getPrice() : BigDecimal.ZERO;
 
-        // [4] Internal member → bypass voucher, paidPrice = 0
-        if (input.isInternal()) {
+        // [4] Internal member + course bật "miễn phí cho nội bộ" → bypass voucher, paidPrice = 0.
+        //     Nếu user nội bộ nhưng course KHÔNG bật cờ → tính giá bình thường như mọi người.
+        if (input.isInternal() && course.isFreeForInternal()) {
             return processInternal(user, course, input, originalPrice);
         }
 

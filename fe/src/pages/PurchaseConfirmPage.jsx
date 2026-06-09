@@ -168,8 +168,17 @@ export default function PurchaseConfirmPage() {
 
       {/* ── Course Info ─────────────────────────────────────────────── */}
       <div className="border rounded-xl p-4 mb-4 flex gap-4">
-        <div className="size-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <BookOpen className="size-7 text-muted-foreground/30" />
+        <div className="size-16 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+          {course?.thumbnailUrl ? (
+            <img
+              src={course.thumbnailUrl}
+              alt={course.title}
+              className="w-full h-full object-cover"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          ) : (
+            <BookOpen className="size-7 text-muted-foreground/30" />
+          )}
         </div>
         <div className="flex-1 min-w-0">
           {!course ? (

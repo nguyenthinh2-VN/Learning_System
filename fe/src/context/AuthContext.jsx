@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getProfileApi } from '@/api/wallet';
+import { getAdminProfileApi } from '@/api/adminApi';
 import { isJwtExpired } from '@/lib/jwt';
 
 const AuthContext = createContext(null);
@@ -139,6 +140,31 @@ export function AuthProvider({ children }) {
     setAdminUser(null);
   }, []);
 
+  /**
+   * Đồng bộ lại permissions của admin đang đăng nhập từ server.
+   * Cần thiết cho phân quyền động: khi SUPER_ADMIN đổi ma trận quyền, các tài khoản
+   * đang đăng nhập sẽ nhận quyền mới mà không phải đăng nhập lại.
+   */
+  const refreshAdminPermissions = useCallback(async () => {
+    try {
+      const res = await getAdminProfileApi();
+      const data = res.data?.data;
+      if (!data) return;
+      setAdminUser((prev) => {
+        if (!prev) return prev;
+        const updated = {
+          ...prev,
+          role: data.role ?? prev.role,
+          permissions: data.permissions ?? prev.permissions ?? [],
+        };
+        localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    } catch (err) {
+      console.error('[AuthContext] refreshAdminPermissions failed:', err);
+    }
+  }, []);
+
   // Khi app load trong khu vực /admin: nếu token admin hết hạn → đăng xuất + về /admin/login.
   useEffect(() => {
     const token = localStorage.getItem(ADMIN_TOKEN_KEY);
@@ -172,6 +198,7 @@ export function AuthProvider({ children }) {
         adminToken,
         adminLogin,
         adminLogout,
+        refreshAdminPermissions,
         isAdminAuthenticated,
       }}
     >

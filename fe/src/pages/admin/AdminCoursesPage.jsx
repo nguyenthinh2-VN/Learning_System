@@ -79,6 +79,7 @@ function CourseFormModal({ course, onClose, onSave }) {
     maxStudents: course?.maxStudents ?? '',
     thumbnailUrl: course?.thumbnailUrl || '',
     requestedInstructorId: course?.instructorId ?? '',
+    freeForInternal: course?.freeForInternal ?? false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -103,6 +104,7 @@ function CourseFormModal({ course, onClose, onSave }) {
         price: parseFloat(form.price),
         maxStudents: parseInt(form.maxStudents),
         thumbnailUrl: form.thumbnailUrl.trim() || null,
+        freeForInternal: form.freeForInternal,
       };
       if (form.requestedInstructorId) {
         payload.requestedInstructorId = parseInt(form.requestedInstructorId);
@@ -174,6 +176,22 @@ function CourseFormModal({ course, onClose, onSave }) {
             <Label>ID Giảng viên <span className="text-muted-foreground text-xs">(để trống = dùng tài khoản hiện tại)</span></Label>
             <Input name="requestedInstructorId" type="number" value={form.requestedInstructorId} onChange={handleChange} placeholder="VD: 2" min={1} />
           </div>
+
+          <label className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+            <input
+              type="checkbox"
+              name="freeForInternal"
+              checked={form.freeForInternal}
+              onChange={(e) => setForm((p) => ({ ...p, freeForInternal: e.target.checked }))}
+              className="mt-0.5 size-4 accent-emerald-500"
+            />
+            <span>
+              <span className="text-sm font-medium">Miễn phí cho thành viên nội bộ</span>
+              <span className="block text-xs text-muted-foreground mt-0.5">
+                Khi bật, tài khoản nội bộ học khóa này miễn phí. Học viên thường vẫn trả giá như bình thường.
+              </span>
+            </span>
+          </label>
 
           <div className="flex gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">Hủy</Button>

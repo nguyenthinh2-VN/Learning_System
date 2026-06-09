@@ -109,7 +109,7 @@ public class CourseController {
                 CreateCourseInput input = new CreateCourseInput(
                                 requesterId, requesterRole, req.getTitle(), req.getDescription(),
                                 req.getMaxStudents(), req.getPrice(), req.getRequestedInstructorId(),
-                                req.getThumbnailUrl(), req.getSections());
+                                req.getThumbnailUrl(), req.isFreeForInternal(), req.getSections());
 
                 CourseOutput output = createCourseUseCase.execute(input);
 
@@ -129,7 +129,8 @@ public class CourseController {
 
                 UpdateCourseInput input = new UpdateCourseInput(
                                 id, requesterId, requesterRole, req.getTitle(), req.getDescription(),
-                                req.getMaxStudents(), req.getPrice(), req.getThumbnailUrl(), req.getSections());
+                                req.getMaxStudents(), req.getPrice(), req.getThumbnailUrl(),
+                                req.isFreeForInternal(), req.getSections());
 
                 CourseOutput output = updateCourseUseCase.execute(input);
 

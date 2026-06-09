@@ -34,6 +34,7 @@ public class CourseMapper {
                 entity.getThumbnailUrl(),
                 entity.isPublished(),
                 entity.isPriceLocked(),
+                entity.isFreeForInternal(),
                 entity.getPublishedAt(),
                 entity.getPublishedBy(),
                 sections);
@@ -83,6 +84,7 @@ public class CourseMapper {
         entity.setThumbnailUrl(course.getThumbnailUrl());
         entity.setPublished(course.isPublished());
         entity.setPriceLocked(course.isPriceLocked());
+        entity.setFreeForInternal(course.isFreeForInternal());
         entity.setPublishedAt(course.getPublishedAt());
         entity.setPublishedBy(course.getPublishedBy());
 

@@ -3,11 +3,9 @@ package com.example.learning_system_spring.application.usecase.Voucher;
 import com.example.learning_system_spring.application.dto.Voucher.CreateVoucherInput;
 import com.example.learning_system_spring.application.dto.Voucher.VoucherOutput;
 import com.example.learning_system_spring.application.repository.Voucher.VoucherRepository;
-import com.example.learning_system_spring.domain.exception.CourseAccessDeniedException;
 import com.example.learning_system_spring.domain.exception.VoucherCodeAlreadyExistsException;
 import com.example.learning_system_spring.domain.model.Voucher.Voucher;
 import com.example.learning_system_spring.domain.model.Voucher.VoucherType;
-import com.example.learning_system_spring.domain.service.CourseOwnershipPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +20,7 @@ public class CreateVoucherUseCase {
 
     @Transactional
     public VoucherOutput execute(CreateVoucherInput input) {
-        if (!CourseOwnershipPolicy.hasFullAccess(input.requesterRole())) {
-            throw new CourseAccessDeniedException("Bạn không có quyền tạo voucher.");
-        }
+        // Authz: enforce ở controller bằng @PreAuthorize("hasAuthority('MANAGE_VOUCHER')").
 
         // Validate phần trăm phải <= 100
         if (input.type() == VoucherType.PERCENT

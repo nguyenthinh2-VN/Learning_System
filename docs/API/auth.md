@@ -97,7 +97,8 @@ Base URL: `http://localhost:8080/api/v1`
     "role": "MEMBER",
     "isInternal": false,
     "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2Vy...",
-    "lastLogin": "2026-05-15T15:30:00"
+    "lastLogin": "2026-05-15T15:30:00",
+    "permissions": ["VIEW_COURSE", "USE_VOUCHER", "VIEW_LESSON", "TRACK_PROGRESS"]
   },
   "timestamp": "2026-05-15T15:30:00"
 }
@@ -106,7 +107,10 @@ Base URL: `http://localhost:8080/api/v1`
 | Field | Type | Mô tả |
 |-------|------|-------|
 | accessToken | String | JWT token, thời hạn 24h. Dùng cho header `Authorization: Bearer <token>` |
-| role | String | MEMBER / STAFF / ADMIN |
+| role | String | MEMBER / INSTRUCTOR / STAFF / ADMIN_USER / SUPER_ADMIN |
+| permissions | String[] | Danh sách permission của role tại thời điểm login (nạp từ ma trận phân quyền động). FE dùng để ẩn/hiện UI. Xem [roles-permissions-management.md](./roles-permissions-management.md). |
+
+> **Lưu ý về `permissions`:** JWT KHÔNG chứa permission (chỉ chứa `role`) — danh sách này chỉ trả kèm response để FE gate giao diện. Server enforce quyền bằng cách nạp permission động theo role mỗi request. Nếu admin đổi ma trận sau khi user đã login, token vẫn dùng được nhưng FE chỉ thấy `permissions` cũ tới lần login kế tiếp; enforcement ở BE thì cập nhật ngay.
 
 **Response 401 (Sai email/username hoặc password):**
 ```json

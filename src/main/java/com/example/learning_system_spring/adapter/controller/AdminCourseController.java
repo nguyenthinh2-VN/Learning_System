@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,8 +33,9 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * Endpoint quản trị course cho STAFF / SUPER_ADMIN: duyệt course, ẩn / hiện,
- * cập nhật giá (kể cả khi đã priceLocked).
+ * Endpoint quản trị course: duyệt course, ẩn / hiện, cập nhật giá (kể cả khi đã priceLocked).
+ * Enforce theo permission động: PUBLISH_COURSE (duyệt/ẩn/xem danh sách admin),
+ * LOCK_COURSE_PRICE (sửa giá đã khóa).
  */
 @RestController
 @RequestMapping("/api/v1/admin/courses")
@@ -52,6 +54,7 @@ public class AdminCourseController {
     }
 
     @GetMapping("/pending")
+    @PreAuthorize("hasAuthority('PUBLISH_COURSE')")
     public ResponseEntity<?> pendingCourses(
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "0") int page,
@@ -72,6 +75,7 @@ public class AdminCourseController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('PUBLISH_COURSE')")
     public ResponseEntity<?> allCourses(
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "0") int page,
@@ -92,6 +96,7 @@ public class AdminCourseController {
     }
 
     @PostMapping("/{id}/publish")
+    @PreAuthorize("hasAuthority('PUBLISH_COURSE')")
     public ResponseEntity<?> publish(@PathVariable Long id, HttpServletRequest request) {
         Claims claims = getClaims(request);
         Long requesterId = claims.get("userId", Long.class);
@@ -108,6 +113,7 @@ public class AdminCourseController {
     }
 
     @PostMapping("/{id}/unpublish")
+    @PreAuthorize("hasAuthority('PUBLISH_COURSE')")
     public ResponseEntity<?> unpublish(@PathVariable Long id, HttpServletRequest request) {
         Claims claims = getClaims(request);
         Long requesterId = claims.get("userId", Long.class);
@@ -124,6 +130,7 @@ public class AdminCourseController {
     }
 
     @PutMapping("/{id}/price")
+    @PreAuthorize("hasAuthority('LOCK_COURSE_PRICE')")
     public ResponseEntity<?> updatePrice(@PathVariable Long id,
                                          @Valid @RequestBody UpdateCoursePriceRequest req,
                                          HttpServletRequest request) {

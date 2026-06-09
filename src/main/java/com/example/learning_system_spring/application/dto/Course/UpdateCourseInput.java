@@ -14,5 +14,6 @@ public record UpdateCourseInput(
                 int maxStudents,
                 BigDecimal price,
                 String thumbnailUrl,
+                boolean freeForInternal,
                 List<CourseSectionDto> sections) {
 }

@@ -16,6 +16,8 @@
 
 > Xem chi tiết ma trận phân quyền tại `docs/permission-matrix.md`
 
+> **Phân quyền động (Dynamic RBAC):** Việc gán/gỡ permission cho role qua API được mô tả tại [roles-permissions-management.md](./roles-permissions-management.md). `SUPER_ADMIN` (permission `MANAGE_ROLE`) có thể chỉnh ma trận và thay đổi có hiệu lực ngay, không cần deploy lại.
+
 ---
 
 ## 5. Database Schema

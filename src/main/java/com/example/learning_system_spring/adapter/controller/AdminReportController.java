@@ -24,7 +24,7 @@ import java.time.LocalDate;
 
 /**
  * Báo cáo & giao dịch toàn hệ thống cho Admin Portal.
- * Dữ liệu tài chính nhạy cảm → chỉ SUPER_ADMIN.
+ * Dữ liệu tài chính nhạy cảm → enforce theo permission động (VIEW_TRANSACTION / VIEW_REVENUE).
  */
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -40,7 +40,7 @@ public class AdminReportController {
      * GET /api/v1/admin/transactions?keyword=&source=&status=&direction=&from=&to=&page=0&size=20
      */
     @GetMapping("/transactions")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('VIEW_TRANSACTION')")
     public ResponseEntity<ApiResponse<PageResult<AdminTransactionItemResponse>>> listTransactions(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String source,
@@ -73,7 +73,7 @@ public class AdminReportController {
      * GET /api/v1/admin/reports/revenue?granularity=DAY|MONTH&from=&to=
      */
     @GetMapping("/reports/revenue")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('VIEW_REVENUE')")
     public ResponseEntity<ApiResponse<RevenueReportResponse>> revenueReport(
             @RequestParam(defaultValue = "DAY") String granularity,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

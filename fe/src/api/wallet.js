@@ -70,6 +70,36 @@ export const mockWebhookApi = (referenceCode) =>
   api.post(`/webhook/mock?ref=${referenceCode}`);
 
 /**
+ * (VNPay) Hoàn tất giao dịch ở kênh RETURN — gửi toàn bộ vnp_* để BE verify + cộng tiền.
+ * POST /api/v1/wallet/top-up/vnpay-return
+ * Quyền: Đăng nhập (chỉ chủ giao dịch)
+ * @param {Record<string,string>} params - toàn bộ query vnp_* từ URL return
+ * @returns {{ referenceCode, status, amount }}
+ */
+export const completeVnPayReturnApi = (params) =>
+  api.post('/wallet/top-up/vnpay-return', params);
+
+/**
+ * (VNPay) Đọc trạng thái giao dịch (poll khi complete-mode=IPN). Không cộng tiền.
+ * GET /api/v1/wallet/top-up/status?ref={referenceCode}
+ * Quyền: Đăng nhập (chỉ chủ giao dịch)
+ * @param {string} ref
+ * @returns {{ referenceCode, status, amount }}
+ */
+export const getTopUpStatusApi = (ref) =>
+  api.get('/wallet/top-up/status', { params: { ref } });
+
+/**
+ * Huỷ giao dịch nạp tiền đang chờ (đóng tab/đổi ý). Chỉ huỷ được PENDING của chính mình.
+ * POST /api/v1/wallet/top-up/{referenceCode}/cancel
+ * Quyền: Đăng nhập (chỉ chủ giao dịch)
+ * @param {string} referenceCode
+ * @returns {{ referenceCode, status, amount }}
+ */
+export const cancelTopUpApi = (referenceCode) =>
+  api.post(`/wallet/top-up/${referenceCode}/cancel`);
+
+/**
  * Lịch sử giao dịch ví của chính mình (phân trang, mới nhất trước)
  * GET /api/v1/users/me/transactions?page&size
  * Quyền: Đăng nhập

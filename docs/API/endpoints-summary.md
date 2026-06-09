@@ -57,6 +57,12 @@ Base URL: `http://localhost:8080/api/v1`
 - `PUT /api/v1/admin/vouchers/{id}` - Cập nhật voucher
 - `DELETE /api/v1/admin/vouchers/{id}` - Soft-delete voucher
 
+### Phân quyền động (Admin) — [roles-permissions-management.md](./roles-permissions-management.md)
+- `GET /api/v1/admin/permissions` - Danh sách tất cả permission — `MANAGE_ROLE`
+- `GET /api/v1/admin/roles/permissions` - Toàn bộ ma trận role → permission — `MANAGE_ROLE`
+- `GET /api/v1/admin/roles/{roleName}/permissions` - Permission của một role — `MANAGE_ROLE`
+- `PUT /api/v1/admin/roles/{roleName}/permissions` - Thay thế toàn bộ permission của role (replace-all) — `MANAGE_ROLE`
+
 ### Enrollment — [enrollment.md](./enrollment.md)
 - `GET /api/v1/users/me/enrollments` - Danh sách khóa học đã mua (phân trang)
 

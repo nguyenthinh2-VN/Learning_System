@@ -1,5 +1,5 @@
 import '@/styles/brand.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import useWalletStore from '@/store/useWalletStore';
 import { useAuth } from '@/context/AuthContext';
@@ -17,6 +17,7 @@ import {
   RefreshCw,
   QrCode,
   Terminal,
+  ExternalLink,
 } from 'lucide-react';
 
 const QUICK_AMOUNTS = [50000, 100000, 200000, 500000];
@@ -35,12 +36,14 @@ export default function WalletPage() {
     initTopUp, triggerMockWebhook,
     topUpLoading, topUpError, topUpResult,
     mockLoading, mockError, resetTopUp,
+    cancelTopUp, cancelLoading,
   } = useWalletStore();
 
   const [amount, setAmount] = useState('');
   const [mockRef, setMockRef] = useState('');
   const [mockSuccess, setMockSuccess] = useState(null);
   const [initSuccess, setInitSuccess] = useState(false);
+  const prevBalanceRef = useRef(balance);
 
   // ─── Lịch sử giao dịch ────────────────────────────────
   const PAGE_SIZE = 10;
@@ -76,17 +79,55 @@ export default function WalletPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [balance]);
 
+  // Khi số dư TĂNG trong lúc đang chờ thanh toán (VNPay/mock hoàn tất ở tab khác) →
+  // tự đóng hộp "đang chờ", reset form và hiện banner thành công.
+  useEffect(() => {
+    const prev = prevBalanceRef.current;
+    prevBalanceRef.current = balance;
+    if (prev === null || balance === null) return;
+    if (balance > prev && initSuccess) {
+      setInitSuccess(false);
+      resetTopUp();
+      setMockRef('');
+      setMockSuccess('Nạp tiền thành công! Số dư đã được cập nhật.');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [balance]);
+
   const handleTopUp = async () => {
     const value = parseFloat(amount);
     if (!value || value < 10000) return;
     setInitSuccess(false);
     setMockSuccess(null);
     try {
-      await initTopUp(value);
+      const result = await initTopUp(value);
       setInitSuccess(true);
       setAmount('');
+      // VNPay: mở tab mới tới cổng thanh toán đã ký.
+      if (result?.displayType === 'REDIRECT_URL' && result?.displayData) {
+        window.open(result.displayData, '_blank', 'noopener,noreferrer');
+      }
     } catch {
       // error handled in store
+    }
+  };
+
+  const openVnpayTab = () => {
+    if (topUpResult?.displayData) {
+      window.open(topUpResult.displayData, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleCancelTopUp = async () => {
+    if (!topUpResult?.referenceCode) return;
+    try {
+      await cancelTopUp(topUpResult.referenceCode);
+      setInitSuccess(false);
+      setMockRef('');
+      toast.success('Đã huỷ giao dịch nạp tiền.');
+      loadTransactions(0);
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Không huỷ được giao dịch.');
     }
   };
 
@@ -215,10 +256,36 @@ export default function WalletPage() {
           </div>
         )}
 
-        {/* Result: QR or mock instruction */}
+        {/* Result: VNPay redirect / QR image / mock instruction */}
         {initSuccess && topUpResult && (
           <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
-            {topUpResult.displayType === 'QR_URL' ? (
+            {topUpResult.displayType === 'REDIRECT_URL' ? (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <ExternalLink className="size-4" />
+                  <span>Đang chờ thanh toán qua VNPay…</span>
+                </div>
+                <p className="text-xs text-muted-foreground max-w-sm">
+                  Một tab thanh toán VNPay đã được mở. Hoàn tất thanh toán ở tab đó, bạn sẽ được
+                  đưa về trang xác nhận. Số dư cập nhật tự động khi thành công.
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={openVnpayTab}>
+                    <ExternalLink className="size-4 mr-2" />
+                    Mở lại trang thanh toán
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancelTopUp}
+                    disabled={cancelLoading}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    {cancelLoading ? 'Đang huỷ...' : 'Huỷ giao dịch'}
+                  </Button>
+                </div>
+              </div>
+            ) : topUpResult.displayType === 'QR_URL' ? (
               <div className="flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <QrCode className="size-4" />
@@ -246,31 +313,33 @@ export default function WalletPage() {
               Ma giao dich: <span className="font-mono font-semibold">{topUpResult.referenceCode}</span>
             </div>
 
-            {/* Dev: mock webhook trigger */}
-            <div className="border-t pt-3 space-y-2">
-              <p className="text-xs text-muted-foreground font-medium">Dev: Kich hoat thanh toan gia lap</p>
-              <div className="flex gap-2">
-                <Input
-                  id="mock-ref-input"
-                  type="text"
-                  placeholder={topUpResult.referenceCode}
-                  value={mockRef}
-                  onChange={(e) => setMockRef(e.target.value)}
-                  className="flex-1 text-xs font-mono"
-                />
-                <Button
-                  id="mock-webhook-submit"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleMockWebhook}
-                  disabled={mockLoading}
-                  className="whitespace-nowrap"
-                >
-                  {mockLoading ? 'Đang gửi...' : 'Kích hoạt'}
-                </Button>
+            {/* Dev: mock webhook trigger — chỉ hiện ở mock mode (displayType=MESSAGE) */}
+            {topUpResult.displayType === 'MESSAGE' && (
+              <div className="border-t pt-3 space-y-2">
+                <p className="text-xs text-muted-foreground font-medium">Dev: Kich hoat thanh toan gia lap</p>
+                <div className="flex gap-2">
+                  <Input
+                    id="mock-ref-input"
+                    type="text"
+                    placeholder={topUpResult.referenceCode}
+                    value={mockRef}
+                    onChange={(e) => setMockRef(e.target.value)}
+                    className="flex-1 text-xs font-mono"
+                  />
+                  <Button
+                    id="mock-webhook-submit"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleMockWebhook}
+                    disabled={mockLoading}
+                    className="whitespace-nowrap"
+                  >
+                    {mockLoading ? 'Đang gửi...' : 'Kích hoạt'}
+                  </Button>
+                </div>
+                {mockError && <p className="text-xs text-red-600">{mockError}</p>}
               </div>
-              {mockError && <p className="text-xs text-red-600">{mockError}</p>}
-            </div>
+            )}
           </div>
         )}
 

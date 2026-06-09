@@ -110,7 +110,7 @@ public class AdminUserController {
      * Sau khi cộng tiền, push WebSocket event tới FE của user đó.
      */
     @PostMapping("/{userId}/top-up")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('MANAGE_WALLET')")
     public ResponseEntity<ApiResponse<AdminTopUpOutput>> adminTopUp(
             @PathVariable Long userId,
             @Valid @RequestBody AdminTopUpRequest request) {
@@ -136,7 +136,7 @@ public class AdminUserController {
      * Phân giải identifier ra user rồi cộng tiền. Push WebSocket sau khi cộng.
      */
     @PostMapping("/top-up")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('MANAGE_WALLET')")
     public ResponseEntity<ApiResponse<AdminTopUpOutput>> adminTopUpByIdentifier(
             @Valid @RequestBody AdminTopUpByIdentifierRequest request) {
 

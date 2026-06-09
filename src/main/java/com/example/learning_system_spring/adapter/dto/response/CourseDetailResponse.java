@@ -21,6 +21,7 @@ public class CourseDetailResponse {
     private String thumbnailUrl;
     private boolean published;
     private boolean priceLocked;
+    private boolean freeForInternal;
     private LocalDateTime publishedAt;
     private Long publishedBy;
     private java.util.List<CourseSectionDto> sections;
@@ -39,6 +40,7 @@ public class CourseDetailResponse {
                 .thumbnailUrl(output.thumbnailUrl())
                 .published(output.published())
                 .priceLocked(output.priceLocked())
+                .freeForInternal(output.freeForInternal())
                 .publishedAt(output.publishedAt())
                 .publishedBy(output.publishedBy())
                 .sections(output.sections())

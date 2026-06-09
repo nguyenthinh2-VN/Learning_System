@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -20,6 +21,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final PermissionCacheService permissionCacheService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -43,9 +45,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String username = claims.getSubject();
         String role = claims.get("role", String.class);
 
+        // Phương án C (Hybrid): JWT chỉ giữ role; permission được nạp động từ cache.
+        // Set CẢ ROLE_<role> (giữ tương thích hasRole(...) cũ) LẪN từng permission
+        // (cho hasAuthority('PERMISSION') mới) — migrate dần (chốt 2.2).
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        if (role != null) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+            for (String perm : permissionCacheService.getPermissions(role)) {
+                authorities.add(new SimpleGrantedAuthority(perm));
+            }
+        }
+
         UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(username, null,
-                List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+            new UsernamePasswordAuthenticationToken(username, null, authorities);
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
         filterChain.doFilter(request, response);

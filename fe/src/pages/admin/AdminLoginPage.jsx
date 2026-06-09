@@ -74,6 +74,7 @@ export default function AdminLoginPage() {
           name: data.name,
           role: data.role,
           isInternal: data.isInternal,
+          permissions: data.permissions ?? [],
         },
         data.accessToken
       );

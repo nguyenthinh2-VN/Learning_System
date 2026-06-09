@@ -156,4 +156,72 @@ class WalletTransactionTest {
             assertThat(tx.isPending()).isFalse();
         }
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // expire()
+    // ─────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("expire()")
+    class Expire {
+
+        @Test
+        @DisplayName("PENDING → expire() → status=EXPIRED")
+        void pendingToExpired() {
+            WalletTransaction tx = WalletTransaction.createPending(1L, BigDecimal.TEN, TxSource.VNPAY, 15);
+            tx.expire();
+
+            assertThat(tx.getStatus()).isEqualTo(TxStatus.EXPIRED);
+            assertThat(tx.getCompletedAt()).isNull();
+        }
+
+        @Test
+        @DisplayName("COMPLETED → expire() → IllegalStateException (không đụng giao dịch đã xong)")
+        void completedCannotExpire() {
+            WalletTransaction tx = WalletTransaction.createPending(1L, BigDecimal.TEN, TxSource.VNPAY, 15);
+            tx.complete("done");
+
+            assertThatThrownBy(tx::expire)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("PENDING");
+        }
+
+        @Test
+        @DisplayName("expire() lần 2 → IllegalStateException (idempotent qua kiểm tra trạng thái)")
+        void doubleExpireRejected() {
+            WalletTransaction tx = WalletTransaction.createPending(1L, BigDecimal.TEN, TxSource.VNPAY, 15);
+            tx.expire();
+
+            assertThatThrownBy(tx::expire)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // cancel()
+    // ─────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("cancel()")
+    class Cancel {
+
+        @Test
+        @DisplayName("PENDING → cancel() → status=FAILED, note ghi lý do huỷ")
+        void pendingToCancelled() {
+            WalletTransaction tx = WalletTransaction.createPending(1L, BigDecimal.TEN, TxSource.VNPAY, 15);
+            tx.cancel();
+
+            assertThat(tx.getStatus()).isEqualTo(TxStatus.FAILED);
+            assertThat(tx.getNote()).contains("huỷ");
+            assertThat(tx.getCompletedAt()).isNull();
+        }
+
+        @Test
+        @DisplayName("COMPLETED → cancel() → IllegalStateException")
+        void completedCannotCancel() {
+            WalletTransaction tx = WalletTransaction.createPending(1L, BigDecimal.TEN, TxSource.VNPAY, 15);
+            tx.complete("done");
+
+            assertThatThrownBy(tx::cancel)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+    }
 }

@@ -25,8 +25,10 @@ import {
   ShieldCheck,
   ClipboardCheck,
   GraduationCap,
+  KeyRound,
 } from 'lucide-react';
 import { ROLE_LABELS, getRoleTextClass } from '@/lib/roleColors';
+import { hasPermission } from '@/lib/permissions';
 
 /**
  * Ma trận phân quyền theo permission-matrix.md
@@ -47,8 +49,8 @@ const NAV_GROUPS = [
     items: [
       // INSTRUCTOR chỉ thấy "Khóa học của tôi" — tất cả role có CREATE_COURSE đều thấy
       { title: 'Khóa học', url: '/admin/courses', icon: BookOpen },
-      // Chờ duyệt: chỉ STAFF, SUPER_ADMIN (PUBLISH_COURSE)
-      { title: 'Chờ duyệt', url: '/admin/courses/pending', icon: ClipboardCheck, roles: ['STAFF', 'SUPER_ADMIN'] },
+      // Chờ duyệt: ai có PUBLISH_COURSE
+      { title: 'Chờ duyệt', url: '/admin/courses/pending', icon: ClipboardCheck, permission: 'PUBLISH_COURSE' },
     ],
   },
   {
@@ -56,17 +58,19 @@ const NAV_GROUPS = [
     items: [
       // VIEW_USER: ADMIN_USER, SUPER_ADMIN
       { title: 'Người dùng', url: '/admin/users', icon: Users, roles: ['ADMIN_USER', 'SUPER_ADMIN'] },
+      // MANAGE_ROLE: phân quyền động (mặc định chỉ SUPER_ADMIN)
+      { title: 'Phân quyền', url: '/admin/permissions', icon: KeyRound, permission: 'MANAGE_ROLE' },
     ],
   },
   {
     label: 'Tài chính',
     items: [
-      // MANAGE_VOUCHER: STAFF, SUPER_ADMIN
-      { title: 'Voucher', url: '/admin/vouchers', icon: Ticket, roles: ['STAFF', 'SUPER_ADMIN'] },
-      // Giao dịch toàn hệ thống: chỉ SUPER_ADMIN
-      { title: 'Giao dịch', url: '/admin/transactions', icon: Receipt, roles: ['SUPER_ADMIN'] },
-      // Cộng tiền: chỉ SUPER_ADMIN
-      { title: 'Cộng tiền', url: '/admin/wallet', icon: Wallet, roles: ['SUPER_ADMIN'] },
+      // MANAGE_VOUCHER: ai có MANAGE_VOUCHER
+      { title: 'Voucher', url: '/admin/vouchers', icon: Ticket, permission: 'MANAGE_VOUCHER' },
+      // Giao dịch toàn hệ thống: ai có VIEW_TRANSACTION
+      { title: 'Giao dịch', url: '/admin/transactions', icon: Receipt, permission: 'VIEW_TRANSACTION' },
+      // Cộng tiền: ai có MANAGE_WALLET
+      { title: 'Cộng tiền', url: '/admin/wallet', icon: Wallet, permission: 'MANAGE_WALLET' },
     ],
   },
 ];
@@ -78,7 +82,10 @@ export default function AdminSidebar() {
 
   const role = adminUser?.role;
   const isInstructor = role === 'INSTRUCTOR';
-  const canAccess = (item) => !item.roles || item.roles.includes(role);
+  const canAccess = (item) => {
+    if (item.permission) return hasPermission(adminUser, item.permission);
+    return !item.roles || item.roles.includes(role);
+  };
 
   // Tập hợp tất cả url nav mà role hiện tại thấy được
   const allUrls = NAV_GROUPS

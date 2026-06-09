@@ -55,6 +55,7 @@ public class CreateCourseUseCase {
                 input.price(),
                 instructorId,
                 input.thumbnailUrl(),
+                input.freeForInternal(),
                 domainSections);
 
         Course savedCourse = courseRepository.save(course);

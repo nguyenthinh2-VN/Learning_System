@@ -42,6 +42,10 @@ adminApi.interceptors.response.use(
 export const adminLoginApi = (credentials) =>
   adminApi.post('/auth/login', credentials);
 
+// Lấy thông tin + permissions hiện tại của admin đang đăng nhập (refresh quyền động)
+export const getAdminProfileApi = () =>
+  adminApi.get('/users/me/profile');
+
 // ─── Users ──────────────────────────────────────────────
 export const createUserApi = (data) =>
   adminApi.post('/admin/users', data);
@@ -141,5 +145,22 @@ export const adminTopUpApi = (userId, data) =>
 // Cộng tiền theo username HOẶC email (ô nhập 1 dòng)
 export const adminTopUpByIdentifierApi = (data) =>
   adminApi.post('/admin/users/top-up', data); // { identifier, amount, note }
+
+// ─── Phân quyền động (Dynamic RBAC — MANAGE_ROLE) ───────
+// Danh sách tất cả permission khả dụng
+export const getPermissionsApi = () =>
+  adminApi.get('/admin/permissions');
+
+// Toàn bộ ma trận role → permission (FE render bảng checkbox)
+export const getPermissionMatrixApi = () =>
+  adminApi.get('/admin/roles/permissions');
+
+// Permission của một role cụ thể
+export const getRolePermissionsApi = (roleName) =>
+  adminApi.get(`/admin/roles/${roleName}/permissions`);
+
+// Thay thế toàn bộ permission của một role (replace-all)
+export const updateRolePermissionsApi = (roleName, permissions) =>
+  adminApi.put(`/admin/roles/${roleName}/permissions`, { permissions });
 
 export default adminApi;
