@@ -21,7 +21,11 @@ public class CorsConfig {
                 "http://localhost:5173",    // Vite dev server
                 "http://localhost:3000",    // CRA / Next.js
                 "http://127.0.0.1:63342",
-                "http://127.0.0.1:5173"
+                "http://127.0.0.1:5173",
+                "http://180.93.225.119",
+                "http://180.93.225.119:8080",
+                "https://learning.lotusai.com.vn/"
+
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

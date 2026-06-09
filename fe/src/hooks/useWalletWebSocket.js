@@ -1,8 +1,8 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
-const WS_URL = 'http://localhost:8080/ws';
+const WS_URL = 'http://180.93.225.119:8080/ws';
 
 function formatMoney(amount) {
   return new Intl.NumberFormat('vi-VN', {

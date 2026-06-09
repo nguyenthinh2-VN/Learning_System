@@ -33,7 +33,7 @@ interface JpaCourseRepository extends JpaRepository<CourseJpaEntity, Long> {
                                                @Param("keyword") String keyword,
                                                Pageable pageable);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    //@Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM CourseJpaEntity c WHERE c.id = :id")
     Optional<CourseJpaEntity> findByIdForUpdate(@Param("id") Long id);
 }
