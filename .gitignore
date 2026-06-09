@@ -42,3 +42,6 @@ yarn-error.log
 ### Uploaded user files (avatars, ...) ###
 /uploads/
 uploads/
+
+### ECC Agent / Skill / Rule ###
+.agent/

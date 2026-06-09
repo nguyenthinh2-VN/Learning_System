@@ -50,3 +50,36 @@ Hệ thống thanh toán hiện tại (`PurchaseCourseUseCase`) chỉ hỗ trợ
 
 Kế hoạch này sinh ra để làm cầu nối cho **Lộ trình học tập** và **AI Chatbot**. User sẽ bỏ các khóa học được gợi ý vào giỏ và thanh toán 1 lần tại đây.
 Bạn đồng ý với luồng xử lý Bulk Checkout trừ tiền 1 lần này chứ?
+
+---
+
+## 5. Chi Tiết Triển Khai (Dự Kiến)
+
+Dựa trên luồng `ApplyVoucherCheckoutUseCase` hiện tại, việc triển khai Bulk Checkout cần tuân thủ các quy tắc chống **Deadlock** và Clean Architecture.
+
+### 5.1. Chiến Lược Chống Deadlock (Quan Trọng)
+Trong `ApplyVoucherCheckoutUseCase`, lock được lấy theo thứ tự: User → Course → Voucher. 
+Với Bulk Checkout có nhiều khóa học, việc lock đồng thời nhiều Course có thể dẫn đến **Deadlock** ở Database (nếu 2 user checkout cùng lúc 2 giỏ hàng chứa khóa A và B nhưng khác thứ tự).
+**Giải pháp:** Bắt buộc phải **Sort danh sách `courseIds` theo thứ tự tăng dần** trước khi gọi `findByIdForUpdate` trong Database.
+
+### 5.2. Thay Đổi Ở Domain Layer
+- **Entity**: Thêm `CartItem`.
+- **Repository**: Thêm `CartItemRepository`. Thêm method `findByIdInOrderByIdForUpdate(List<Long> courseIds)` vào `CourseRepository`.
+
+### 5.3. Thay Đổi Ở Application Layer
+- **Use Cases mới**:
+  - `AddCourseToCartUseCase`
+  - `RemoveCourseFromCartUseCase`
+  - `GetCartItemsUseCase`
+  - `BulkCheckoutUseCase` (Lock theo thứ tự User -> Courses đã sort -> Voucher, trừ tiền tổng, lưu Enrollment hàng loạt, xóa Cart).
+
+---
+
+## 6. Câu Hỏi Mở (Open Questions)
+
+Xin vui lòng trả lời các câu hỏi sau trước khi chốt kế hoạch và bắt đầu code:
+
+1. **Áp dụng Voucher**: Trong Bulk Checkout, nếu user nhập mã Voucher, Voucher đó sẽ được tính giảm giá trên **TỔNG ĐƠN HÀNG** hay chỉ áp dụng cho một khóa học duy nhất trong giỏ? (Hệ thống `PricingEngine` hiện tại đang thiết kế cho 1 `course_id`).
+2. **Xử lý khóa học đã đăng ký (Already Enrolled)**: Nếu giỏ hàng có 3 khóa, trong đó 1 khóa user đã mua trước đó rồi, hệ thống nên `throw Exception` (từ chối toàn bộ giao dịch) hay tự động bỏ qua khóa đã mua và chỉ tính tiền/enroll các khóa còn lại?
+3. **API Giỏ hàng**: API `GET /api/v1/cart` trả về danh sách khóa. Backend có cần tính luôn **Tổng tiền** của giỏ để Frontend hiển thị cho nhanh không?
+4. **Script Migration**: File SQL tạo bảng `cart_items` sẽ được tạo rời trong `src/main/resources/sql/cart_items.sql`. Dự án của bạn chạy migration SQL tự động hay bạn sẽ chạy file này thủ công trên DB?

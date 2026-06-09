@@ -36,4 +36,8 @@ interface JpaCourseRepository extends JpaRepository<CourseJpaEntity, Long> {
     //@Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM CourseJpaEntity c WHERE c.id = :id")
     Optional<CourseJpaEntity> findByIdForUpdate(@Param("id") Long id);
+
+    //@Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM CourseJpaEntity c WHERE c.id IN :ids ORDER BY c.id ASC")
+    java.util.List<CourseJpaEntity> findByIdInOrderByIdForUpdate(@Param("ids") java.util.List<Long> ids);
 }

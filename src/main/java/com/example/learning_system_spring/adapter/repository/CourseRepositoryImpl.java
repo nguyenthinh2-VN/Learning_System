@@ -76,6 +76,13 @@ public class CourseRepositoryImpl implements CourseRepository {
     }
 
     @Override
+    public List<Course> findByIdInOrderByIdForUpdate(List<Long> ids) {
+        return jpaCourseRepository.findByIdInOrderByIdForUpdate(ids).stream()
+                .map(courseMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public Course save(Course course) {
         CourseJpaEntity entity = courseMapper.fromDomain(course);
         CourseJpaEntity saved = jpaCourseRepository.save(entity);

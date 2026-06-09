@@ -3,6 +3,7 @@ package com.example.learning_system_spring.application.repository.Course;
 import com.example.learning_system_spring.application.dto.PageResult;
 import com.example.learning_system_spring.domain.model.Course;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CourseRepository {
@@ -29,6 +30,7 @@ public interface CourseRepository {
 
     Optional<Course> findById(Long id);
     Optional<Course> findByIdForUpdate(Long id);
+    List<Course> findByIdInOrderByIdForUpdate(List<Long> ids);
     Course save(Course course);
     void deleteById(Long id);
 }
