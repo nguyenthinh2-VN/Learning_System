@@ -45,3 +45,5 @@ uploads/
 
 ### ECC Agent / Skill / Rule ###
 .agent/
+.agents/
+.claude/

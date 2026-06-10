@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import { TooltipProvider } from '@/components/ui/tooltip';
 import AppSidebar from './AppSidebar';
 import { Separator } from '@/components/ui/separator';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget';
 
 export default function AppLayout() {
   return (
@@ -18,10 +19,13 @@ export default function AppLayout() {
           </header>
 
           {/* Page content */}
-          <div className="flex-1">
-            <Outlet />
-          </div>
-        </SidebarInset>
+            <div className="flex-1">
+              <Outlet />
+            </div>
+            
+            {/* AI Chatbot Floating Widget */}
+            <ChatbotWidget />
+          </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>
   );

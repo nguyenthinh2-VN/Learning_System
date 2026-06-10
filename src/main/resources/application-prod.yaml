@@ -44,3 +44,15 @@ storage:
     base-dir: ${STORAGE_DIR:./uploads}
 
   public-base-url: ${PUBLIC_BASE_URL}
+
+# AI Configuration (ShopAIKey / OpenAI)
+ai:
+  provider: ${AI_PROVIDER:gemini}
+  openai:
+    api-key: ${OPENAI_API_KEY:sk-40e6c5e8a416963945771fa5522641a6cc3ec7c58575e9a1}
+    base-url: ${OPENAI_BASE_URL:https://api.shopaikey.com/v1}
+    model: ${OPENAI_MODEL:gpt-4o-mini}
+  gemini:
+    api-key: ${GEMINI_API_KEY:sk-40e6c5e8a416963945771fa5522641a6cc3ec7c58575e9a1}
+    base-url: ${GEMINI_BASE_URL:https://api.shopaikey.com}
+    model: ${GEMINI_MODEL:gemini-2.5-flash}

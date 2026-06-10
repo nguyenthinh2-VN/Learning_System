@@ -5,19 +5,64 @@ Tích hợp một Trợ lý ảo (AI Chatbot) vào hệ thống LMS để tư v�
 
 ---
 
-## 2. Kiến trúc Hệ thống (Architecture)
+## 2. Kiến trúc Hệ thống (Architecture) & Pattern Áp Dụng
 
-### 2.1. Abstract Interface cho LLM Provider
-Hệ thống sẽ áp dụng Design Pattern **Strategy / Adapter** để không bị phụ thuộc vào một hãng AI duy nhất:
-- Tạo interface `LlmProvider` có phương thức `String chat(List<ChatMessage> history, List<CourseDto> context)`.
-- Cài đặt (Implementations): `OpenAiLlmProvider`, `GeminiLlmProvider`, `ClaudeLlmProvider`.
-- Dùng cấu hình (`application.yml` `ai.provider=gemini`) để quyết định Inject bean nào lúc runtime.
+Áp dụng chuẩn **Spring Boot Architecture** với các tầng Controller, Service, và Repository rành mạch, kết hợp với các nguyên tắc **SOLID** trong việc thiết kế AI Provider.
 
-### 2.2. Context Injection (Cung cấp ngữ cảnh)
-Backend query DB lấy danh sách các khóa học liên quan (hoặc toàn bộ nếu ít) và đưa vào System Prompt để AI tư vấn dựa trên dữ liệu thật của hệ thống.
+### 2.1. Abstract Interface cho LLM Provider (Strategy Pattern - OCP & DIP)
+Hệ thống sẽ áp dụng Design Pattern **Strategy** để không bị phụ thuộc vào một hãng AI duy nhất, giúp code dễ dàng mở rộng (Open/Closed Principle - OCP) và phụ thuộc vào Abstraction (Dependency Inversion Principle - DIP).
 
-### 2.3. Dữ liệu Trả về (JSON)
-AI phải trả về định dạng JSON:
+```java
+public interface LlmProvider {
+    /**
+     * @param history Lịch sử trò chuyện trước đó
+     * @param context Ngữ cảnh (danh sách khóa học)
+     * @param userMessage Tin nhắn hiện tại của user
+     * @return Chuỗi JSON chứa câu trả lời và danh sách ID khóa học gợi ý
+     */
+    String chat(List<ChatMessageDto> history, List<CourseDto> context, String userMessage);
+}
+```
+
+- **Implementations:** Tạo các class implement interface này như `GeminiLlmProvider`, `OpenAiLlmProvider`, `ClaudeLlmProvider`.
+- **Dependency Injection:** Sử dụng Spring `@ConditionalOnProperty` để tự động inject Bean tương ứng dựa trên cấu hình trong `application.yml`.
+
+```java
+@Service
+@ConditionalOnProperty(name = "ai.provider", havingValue = "gemini", matchIfMissing = true)
+public class GeminiLlmProvider implements LlmProvider {
+    // Implement logic gọi qua API của Gemini
+}
+```
+
+### 2.2. Service Layer & Context Injection
+Backend truy xuất CSDL lấy danh sách các khóa học liên quan (tên, mô tả ngắn, ID) và đưa vào System Prompt để AI tư vấn dựa trên dữ liệu thật của hệ thống LMS. Các thao tác lưu trữ được bọc trong `@Transactional`.
+
+```java
+@Service
+public class ChatbotService {
+    private final LlmProvider llmProvider;
+    private final ChatSessionRepository sessionRepo;
+    private final ChatMessageRepository messageRepo;
+    private final CourseRepository courseRepo;
+
+    public ChatbotService(LlmProvider llmProvider, /*...*/) {
+        this.llmProvider = llmProvider;
+        // ...
+    }
+
+    @Transactional
+    public ChatResponse sendMessage(Long sessionId, String userMessage) {
+        // 1. Lấy ngữ cảnh khóa học và lịch sử chat
+        // 2. Uỷ quyền cho llmProvider xử lý
+        // 3. Lưu tin nhắn của User và phản hồi của AI vào Database
+        // 4. Map Entity sang DTO trả về
+    }
+}
+```
+
+### 2.3. Dữ liệu Trả về (JSON Format)
+AI phải được prompt để luôn trả về định dạng JSON chuẩn xác:
 ```json
 {
   "reply_message": "Dựa trên nhu cầu làm Data Analyst, tôi gợi ý 3 khóa học sau...",
@@ -27,37 +72,80 @@ AI phải trả về định dạng JSON:
 
 ---
 
-## 3. Thiết kế Database (Lưu Lịch sử)
+## 3. Thiết kế Database (Lưu Lịch sử theo chuẩn JPA)
 
-1. **`chat_sessions`**:
-   - `id`, `user_id`, `title`, `created_at`
-2. **`chat_messages`**:
-   - `id`, `session_id`, `role` (USER/ASSISTANT), `content`
-   - `recommended_courses` (JSON)
+Sử dụng JPA Entity với quan hệ One-to-Many để quản lý phiên chat và tin nhắn.
+
+1. **`ChatSessionEntity`** (`chat_sessions`):
+   - `id` (PK), `user_id` (FK), `title`, `created_at`, `updated_at`
+   - `summary` (TEXT) - Lưu trữ bản tóm tắt các đoạn hội thoại cũ (Context Compaction) để tiết kiệm token.
+2. **`ChatMessageEntity`** (`chat_messages`):
+   - `id` (PK), `session_id` (FK), `role` (Enum: USER / ASSISTANT / SYSTEM), `content` (TEXT)
+   - `recommended_courses` (JSONB / VARCHAR lưu dạng JSON array IDs)
+   - `created_at`
 
 ---
 
-## 4. API Endpoints Dự Kiến
+## 4. API Endpoints & RESTful Design
 
-- `POST /api/v1/chatbot/sessions`: Khởi tạo phiên chat.
-- `GET /api/v1/chatbot/sessions/{id}/messages`: Xem lại lịch sử chat.
-- `POST /api/v1/chatbot/sessions/{id}/messages`: Gửi tin nhắn mới. Trả về câu trả lời + danh sách thông tin khóa học (Card).
+Thiết kế API tuân thủ REST, có sử dụng Record DTO validation và cấu trúc trả về đồng nhất (`ApiResponse`).
+
+```java
+@RestController
+@RequestMapping("/api/v1/chatbot")
+@Validated
+public class ChatbotController {
+    
+    private final ChatbotService chatbotService;
+    // constructor...
+
+    @PostMapping("/sessions")
+    public ResponseEntity<ApiResponse<ChatSessionResponse>> createSession() {
+        // Khởi tạo phiên chat mới
+    }
+
+    @GetMapping("/sessions/{id}/messages")
+    public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> getMessages(@PathVariable Long id) {
+        // Lấy lịch sử đoạn hội thoại
+    }
+
+    @PostMapping("/sessions/{id}/messages")
+    public ResponseEntity<ApiResponse<ChatResponse>> sendMessage(
+            @PathVariable Long id, 
+            @Valid @RequestBody SendMessageRequest request) {
+        // Nhận tin nhắn user, xử lý qua LLM và trả về phản hồi
+    }
+}
+```
+
+**DTO Validation Pattern:**
+```java
+public record SendMessageRequest(
+    @NotBlank(message = "Message content cannot be blank") 
+    @Size(max = 2000, message = "Message is too long") 
+    String content
+) {}
+```
 
 ---
 
 ## 5. Luồng Nghiệp Vụ (Business Logic) Cập Nhật
 
-1. Học viên chat với AI.
-2. Backend dùng `LlmProvider` để lấy kết quả tư vấn JSON.
-3. Trả về Frontend. Frontend hiển thị câu chat của AI kèm dạng Carousel các khóa học.
-4. **THAY ĐỔI MỚI:** Thay vì gán trực tiếp, Frontend sẽ hiển thị nút **"Thêm Lộ Trình Này Vào Giỏ Hàng"**.
-5. Khi bấm, toàn bộ ID khóa học gợi ý được gửi lên API `/api/v1/cart/items` của chức năng Giỏ hàng.
-6. User vào giỏ hàng, xem lại giá tiền, loại bỏ khóa học không thích và bấm **Thanh toán hàng loạt (Bulk Checkout)**.
+1. **Khởi tạo:** Học viên vào trang Chatbot, gọi API `/sessions` để tạo phiên hoặc load lại phiên cũ.
+2. **Hỏi đáp:** Học viên gửi nhu cầu học tập qua `/sessions/{id}/messages`.
+3. **AI Xử lý (Backend):**
+   - **Tối ưu Token (Context Compaction):** Kiểm tra số lượng tin nhắn trong Session. Nếu vượt ngưỡng (VD: 10-20 tin), hệ thống sẽ gọi LLM để tóm tắt các tin nhắn cũ và lưu vào trường `summary` của Session.
+   - Trích xuất lịch sử tin nhắn: Lấy `summary` (nhúng vào System Prompt) + vài tin nhắn mới nhất.
+   - Inject context khóa học (RAG cơ bản).
+   - Gọi logic xử lý linh động qua Interface `LlmProvider`.
+   - Lưu trữ toàn bộ tương tác vào database (Transaction-safe).
+4. **Frontend Hiển thị:** Trả về Frontend. Frontend hiển thị câu chat của AI kèm Carousel chứa Card các khóa học được gợi ý (dựa vào mảng `recommended_course_ids`).
+5. **Đẩy vào Giỏ Hàng (Cart Integration):** Thay vì tự động gán, Frontend hiển thị nút CTA **"Thêm Lộ Trình Này Vào Giỏ Hàng"**.
+6. **Thanh Toán:** Khi bấm nút, hệ thống gọi API `/api/v1/cart/items` thêm nhiều khóa học cùng lúc. User xem lại và bấm **Thanh toán hàng loạt (Bulk Checkout)**.
 
 ---
 
 ## > [!IMPORTANT]
-## Trạng Thái: Đang Lên Kế Hoạch (Chưa Code)
+## Trạng Thái: Đã Tinh Chỉnh & Áp Dụng Design Pattern
 
-Kế hoạch này đã được **cập nhật Abstract Interface** cho LLM và đổi luồng gán khóa học sang **Đẩy vào Giỏ Hàng**. 
-Bạn hãy xem lại các thay đổi nhé.
+Kế hoạch này đã được tinh chỉnh với các **kỹ thuật chuẩn của Spring Boot** (Record DTO, Validation, Service Transactional) và tuân thủ chặt chẽ nguyên tắc **SOLID (OCP, DIP)**. Giao tiếp với AI hoàn toàn abstract, có thể plug-and-play bất kỳ Model LLM nào qua configuration. Sẵn sàng để đi vào cài đặt mã nguồn (implementation).

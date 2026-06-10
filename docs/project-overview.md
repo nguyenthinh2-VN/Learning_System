@@ -36,8 +36,9 @@ Quy tắc kiến trúc chi tiết: `.claude/rules/spring-clean-architecture.md`
 | 2.11 | User Profile & Wallet Balance | 1 | `docs/api-docs.md` §16 |
 | 2.12 | Admin User Listing | 1 | `docs/api-docs.md` §17 |
 | 2.13 | Course `thumbnailUrl` | — | `docs/api-docs.md` §18 |
+| 2.14 | AI Chatbot Tư vấn lộ trình học | 3 | `docs/API/ai-chatbot.md` |
 
-**Tổng: ~36 endpoints.** Xem đầy đủ tại `docs/api-docs.md`.
+**Tổng: ~39 endpoints.** Xem đầy đủ tại `docs/API/README.md`.
 
 ---
 
@@ -141,6 +142,7 @@ SQL migration mới nhất: `docs/sql/wallet_transactions.sql`
 - User Profile + số dư ví (`GET /api/v1/users/me/profile`)
 - Admin liệt kê người dùng (`GET /api/v1/admin/users` — phân trang + tìm kiếm)
 - Course `thumbnailUrl` (ảnh bìa khóa học)
+- AI Chatbot Tư vấn lộ trình học (Context Compaction, Gợi ý khóa học)
 
 **Chưa làm (next steps):**
 - Ghép VietQR thật (chỉ cần thêm `VietQrGateway` + `VietQrWebhookController`)

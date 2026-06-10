@@ -25,6 +25,7 @@ Tài liệu API được tách theo từng mục để dễ tra cứu và tránh
 | 12 | [admin-reports.md](./admin-reports.md) | Admin: doanh thu + giao dịch toàn hệ thống (SUPER_ADMIN) |
 | 13 | [testing.md](./testing.md) | Testing với Postman/Insomnia |
 | 14 | [endpoints-summary.md](./endpoints-summary.md) | Tổng kết toàn bộ endpoints |
+| 15 | [ai-chatbot.md](./ai-chatbot.md) | AI Chatbot Tư vấn lộ trình học |
 
 ---
 
