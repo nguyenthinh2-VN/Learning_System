@@ -59,7 +59,13 @@ public class EnrollmentRepositoryImpl implements EnrollmentRepository {
                 jpaPage.getTotalPages(),
                 page,
                 size,
-                items
-        );
+                items);
+    }
+
+    @Override
+    public List<Enrollment> findAllByUserId(Long userId) {
+        return jpaRepo.findAllByUserId(userId).stream()
+                .map(EnrollmentJpaEntity::toDomain)
+                .toList();
     }
 }

@@ -17,4 +17,6 @@ interface JpaLessonProgressRepository extends JpaRepository<LessonProgressJpaEnt
 
     @Query("SELECT p.lessonId FROM LessonProgressJpaEntity p WHERE p.userId = :userId AND p.courseId = :courseId")
     List<Long> findCompletedLessonIds(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    List<LessonProgressJpaEntity> findByUserId(Long userId);
 }

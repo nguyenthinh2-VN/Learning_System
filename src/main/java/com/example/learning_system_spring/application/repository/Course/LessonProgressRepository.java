@@ -19,4 +19,7 @@ public interface LessonProgressRepository {
 
     /** Danh sách lessonId user đã hoàn thành trong một course. */
     List<Long> findCompletedLessonIds(Long userId, Long courseId);
+
+    /** Lấy toàn bộ lịch sử học của user (phục vụ tính streak, heatmap). */
+    List<LessonProgress> findByUserId(Long userId);
 }

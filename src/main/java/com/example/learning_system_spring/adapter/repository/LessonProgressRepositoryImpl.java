@@ -39,4 +39,11 @@ public class LessonProgressRepositoryImpl implements LessonProgressRepository {
     public List<Long> findCompletedLessonIds(Long userId, Long courseId) {
         return jpaRepo.findCompletedLessonIds(userId, courseId);
     }
+
+    @Override
+    public List<LessonProgress> findByUserId(Long userId) {
+        return jpaRepo.findByUserId(userId).stream()
+                .map(LessonProgressJpaEntity::toDomain)
+                .toList();
+    }
 }

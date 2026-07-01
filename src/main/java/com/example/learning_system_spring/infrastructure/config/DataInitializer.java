@@ -4,6 +4,9 @@ import com.example.learning_system_spring.adapter.repository.jpa.role_permission
 import com.example.learning_system_spring.adapter.repository.jpa.role_permissionEntity.RoleJpaEntity;
 import com.example.learning_system_spring.domain.model.Permission;
 import com.example.learning_system_spring.domain.model.Role;
+import com.example.learning_system_spring.domain.model.User;
+import com.example.learning_system_spring.adapter.repository.jpa.UserEntity.UserJpaEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
     private final EntityManager em;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -23,11 +27,13 @@ public class DataInitializer implements CommandLineRunner {
         initRoles();
         initPermissions();
         assignPermissionsToRoles();
+        initSuperAdmin();
     }
 
     private void initRoles() {
         Long count = em.createQuery("SELECT COUNT(r) FROM RoleJpaEntity r", Long.class).getSingleResult();
-        if (count > 0) return;
+        if (count > 0)
+            return;
 
         em.persist(RoleJpaEntity.fromDomain(Role.create("MEMBER", "Học viên (nội bộ/ngoài)")));
         em.persist(RoleJpaEntity.fromDomain(Role.create("INSTRUCTOR", "Giảng viên")));
@@ -38,10 +44,25 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Seeded 5 roles: MEMBER, INSTRUCTOR, STAFF, ADMIN_USER, SUPER_ADMIN");
     }
 
+    private void initSuperAdmin() {
+        Long count = em.createQuery("SELECT COUNT(u) FROM UserJpaEntity u", Long.class).getSingleResult();
+        if (count > 0)
+            return;
+
+        RoleJpaEntity superAdminRole = getRole("SUPER_ADMIN");
+        String encodedPassword = passwordEncoder.encode("123456");
+        User superAdmin = User.create("superadmin", "superadmin@learning.com", encodedPassword, "Super Admin",
+                superAdminRole.toDomain(), true);
+        em.persist(UserJpaEntity.fromDomain(superAdmin));
+
+        log.info("Seeded default superadmin account: superadmin / 123456");
+    }
+
     /**
      * Seed permissions theo ma trận phân quyền (docs/permission-matrix.md).
      * Idempotent theo từng permission: chỉ insert permission nào CHƯA tồn tại,
-     * nhờ vậy DB đã seed trước đó vẫn nhận được các permission mới khi khởi động lại.
+     * nhờ vậy DB đã seed trước đó vẫn nhận được các permission mới khi khởi động
+     * lại.
      */
     private void initPermissions() {
         // 18 permission gốc
@@ -114,8 +135,9 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(memberRole, viewLesson);
         assignPermission(memberRole, trackProgress);
 
-        // INSTRUCTOR: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, CREATE_SECTION, EDIT_SECTION,
-        //             CREATE_LESSON, EDIT_LESSON, VIEW_REPORT, VIEW_LESSON, TRACK_PROGRESS
+        // INSTRUCTOR: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE,
+        // CREATE_SECTION, EDIT_SECTION,
+        // CREATE_LESSON, EDIT_LESSON, VIEW_REPORT, VIEW_LESSON, TRACK_PROGRESS
         assignPermission(instructorRole, viewCourse);
         assignPermission(instructorRole, createCourse);
         assignPermission(instructorRole, editCourse);
@@ -128,9 +150,11 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(instructorRole, viewLesson);
         assignPermission(instructorRole, trackProgress);
 
-        // STAFF: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, CREATE_SECTION, EDIT_SECTION,
-        //        CREATE_LESSON, EDIT_LESSON, PUBLISH_COURSE, LOCK_COURSE_PRICE, MANAGE_VOUCHER,
-        //        VIEW_LESSON, TRACK_PROGRESS
+        // STAFF: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE,
+        // CREATE_SECTION, EDIT_SECTION,
+        // CREATE_LESSON, EDIT_LESSON, PUBLISH_COURSE, LOCK_COURSE_PRICE,
+        // MANAGE_VOUCHER,
+        // VIEW_LESSON, TRACK_PROGRESS
         assignPermission(staffRole, viewCourse);
         assignPermission(staffRole, createCourse);
         assignPermission(staffRole, editCourse);
@@ -145,7 +169,8 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(staffRole, viewLesson);
         assignPermission(staffRole, trackProgress);
 
-        // ADMIN_USER: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE, VIEW_USER, EDIT_USER, CREATE_USER
+        // ADMIN_USER: VIEW_COURSE, CREATE_COURSE, EDIT_COURSE, DELETE_COURSE,
+        // VIEW_USER, EDIT_USER, CREATE_USER
         assignPermission(adminUserRole, viewCourse);
         assignPermission(adminUserRole, createCourse);
         assignPermission(adminUserRole, editCourse);
@@ -186,7 +211,7 @@ public class DataInitializer implements CommandLineRunner {
     /** Insert permission nếu chưa tồn tại (idempotent theo name). */
     private void seedPermission(String name, String description) {
         Long count = em.createQuery(
-                        "SELECT COUNT(p) FROM PermissionJpaEntity p WHERE p.name = :name", Long.class)
+                "SELECT COUNT(p) FROM PermissionJpaEntity p WHERE p.name = :name", Long.class)
                 .setParameter("name", name)
                 .getSingleResult();
         if (count == 0) {
@@ -213,14 +238,14 @@ public class DataInitializer implements CommandLineRunner {
      */
     private void assignPermission(RoleJpaEntity role, PermissionJpaEntity permission) {
         Number existing = (Number) em.createNativeQuery(
-                        "SELECT COUNT(*) FROM role_permissions WHERE role_id = ? AND permission_id = ?")
+                "SELECT COUNT(*) FROM role_permissions WHERE role_id = ? AND permission_id = ?")
                 .setParameter(1, role.getId())
                 .setParameter(2, permission.getId())
                 .getSingleResult();
 
         if (existing.longValue() == 0) {
             em.createNativeQuery(
-                            "INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)")
+                    "INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)")
                     .setParameter(1, role.getId())
                     .setParameter(2, permission.getId())
                     .executeUpdate();

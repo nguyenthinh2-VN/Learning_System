@@ -48,6 +48,11 @@ public class CourseSectionRepositoryImpl implements CourseSectionRepository {
 
     @Override
     public void deleteById(Long id) {
-        jpaRepo.deleteById(id);
+        jpaRepo.findById(id).ifPresent(section -> {
+            if (section.getCourse() != null) {
+                section.getCourse().removeSection(section);
+            }
+            jpaRepo.delete(section);
+        });
     }
 }

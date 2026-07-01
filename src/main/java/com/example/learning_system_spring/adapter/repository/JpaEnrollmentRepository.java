@@ -4,8 +4,12 @@ import com.example.learning_system_spring.adapter.repository.jpa.CourseEntity.En
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 
 interface JpaEnrollmentRepository extends JpaRepository<EnrollmentJpaEntity, Long> {
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
+
     Page<EnrollmentJpaEntity> findByUserId(Long userId, Pageable pageable);
+
+    List<EnrollmentJpaEntity> findAllByUserId(Long userId);
 }

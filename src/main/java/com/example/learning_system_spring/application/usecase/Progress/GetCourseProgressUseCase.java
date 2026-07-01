@@ -22,28 +22,28 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetCourseProgressUseCase {
 
-    private final CourseRepository courseRepository;
-    private final CourseLessonRepository lessonRepository;
-    private final EnrollmentRepository enrollmentRepository;
-    private final LessonProgressRepository lessonProgressRepository;
+        private final CourseRepository courseRepository;
+        private final CourseLessonRepository lessonRepository;
+        private final EnrollmentRepository enrollmentRepository;
+        private final LessonProgressRepository lessonProgressRepository;
 
-    @Transactional(readOnly = true)
-    public CourseProgressOutput execute(Long requesterId, Role requesterRole, Long courseId) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException(courseId));
+        @Transactional(readOnly = true)
+        public CourseProgressOutput execute(Long requesterId, Role requesterRole, Long courseId) {
+                Course course = courseRepository.findById(courseId)
+                                .orElseThrow(() -> new CourseNotFoundException(courseId));
 
-        boolean isEnrolled = requesterRole.isMember()
-                && enrollmentRepository.existsByUserIdAndCourseId(requesterId, courseId);
-        LessonAuthorizationService.authorizeView(course, requesterId, requesterRole, isEnrolled);
+                boolean isEnrolled = requesterRole.isMember()
+                                && enrollmentRepository.existsByUserIdAndCourseId(requesterId, courseId);
+                LessonAuthorizationService.authorizeView(course, requesterId, requesterRole, isEnrolled);
 
-        int totalLessons = (int) lessonRepository.countByCourseId(courseId);
-        List<Long> completedIds = lessonProgressRepository.findCompletedLessonIds(requesterId, courseId);
-        int completed = completedIds.size();
+                int totalLessons = (int) lessonRepository.countByCourseId(courseId);
+                List<Long> completedIds = lessonProgressRepository.findCompletedLessonIds(requesterId, courseId);
+                int completed = completedIds.size();
 
-        int percent = totalLessons == 0
-                ? 0
-                : (int) Math.round((completed * 100.0) / totalLessons);
+                int percent = totalLessons == 0
+                                ? 0
+                                : (int) Math.round((completed * 100.0) / totalLessons);
 
-        return new CourseProgressOutput(courseId, totalLessons, completed, percent, completedIds);
-    }
+                return new CourseProgressOutput(courseId, totalLessons, completed, percent, completedIds);
+        }
 }

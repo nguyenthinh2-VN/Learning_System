@@ -31,6 +31,7 @@ public interface CourseRepository {
     Optional<Course> findById(Long id);
     Optional<Course> findByIdForUpdate(Long id);
     List<Course> findByIdInOrderByIdForUpdate(List<Long> ids);
+    List<Course> findByIdIn(List<Long> ids);
     Course save(Course course);
     void deleteById(Long id);
 }

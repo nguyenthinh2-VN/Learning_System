@@ -102,7 +102,7 @@ public class UserController {
      * Upload ảnh avatar (multipart). Lưu trên ổ đĩa BE, tự gán avatarUrl.
      * Chỉ chấp nhận JPEG/PNG/WebP, tối đa 2MB.
      *
-     * POST /api/v1/users/me/avatar  (form-data, part "file")
+     * POST /api/v1/users/me/avatar (form-data, part "file")
      */
     @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<UserProfileResponse>> uploadMyAvatar(
@@ -165,7 +165,8 @@ public class UserController {
     }
 
     /**
-     * Lấy lịch sử giao dịch ví của chính người dùng đang đăng nhập (phân trang, mới nhất trước).
+     * Lấy lịch sử giao dịch ví của chính người dùng đang đăng nhập (phân trang, mới
+     * nhất trước).
      * Bao gồm cả tiền vào (nạp tiền) và tiền ra (mua khóa học).
      *
      * GET /api/v1/users/me/transactions?page=0&size=20

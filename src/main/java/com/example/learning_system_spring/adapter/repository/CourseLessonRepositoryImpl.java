@@ -46,7 +46,12 @@ public class CourseLessonRepositoryImpl implements CourseLessonRepository {
 
     @Override
     public void deleteById(Long id) {
-        jpaLessonRepository.deleteById(id);
+        jpaLessonRepository.findById(id).ifPresent(lesson -> {
+            if (lesson.getSection() != null) {
+                lesson.getSection().removeLesson(lesson);
+            }
+            jpaLessonRepository.delete(lesson);
+        });
     }
 
     @Override
