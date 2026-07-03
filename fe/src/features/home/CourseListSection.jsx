@@ -1,11 +1,13 @@
 import '@/styles/brand.css';
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import useCourseStore from '@/store/useCourseStore';
 import CourseCard from './CourseCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 
 export default function CourseListSection() {
+  const { t } = useTranslation();
   const { courses, totalPages, currentPage, keyword, loading, initialized, fetchCourses } = useCourseStore();
   const [searchInput, setSearchInput] = useState(keyword);
   const isFirstRender = useRef(true);
@@ -51,7 +53,7 @@ export default function CourseListSection() {
             <input
               id="course-search"
               type="text"
-              placeholder="Tìm kiếm khóa học..."
+              placeholder={t('ui.home.search_placeholder')}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm rounded-xl bg-white outline-none transition-all"
@@ -90,6 +92,7 @@ export default function CourseListSection() {
                 enrolledCount={course.enrolledCount}
                 maxStudents={course.maxStudents}
                 thumbnailUrl={course.thumbnailUrl}
+                isMandatory={course.isMandatory}
               />
             ))}
           </div>
@@ -99,8 +102,8 @@ export default function CourseListSection() {
             style={{ border: '1px dashed var(--brand-border)', color: 'var(--brand-text-secondary)' }}
           >
             {searchInput
-              ? `Không tìm thấy khóa học nào cho "${searchInput}"`
-              : 'Chưa có khóa học nào.'}
+              ? `${t('ui.home.no_course_found')} "${searchInput}"`
+              : t('ui.home.no_course')}
           </div>
         )}
 

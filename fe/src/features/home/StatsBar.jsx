@@ -1,14 +1,17 @@
+import { useTranslation } from 'react-i18next';
 import '@/styles/brand.css';
 import { Users, BookOpen, GraduationCap, Star } from 'lucide-react';
 
-const stats = [
-  { icon: BookOpen,      value: '500+',  label: 'Khóa học chất lượng' },
-  { icon: Users,         value: '10k+',  label: 'Học viên tin tưởng'  },
-  { icon: GraduationCap, value: '200+',  label: 'Giảng viên hàng đầu' },
-  { icon: Star,          value: '4.8',   label: 'Đánh giá trung bình' },
-];
-
 export default function StatsBar() {
+  const { t } = useTranslation();
+
+  const stats = [
+    { icon: BookOpen, value: '500+', label: t('ui.home.quality_courses') },
+    { icon: Users, value: '10k+', label: t('ui.home.trusted_students') },
+    { icon: GraduationCap, value: '200+', label: t('ui.home.top_instructors') },
+    { icon: Star, value: '4.8', label: t('ui.home.avg_rating') },
+  ];
+
   return (
     <section className="px-6 py-10" style={{ background: 'var(--brand-bg-section)' }}>
       <div className="max-w-5xl mx-auto">

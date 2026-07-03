@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { getAdminCoursesApi, getInstructorCoursesApi, getPendingCoursesApi, getVouchersApi, getRevenueReportApi } from '@/api/adminApi';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -93,6 +94,7 @@ function QuickAction({ to, icon: Icon, title, desc, tone = 'slate' }) {
 
 export default function AdminOverviewPage() {
   const { adminUser } = useAuth();
+  const { t } = useTranslation();
   const role = adminUser?.role;
   const isInstructor = role === 'INSTRUCTOR';
 
@@ -163,15 +165,15 @@ export default function AdminOverviewPage() {
   // Quick actions theo role/permission
   const quickActions = isInstructor
     ? [
-        { to: '/admin/courses', icon: BookOpen, title: 'Khóa học của tôi', desc: 'Xem và quản lý khóa học', tone: 'indigo' },
+        { to: '/admin/courses', icon: BookOpen, title: t('ui.admin_overview.my_courses'), desc: t('ui.admin_overview.qa_my_courses_desc'), tone: 'indigo' },
       ]
     : [
-        { to: '/admin/users', icon: Users, title: 'Thêm tài khoản', desc: 'Tạo tài khoản người dùng mới', tone: 'violet', roles: ['ADMIN_USER', 'SUPER_ADMIN'] },
-        { to: '/admin/courses/pending', icon: ClipboardCheck, title: 'Duyệt khóa học', desc: 'Xem danh sách chờ duyệt', tone: 'amber', roles: ['STAFF', 'SUPER_ADMIN'] },
-        { to: '/admin/courses', icon: BookOpen, title: 'Quản lý khóa học', desc: 'Tất cả khóa học hệ thống', tone: 'indigo' },
-        { to: '/admin/vouchers', icon: Ticket, title: 'Quản lý voucher', desc: 'Tạo và quản lý mã giảm giá', tone: 'violet', roles: ['STAFF', 'SUPER_ADMIN'] },
-        { to: '/admin/transactions', icon: Receipt, title: 'Giao dịch hệ thống', desc: 'Xem mọi giao dịch của người dùng', tone: 'sky', permission: 'VIEW_TRANSACTION' },
-        { to: '/admin/wallet', icon: Wallet, title: 'Cộng tiền thủ công', desc: 'Cộng tiền vào ví người dùng', tone: 'emerald', permission: 'MANAGE_WALLET' },
+        { to: '/admin/users', icon: Users, title: t('ui.admin_overview.qa_add_user'), desc: t('ui.admin_overview.qa_add_user_desc'), tone: 'violet', roles: ['ADMIN_USER', 'SUPER_ADMIN'] },
+        { to: '/admin/courses/pending', icon: ClipboardCheck, title: t('ui.admin_overview.qa_approve_courses'), desc: t('ui.admin_overview.qa_approve_courses_desc'), tone: 'amber', roles: ['STAFF', 'SUPER_ADMIN'] },
+        { to: '/admin/courses', icon: BookOpen, title: t('ui.admin_overview.qa_manage_courses'), desc: t('ui.admin_overview.qa_manage_courses_desc'), tone: 'indigo' },
+        { to: '/admin/vouchers', icon: Ticket, title: t('ui.admin_overview.qa_manage_vouchers'), desc: t('ui.admin_overview.qa_manage_vouchers_desc'), tone: 'violet', roles: ['STAFF', 'SUPER_ADMIN'] },
+        { to: '/admin/transactions', icon: Receipt, title: t('ui.admin_overview.qa_transactions'), desc: t('ui.admin_overview.qa_transactions_desc'), tone: 'sky', permission: 'VIEW_TRANSACTION' },
+        { to: '/admin/wallet', icon: Wallet, title: t('ui.admin_overview.qa_topup'), desc: t('ui.admin_overview.qa_topup_desc'), tone: 'emerald', permission: 'MANAGE_WALLET' },
       ].filter((a) => {
         if (a.permission) return hasPermission(adminUser, a.permission);
         return !a.roles || a.roles.includes(role);
@@ -188,7 +190,7 @@ export default function AdminOverviewPage() {
           : <ShieldCheck className="size-4 text-muted-foreground" />
         }
         <span className="text-sm font-medium">
-          {isInstructor ? 'Instructor Portal' : 'Admin Portal'}
+          {isInstructor ? t('ui.admin_overview.instructor_portal') : t('ui.admin_overview.admin_portal')}
         </span>
         <div className="ml-auto flex items-center gap-2">
           <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${getRoleBadgeClass(role)}`}>
@@ -201,10 +203,10 @@ export default function AdminOverviewPage() {
       <div className="p-6 max-w-6xl mx-auto space-y-8">
         {/* Welcome */}
         <div>
-          <h1 className="text-2xl font-bold">Xin chào, {adminUser?.name}</h1>
+          <h1 className="text-2xl font-bold">{t('ui.admin_overview.hello')} {adminUser?.name}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {ROLE_LABELS[role] || role}
-            {isInstructor ? ' — Quản lý nội dung khóa học' : ' — Quản trị hệ thống LearnSpace'}
+            {isInstructor ? t('ui.admin_overview.instructor_subtitle') : t('ui.admin_overview.admin_subtitle')}
           </p>
         </div>
 
@@ -213,15 +215,15 @@ export default function AdminOverviewPage() {
           <StatCard
             icon={BookOpen}
             tone="indigo"
-            label={isInstructor ? 'Khóa học của tôi' : 'Tổng khóa học'}
+            label={isInstructor ? t('ui.admin_overview.my_courses') : t('ui.admin_overview.total_courses')}
             value={stats.courses}
             loading={loading}
           />
           {!isInstructor && (
-            <StatCard icon={ClipboardCheck} tone="amber" label="Chờ duyệt" value={stats.pending} loading={loading} />
+            <StatCard icon={ClipboardCheck} tone="amber" label={t('ui.admin_overview.pending_approval')} value={stats.pending} loading={loading} />
           )}
           {['STAFF', 'SUPER_ADMIN'].includes(role) && (
-            <StatCard icon={Ticket} tone="violet" label="Voucher" value={stats.vouchers} loading={loading} />
+            <StatCard icon={Ticket} tone="violet" label={t('ui.admin_overview.voucher')} value={stats.vouchers} loading={loading} />
           )}
           {canViewRevenue ? (
             <>
@@ -235,7 +237,7 @@ export default function AdminOverviewPage() {
                       <TrendingUp className="size-5" />
                     </div>
                     <p className="text-sm text-emerald-50">
-                      Doanh thu ({granularity === 'MONTH' ? '12 tháng' : '30 ngày'})
+                      {t('ui.admin_overview.revenue')} ({granularity === 'MONTH' ? t('ui.admin_overview.months_12') : t('ui.admin_overview.days_30')})
                     </p>
                   </div>
                   <p className="text-3xl font-bold tracking-tight">
@@ -245,7 +247,7 @@ export default function AdminOverviewPage() {
                   </p>
                   {revenue && (
                     <p className="text-xs text-emerald-50/90 mt-1">
-                      {revenue.paidPurchaseCount} giao dịch có doanh thu
+                      {revenue.paidPurchaseCount} {t('ui.admin_overview.revenue_transactions')}
                     </p>
                   )}
                 </div>
@@ -253,15 +255,15 @@ export default function AdminOverviewPage() {
               <StatCard
                 icon={ShoppingCart}
                 tone="sky"
-                label="Khóa bán ra"
+                label={t('ui.admin_overview.courses_sold')}
                 value={revenue ? revenue.coursesSold : '—'}
-                sub={revenue ? `Nạp ví: ${fmtMoney(revenue.totalTopUp)}` : null}
+                sub={revenue ? `${t('ui.admin_overview.top_up_wallet')} ${fmtMoney(revenue.totalTopUp)}` : null}
                 loading={revenueLoading}
               />
             </>
           ) : (
             !isInstructor && (
-              <StatCard icon={TrendingUp} tone="emerald" label="Doanh thu" value="—" sub="Cần quyền xem doanh thu" loading={false} />
+              <StatCard icon={TrendingUp} tone="emerald" label={t('ui.admin_overview.revenue')} value="—" sub={t('ui.admin_overview.need_revenue_permission')} loading={false} />
             )
           )}
         </div>
@@ -275,14 +277,14 @@ export default function AdminOverviewPage() {
                   <TrendingUp className="size-4.5" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold">Biểu đồ doanh thu</h2>
+                  <h2 className="text-sm font-semibold">{t('ui.admin_overview.revenue_chart')}</h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Tiền thu từ bán khóa học theo {granularity === 'MONTH' ? 'tháng' : 'ngày'}
+                    {t('ui.admin_overview.revenue_chart_desc')} {granularity === 'MONTH' ? t('ui.admin_overview.month') : t('ui.admin_overview.day')}
                   </p>
                 </div>
               </div>
               <div className="flex items-center rounded-lg bg-muted p-0.5">
-                {[['DAY', 'Ngày'], ['MONTH', 'Tháng']].map(([val, label]) => (
+                {[['DAY', t('ui.admin_overview.Day')], ['MONTH', t('ui.admin_overview.Month')]].map(([val, label]) => (
                   <button
                     key={val}
                     onClick={() => setGranularity(val)}

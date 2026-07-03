@@ -15,5 +15,8 @@ public record UpdateCourseInput(
                 BigDecimal price,
                 String thumbnailUrl,
                 boolean freeForInternal,
+                boolean isMandatory,
+                String assignedDepartment,
+                java.time.LocalDateTime mandatoryDeadline,
                 List<CourseSectionDto> sections) {
 }

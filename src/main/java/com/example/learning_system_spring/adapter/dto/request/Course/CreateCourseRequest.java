@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.util.List;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Getter
 @Setter
@@ -31,6 +32,11 @@ public class CreateCourseRequest {
 
     /** Miễn phí cho thành viên nội bộ (user.isInternal). Mặc định false. */
     private boolean freeForInternal;
+
+    @JsonProperty("isMandatory")
+    private boolean isMandatory;
+    private String assignedDepartment;
+    private java.time.LocalDateTime mandatoryDeadline;
 
     private List<CourseSectionDto> sections;
 }

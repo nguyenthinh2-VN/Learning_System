@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import '@/styles/brand.css';
 import { Star, Quote, BadgeCheck, TrendingUp } from 'lucide-react';
 
@@ -68,6 +69,7 @@ function Avatar({ name, from, to, size = 'size-11' }) {
 }
 
 export default function Testimonials() {
+  const { t } = useTranslation();
   return (
     <section className="relative px-6 py-16 overflow-hidden" style={{ background: 'var(--brand-bg-section)' }}>
       {/* Decorative blobs */}

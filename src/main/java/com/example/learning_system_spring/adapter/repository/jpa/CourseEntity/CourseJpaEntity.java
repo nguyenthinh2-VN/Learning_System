@@ -62,6 +62,15 @@ public class CourseJpaEntity {
     @Column(name = "published_by")
     private Long publishedBy;
 
+    @Column(name = "is_mandatory", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean isMandatory = false;
+
+    @Column(name = "assigned_department", length = 255)
+    private String assignedDepartment;
+
+    @Column(name = "mandatory_deadline")
+    private LocalDateTime mandatoryDeadline;
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CourseSectionJpaEntity> sections = new ArrayList<>();
 

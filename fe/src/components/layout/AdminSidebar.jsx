@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import {
   Sidebar,
@@ -27,6 +28,7 @@ import {
   GraduationCap,
   KeyRound,
 } from 'lucide-react';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
 import { ROLE_LABELS, getRoleTextClass } from '@/lib/roleColors';
 import { hasPermission } from '@/lib/permissions';
 
@@ -37,45 +39,47 @@ import { hasPermission } from '@/lib/permissions';
  * ADMIN_USER: + VIEW_USER, CREATE_USER, EDIT_USER
  * SUPER_ADMIN: tất cả
  */
-const NAV_GROUPS = [
+export default function AdminSidebar() {
+  const { t } = useTranslation();
+
+  const NAV_GROUPS = [
   {
-    label: 'Tổng quan',
+    label: t('ui.admin.overview'),
     items: [
-      { title: 'Dashboard', url: '/admin', icon: LayoutDashboard },
+      { title: t('ui.admin.dashboard'), url: '/admin', icon: LayoutDashboard },
     ],
   },
   {
-    label: 'Nội dung',
+    label: t('ui.admin.content'),
     items: [
       // INSTRUCTOR chỉ thấy "Khóa học của tôi" — tất cả role có CREATE_COURSE đều thấy
-      { title: 'Khóa học', url: '/admin/courses', icon: BookOpen },
+      { title: t('ui.admin.courses'), url: '/admin/courses', icon: BookOpen },
       // Chờ duyệt: ai có PUBLISH_COURSE
-      { title: 'Chờ duyệt', url: '/admin/courses/pending', icon: ClipboardCheck, permission: 'PUBLISH_COURSE' },
+      { title: t('ui.admin.pending_approval'), url: '/admin/courses/pending', icon: ClipboardCheck, permission: 'PUBLISH_COURSE' },
     ],
   },
   {
-    label: 'Quản lý',
+    label: t('ui.admin.management'),
     items: [
       // VIEW_USER: ADMIN_USER, SUPER_ADMIN
-      { title: 'Người dùng', url: '/admin/users', icon: Users, roles: ['ADMIN_USER', 'SUPER_ADMIN'] },
+      { title: t('ui.admin.users'), url: '/admin/users', icon: Users, roles: ['ADMIN_USER', 'SUPER_ADMIN'] },
       // MANAGE_ROLE: phân quyền động (mặc định chỉ SUPER_ADMIN)
-      { title: 'Phân quyền', url: '/admin/permissions', icon: KeyRound, permission: 'MANAGE_ROLE' },
+      { title: t('ui.admin.roles_permissions'), url: '/admin/permissions', icon: KeyRound, permission: 'MANAGE_ROLE' },
     ],
   },
   {
-    label: 'Tài chính',
+    label: t('ui.admin.finance'),
     items: [
       // MANAGE_VOUCHER: ai có MANAGE_VOUCHER
-      { title: 'Voucher', url: '/admin/vouchers', icon: Ticket, permission: 'MANAGE_VOUCHER' },
+      { title: t('ui.admin.vouchers'), url: '/admin/vouchers', icon: Ticket, permission: 'MANAGE_VOUCHER' },
       // Giao dịch toàn hệ thống: ai có VIEW_TRANSACTION
-      { title: 'Giao dịch', url: '/admin/transactions', icon: Receipt, permission: 'VIEW_TRANSACTION' },
+      { title: t('ui.admin.transactions'), url: '/admin/transactions', icon: Receipt, permission: 'VIEW_TRANSACTION' },
       // Cộng tiền: ai có MANAGE_WALLET
-      { title: 'Cộng tiền', url: '/admin/wallet', icon: Wallet, permission: 'MANAGE_WALLET' },
+      { title: t('ui.admin.add_funds'), url: '/admin/wallet', icon: Wallet, permission: 'MANAGE_WALLET' },
     ],
   },
 ];
 
-export default function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { adminUser, adminLogout } = useAuth();
@@ -187,13 +191,16 @@ export default function AdminSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
+            <LanguageSwitcher />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
             <SidebarMenuButton
-              tooltip="Đăng xuất"
+              tooltip={t('ui.admin.logout')}
               onClick={handleLogout}
               className="text-muted-foreground hover:text-foreground"
             >
               <LogOut />
-              <span>Đăng xuất</span>
+              <span>{t('ui.admin.logout')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record CourseOutput(
                 Long id,
@@ -19,6 +20,9 @@ public record CourseOutput(
                 boolean published,
                 boolean priceLocked,
                 boolean freeForInternal,
+                @JsonProperty("isMandatory") boolean isMandatory,
+                String assignedDepartment,
+                LocalDateTime mandatoryDeadline,
                 LocalDateTime publishedAt,
                 Long publishedBy,
                 List<CourseSectionDto> sections) {
@@ -48,6 +52,9 @@ public record CourseOutput(
                                 course.isPublished(),
                                 course.isPriceLocked(),
                                 course.isFreeForInternal(),
+                                course.isMandatory(),
+                                course.getAssignedDepartment(),
+                                course.getMandatoryDeadline(),
                                 course.getPublishedAt(),
                                 course.getPublishedBy(),
                                 sectionDtos);

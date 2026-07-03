@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { adminTopUpByIdentifierApi } from '@/api/adminApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ function formatMoney(amount) {
 }
 
 export default function AdminTopUpPage() {
+  const { t } = useTranslation();
   const { adminUser } = useAuth();
   const [form, setForm] = useState({ identifier: '', amount: '', note: '' });
   const [loading, setLoading] = useState(false);
@@ -29,16 +31,16 @@ export default function AdminTopUpPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.identifier.trim() || !form.amount) { setError('Vui lòng nhập username/email và số tiền.'); return; }
+    if (!form.identifier.trim() || !form.amount) { setError(t('ui.admin_topup.err_empty_fields')); return; }
     const amount = parseFloat(form.amount);
-    if (amount <= 0) { setError('Số tiền phải lớn hơn 0.'); return; }
+    if (amount <= 0) { setError(t('ui.admin_topup.err_amount_gt_zero')); return; }
 
     setLoading(true); setError(''); setResult(null);
     try {
       const res = await adminTopUpByIdentifierApi({ identifier: form.identifier.trim(), amount, note: form.note || undefined });
       setResult(res.data.data || res.data);
       setForm({ identifier: '', amount: '', note: '' });
-    } catch (err) { setError(err?.response?.data?.message || 'Cộng tiền thất bại.'); }
+    } catch (err) { setError(err?.response?.data?.message || t('ui.admin_topup.err_topup_fail')); }
     finally { setLoading(false); }
   };
 
@@ -49,14 +51,14 @@ export default function AdminTopUpPage() {
       <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <span className="text-sm font-medium">Cộng tiền thủ công</span>
+        <span className="text-sm font-medium">{t('ui.admin_topup.title')}</span>
         <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
       <div className="p-6 max-w-2xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Cộng tiền thủ công</h1>
-          <p className="text-sm text-muted-foreground mt-1">Cộng tiền trực tiếp vào ví người dùng (chỉ SUPER_ADMIN)</p>
+          <h1 className="text-2xl font-bold">{t('ui.admin_topup.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('ui.admin_topup.subtitle')}</p>
         </div>
 
         <Card>
@@ -69,14 +71,14 @@ export default function AdminTopUpPage() {
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="topup-identifier">Username hoặc Email *</Label>
-                <Input id="topup-identifier" name="identifier" type="text" value={form.identifier} onChange={handleChange} placeholder="VD: MEM2B4A1D hoặc user@example.com" />
-                <p className="text-xs text-muted-foreground">Nhập username hoặc email của người dùng cần cộng tiền</p>
+                <Label htmlFor="topup-identifier">{t('ui.admin_topup.identifier_req')}</Label>
+                <Input id="topup-identifier" name="identifier" type="text" value={form.identifier} onChange={handleChange} placeholder={t('ui.admin_topup.identifier_placeholder')} />
+                <p className="text-xs text-muted-foreground">{t('ui.admin_topup.identifier_hint')}</p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="topup-amount">Số tiền (VNĐ) *</Label>
-                <Input id="topup-amount" name="amount" type="number" value={form.amount} onChange={handleChange} placeholder="VD: 200000" min={1} />
+                <Label htmlFor="topup-amount">{t('ui.admin_topup.amount_req')}</Label>
+                <Input id="topup-amount" name="amount" type="number" value={form.amount} onChange={handleChange} placeholder={t('ui.admin_topup.amount_placeholder')} min={1} />
                 <div className="flex items-center gap-2 mt-2">
                   {quickAmounts.map((amt) => (
                     <Button key={amt} type="button" variant="outline" size="sm" onClick={() => { setForm((prev) => ({ ...prev, amount: String(amt) })); setError(''); }} className="h-7 text-xs">
@@ -87,13 +89,13 @@ export default function AdminTopUpPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="topup-note">Ghi chú (tùy chọn)</Label>
-                <Input id="topup-note" name="note" value={form.note} onChange={handleChange} placeholder="VD: Bù lỗi giao dịch #123" />
+                <Label htmlFor="topup-note">{t('ui.admin_topup.note_optional')}</Label>
+                <Input id="topup-note" name="note" value={form.note} onChange={handleChange} placeholder={t('ui.admin_topup.note_placeholder')} />
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="size-4 animate-spin mr-2" />}
-                {loading ? 'Đang xử lý...' : 'Cộng tiền'}
+                {loading ? t('ui.admin_topup.processing') : t('ui.admin_topup.topup_btn')}
               </Button>
             </form>
           </CardContent>
@@ -103,21 +105,21 @@ export default function AdminTopUpPage() {
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-6 space-y-4">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="size-5 text-emerald-500" />
-              <h3 className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">Cộng tiền thành công!</h3>
+              <h3 className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">{t('ui.admin_topup.msg_success')}</h3>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><p className="text-xs text-muted-foreground mb-1">Người dùng</p><p className="font-medium">{result.username || `ID: ${result.userId}`}</p></div>
-              <div><p className="text-xs text-muted-foreground mb-1">Số tiền cộng</p><p className="font-semibold text-emerald-500">+{formatMoney(result.addedAmount)}</p></div>
-              <div><p className="text-xs text-muted-foreground mb-1">Số dư mới</p><p className="font-semibold">{formatMoney(result.newBalance)}</p></div>
-              <div><p className="text-xs text-muted-foreground mb-1">Mã tham chiếu</p><code className="text-xs font-mono bg-muted px-2 py-0.5 rounded">{result.referenceCode}</code></div>
-              {result.note && <div className="col-span-2"><p className="text-xs text-muted-foreground mb-1">Ghi chú</p><p className="text-sm">{result.note}</p></div>}
+              <div><p className="text-xs text-muted-foreground mb-1">{t('ui.admin_topup.user_lbl')}</p><p className="font-medium">{result.username || `ID: ${result.userId}`}</p></div>
+              <div><p className="text-xs text-muted-foreground mb-1">{t('ui.admin_topup.added_amount_lbl')}</p><p className="font-semibold text-emerald-500">+{formatMoney(result.addedAmount)}</p></div>
+              <div><p className="text-xs text-muted-foreground mb-1">{t('ui.admin_topup.new_balance_lbl')}</p><p className="font-semibold">{formatMoney(result.newBalance)}</p></div>
+              <div><p className="text-xs text-muted-foreground mb-1">{t('ui.admin_topup.ref_lbl')}</p><code className="text-xs font-mono bg-muted px-2 py-0.5 rounded">{result.referenceCode}</code></div>
+              {result.note && <div className="col-span-2"><p className="text-xs text-muted-foreground mb-1">{t('ui.admin_topup.note_lbl')}</p><p className="text-sm">{result.note}</p></div>}
             </div>
           </div>
         )}
 
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
           <p className="text-sm text-amber-600 dark:text-amber-400">
-            <strong>Lưu ý:</strong> Thao tác cộng tiền sẽ được ghi vào audit log. Người dùng sẽ nhận thông báo WebSocket realtime khi ví được cập nhật.
+            <strong>{t('ui.admin_topup.note_title')}</strong> Thao tác cộng tiền sẽ được ghi vào audit log. Người dùng sẽ nhận thông báo WebSocket realtime khi ví được cập nhật.
           </p>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, XCircle, Loader2, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { completeVnPayReturnApi, getTopUpStatusApi } from '@/api/wallet';
@@ -27,6 +28,7 @@ function formatMoney(amount) {
 }
 
 export default function WalletVnpayReturnPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 

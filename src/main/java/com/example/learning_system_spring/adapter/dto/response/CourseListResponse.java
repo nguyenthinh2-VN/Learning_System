@@ -8,6 +8,7 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Getter
 @Builder
@@ -32,6 +33,10 @@ public class CourseListResponse {
         private boolean published;
         private boolean priceLocked;
         private boolean freeForInternal;
+        @JsonProperty("isMandatory")
+        private boolean isMandatory;
+        private String assignedDepartment;
+        private LocalDateTime mandatoryDeadline;
         private LocalDateTime publishedAt;
     }
 
@@ -49,6 +54,9 @@ public class CourseListResponse {
                         .published(output.published())
                         .priceLocked(output.priceLocked())
                         .freeForInternal(output.freeForInternal())
+                        .isMandatory(output.isMandatory())
+                        .assignedDepartment(output.assignedDepartment())
+                        .mandatoryDeadline(output.mandatoryDeadline())
                         .publishedAt(output.publishedAt())
                         .build())
                 .toList();

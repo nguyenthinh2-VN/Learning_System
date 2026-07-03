@@ -19,13 +19,13 @@ export default function AppLayout() {
           </header>
 
           {/* Page content */}
-            <div className="flex-1">
-              <Outlet />
-            </div>
-            
-            {/* AI Chatbot Floating Widget */}
-            <ChatbotWidget />
-          </SidebarInset>
+          <div className="flex-1">
+            <Outlet />
+          </div>
+
+          {/* AI Chatbot Floating Widget */}
+          <ChatbotWidget />
+        </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>
   );

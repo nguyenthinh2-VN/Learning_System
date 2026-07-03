@@ -56,6 +56,9 @@ public class CreateCourseUseCase {
                 instructorId,
                 input.thumbnailUrl(),
                 input.freeForInternal(),
+                input.isMandatory(),
+                input.assignedDepartment(),
+                input.mandatoryDeadline(),
                 domainSections);
 
         Course savedCourse = courseRepository.save(course);

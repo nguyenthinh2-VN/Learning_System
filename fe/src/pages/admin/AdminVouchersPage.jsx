@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { getVouchersApi, createVoucherApi, updateVoucherApi, deleteVoucherApi } from '@/api/adminApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ const EMPTY_FORM = {
 };
 
 function VoucherFormModal({ voucher, onClose, onSave }) {
+  const { t } = useTranslation();
   const isEdit = !!voucher;
   const [form, setForm] = useState(() => {
     if (voucher) {
@@ -52,7 +54,7 @@ function VoucherFormModal({ voucher, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.code || !form.value || !form.validFrom || !form.validTo) {
-      setError('Vui lòng nhập đầy đủ thông tin bắt buộc.'); return;
+      setError(t('ui.admin_vouchers.err_empty_fields')); return;
     }
     setLoading(true);
     try {
@@ -72,7 +74,7 @@ function VoucherFormModal({ voucher, onClose, onSave }) {
         await createVoucherApi(payload);
       }
       onSave();
-    } catch (err) { setError(err?.response?.data?.message || `${isEdit ? 'Cập nhật' : 'Tạo'} voucher thất bại.`); }
+    } catch (err) { setError(err?.response?.data?.message || isEdit ? t('ui.admin_vouchers.err_update_fail') : t('ui.admin_vouchers.err_create_fail')); }
     finally { setLoading(false); }
   };
 
@@ -82,7 +84,7 @@ function VoucherFormModal({ voucher, onClose, onSave }) {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Ticket className="size-5" />
-            <h2 className="text-lg font-semibold">{isEdit ? 'Cập nhật voucher' : 'Tạo voucher mới'}</h2>
+            <h2 className="text-lg font-semibold">{isEdit ? t('ui.admin_vouchers.edit_voucher') : t('ui.admin_vouchers.create_voucher_new')}</h2>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-muted"><X className="size-4" /></button>
         </div>
@@ -95,91 +97,91 @@ function VoucherFormModal({ voucher, onClose, onSave }) {
           )}
           {hasUsage && (
             <div className="flex items-start gap-2 text-sm px-3 py-2.5 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20">
-              <AlertCircle className="size-4 shrink-0 mt-0.5" /><span>Voucher đã có {voucher.usedCount} lượt dùng. Không thể thay đổi mã, loại, và giá trị.</span>
+              <AlertCircle className="size-4 shrink-0 mt-0.5" /><span>{t('ui.admin_vouchers.err_voucher_used').replace('{usedCount}', voucher.usedCount)}</span>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Mã voucher *</Label>
+              <Label>{t('ui.admin_vouchers.code_req')}</Label>
               <Input name="code" value={form.code} onChange={handleChange} placeholder="VD: WELCOME50" disabled={isEdit && hasUsage} className="uppercase" />
             </div>
             <div className="space-y-1.5">
-              <Label>Trạng thái</Label>
+              <Label>{t('ui.admin_vouchers.status')}</Label>
               <select name="status" value={form.status} onChange={handleChange} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Vô hiệu</option>
+                <option value="ACTIVE">{t('ui.admin_vouchers.status_active')}</option><option value="INACTIVE">{t('ui.admin_vouchers.status_inactive')}</option>
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Loại giảm giá *</Label>
+              <Label>{t('ui.admin_vouchers.type_req')}</Label>
               <select name="type" value={form.type} onChange={handleChange} disabled={isEdit && hasUsage} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option value="PERCENT">Phần trăm (%)</option><option value="FIXED">Cố định (VNĐ)</option>
+                <option value="PERCENT">{t('ui.admin_vouchers.type_percent')}</option><option value="FIXED">{t('ui.admin_vouchers.type_fixed')}</option>
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label>Giá trị * {form.type === 'PERCENT' ? '(%)' : '(VNĐ)'}</Label>
+              <Label>{t('ui.admin_vouchers.value_req')} {form.type === 'PERCENT' ? '(%)' : '(VNĐ)'}</Label>
               <Input name="value" type="number" value={form.value} onChange={handleChange} placeholder={form.type === 'PERCENT' ? 'VD: 50' : 'VD: 100000'} disabled={isEdit && hasUsage} min={0} />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label>Phạm vi áp dụng</Label>
+            <Label>{t('ui.admin_vouchers.scope')}</Label>
             <select name="scope" value={form.scope} onChange={handleChange} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <option value="ALL_COURSES">Tất cả khóa học</option><option value="SPECIFIC_COURSES">Khóa học cụ thể</option>
+              <option value="ALL_COURSES">{t('ui.admin_vouchers.scope_all')}</option><option value="SPECIFIC_COURSES">{t('ui.admin_vouchers.scope_specific')}</option>
             </select>
           </div>
 
           {form.scope === 'SPECIFIC_COURSES' && (
             <div className="space-y-1.5">
-              <Label>ID các khóa học (cách nhau bằng dấu phẩy)</Label>
+              <Label>{t('ui.admin_vouchers.specific_course_ids')}</Label>
               <Input name="applicableCourseIds" value={form.applicableCourseIds} onChange={handleChange} placeholder="VD: 1, 5, 12" />
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Bắt đầu *</Label>
+              <Label>{t('ui.admin_vouchers.valid_from')}</Label>
               <Input name="validFrom" type="datetime-local" value={form.validFrom} onChange={handleChange} />
             </div>
             <div className="space-y-1.5">
-              <Label>Kết thúc *</Label>
+              <Label>{t('ui.admin_vouchers.valid_to')}</Label>
               <Input name="validTo" type="datetime-local" value={form.validTo} onChange={handleChange} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Đơn tối thiểu (VNĐ)</Label>
+              <Label>{t('ui.admin_vouchers.min_order_amount')}</Label>
               <Input name="minOrderAmount" type="number" value={form.minOrderAmount} onChange={handleChange} min={0} />
             </div>
             <div className="space-y-1.5">
-              <Label>Giảm tối đa (VNĐ) {form.type === 'PERCENT' ? '' : '(không áp dụng)'}</Label>
+              <Label>{t('ui.admin_vouchers.max_discount')} {form.type === 'PERCENT' ? '' : t('ui.admin_vouchers.not_applicable')}</Label>
               <Input name="maxDiscount" type="number" value={form.maxDiscount} onChange={handleChange} min={0} disabled={form.type !== 'PERCENT'} />
-              <p className="text-xs text-muted-foreground">0 = không giới hạn</p>
+              <p className="text-xs text-muted-foreground">{t('ui.admin_vouchers.no_limit')}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Giới hạn lượt dùng (tổng)</Label>
+              <Label>{t('ui.admin_vouchers.usage_limit')}</Label>
               <Input name="usageLimit" type="number" value={form.usageLimit} onChange={handleChange} min={0} />
-              <p className="text-xs text-muted-foreground">0 = không giới hạn</p>
+              <p className="text-xs text-muted-foreground">{t('ui.admin_vouchers.no_limit')}</p>
             </div>
             <div className="space-y-1.5">
-              <Label>Giới hạn mỗi người</Label>
+              <Label>{t('ui.admin_vouchers.usage_per_user')}</Label>
               <Input name="usagePerUser" type="number" value={form.usagePerUser} onChange={handleChange} min={0} />
-              <p className="text-xs text-muted-foreground">0 = không giới hạn</p>
+              <p className="text-xs text-muted-foreground">{t('ui.admin_vouchers.no_limit')}</p>
             </div>
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Hủy</Button>
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">{t('ui.admin_vouchers.cancel')}</Button>
             <Button type="submit" disabled={loading} className="flex-1">
               {loading && <Loader2 className="size-4 animate-spin mr-2" />}
-              {isEdit ? 'Cập nhật' : 'Tạo voucher'}
+              {isEdit ? t('ui.admin_vouchers.edit_btn') : t('ui.admin_vouchers.create_btn')}
             </Button>
           </div>
         </form>
@@ -189,6 +191,7 @@ function VoucherFormModal({ voucher, onClose, onSave }) {
 }
 
 export default function AdminVouchersPage() {
+  const { t } = useTranslation();
   const { adminUser } = useAuth();
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -204,26 +207,26 @@ export default function AdminVouchersPage() {
       const res = await getVouchersApi({ size: 100 });
       const data = res.data.data;
       setVouchers(data?.items ?? data?.content ?? (Array.isArray(data) ? data : []));
-    } catch (err) { setError(err?.response?.data?.message || 'Không thể tải danh sách voucher.'); }
+    } catch (err) { setError(err?.response?.data?.message || t('ui.admin_vouchers.err_load_fail')); }
     finally { setLoading(false); }
   };
 
   useEffect(() => { fetchVouchers(); }, []);
 
   const handleDelete = async (voucher) => {
-    if (!confirm(`Bạn có chắc muốn vô hiệu hóa voucher "${voucher.code}"?`)) return;
+    if (!confirm(t('ui.admin_vouchers.confirm_delete').replace('{code}', voucher.code))) return;
     setDeleteLoading((p) => ({ ...p, [voucher.id]: true }));
     try {
       await deleteVoucherApi(voucher.id);
-      setSuccessMsg(`Đã vô hiệu hóa voucher "${voucher.code}".`); setTimeout(() => setSuccessMsg(''), 4000);
+      setSuccessMsg(t('ui.admin_vouchers.msg_deleted').replace('{code}', voucher.code)); setTimeout(() => setSuccessMsg(''), 4000);
       fetchVouchers();
-    } catch (err) { alert(err?.response?.data?.message || 'Xóa voucher thất bại.'); }
+    } catch (err) { alert(err?.response?.data?.message || t('ui.admin_vouchers.err_delete_fail')); }
     finally { setDeleteLoading((p) => ({ ...p, [voucher.id]: false })); }
   };
 
   const handleFormSave = () => {
     setShowForm(false); setEditVoucher(null);
-    setSuccessMsg(editVoucher ? 'Đã cập nhật voucher thành công.' : 'Đã tạo voucher mới thành công.');
+    setSuccessMsg(editVoucher ? t('ui.admin_vouchers.msg_updated_success') : t('ui.admin_vouchers.msg_created_success'));
     setTimeout(() => setSuccessMsg(''), 4000); fetchVouchers();
   };
 
@@ -232,15 +235,15 @@ export default function AdminVouchersPage() {
       <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <span className="text-sm font-medium">Quản lý voucher</span>
+        <span className="text-sm font-medium">{t('ui.admin_vouchers.title')}</span>
         <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
       <div className="p-6 max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Quản lý voucher</h1>
-            <p className="text-sm text-muted-foreground mt-1">Tạo và quản lý mã giảm giá</p>
+            <h1 className="text-2xl font-bold">{t('ui.admin_vouchers.title')}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t('ui.admin_vouchers.subtitle')}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={fetchVouchers} disabled={loading}>
@@ -265,13 +268,13 @@ export default function AdminVouchersPage() {
 
         <div className="rounded-xl border overflow-hidden">
           <div className="bg-muted/50 px-4 py-3 border-b grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            <span className="col-span-2">Mã</span>
-            <span className="col-span-2">Loại / Giá trị</span>
-            <span className="col-span-2">Phạm vi</span>
-            <span className="col-span-2">Hiệu lực</span>
-            <span className="col-span-1">Đã dùng</span>
-            <span className="col-span-1">Trạng thái</span>
-            <span className="col-span-2">Thao tác</span>
+            <span className="col-span-2">{t('ui.admin_vouchers.col_code')}</span>
+            <span className="col-span-2">{t('ui.admin_vouchers.col_type_value')}</span>
+            <span className="col-span-2">{t('ui.admin_vouchers.col_scope')}</span>
+            <span className="col-span-2">{t('ui.admin_vouchers.col_validity')}</span>
+            <span className="col-span-1">{t('ui.admin_vouchers.col_used')}</span>
+            <span className="col-span-1">{t('ui.admin_vouchers.status')}</span>
+            <span className="col-span-2">{t('ui.admin_vouchers.col_actions')}</span>
           </div>
 
           {loading ? (
@@ -279,7 +282,7 @@ export default function AdminVouchersPage() {
               <Loader2 className="size-6 animate-spin text-muted-foreground" />
             </div>
           ) : vouchers.length === 0 ? (
-            <div className="py-20 text-center text-sm text-muted-foreground">Chưa có voucher nào.</div>
+            <div className="py-20 text-center text-sm text-muted-foreground">{t('ui.admin_vouchers.no_vouchers')}</div>
           ) : (
             <div className="divide-y">
               {vouchers.map((v) => (
@@ -292,13 +295,13 @@ export default function AdminVouchersPage() {
                   <div className="col-span-2">
                     <p className="text-sm font-medium">{v.type === 'PERCENT' ? `${v.value}%` : formatMoney(v.value)}</p>
                     <p className="text-xs text-muted-foreground">
-                      {v.type === 'PERCENT' ? 'Phần trăm' : 'Cố định'}
-                      {v.type === 'PERCENT' && v.maxDiscount > 0 && ` (tối đa ${formatMoney(v.maxDiscount)})`}
+                      {v.type === 'PERCENT' ? t('ui.admin_vouchers.percent') : t('ui.admin_vouchers.fixed')}
+                      {v.type === 'PERCENT' && v.maxDiscount > 0 && ` ${t('ui.admin_vouchers.max_suffix').replace('{max}', formatMoney(v.maxDiscount))}`}
                     </p>
                   </div>
                   <div className="col-span-2">
-                    <p className="text-xs text-muted-foreground">{v.scope === 'ALL_COURSES' ? 'Tất cả' : 'Cụ thể'}</p>
-                    {v.minOrderAmount > 0 && <p className="text-xs text-muted-foreground">Tối thiểu: {formatMoney(v.minOrderAmount)}</p>}
+                    <p className="text-xs text-muted-foreground">{v.scope === 'ALL_COURSES' ? t('ui.admin_vouchers.all') : t('ui.admin_vouchers.specific')}</p>
+                    {v.minOrderAmount > 0 && <p className="text-xs text-muted-foreground">{t('ui.admin_vouchers.min_suffix').replace('{min}', formatMoney(v.minOrderAmount))}</p>}
                   </div>
                   <div className="col-span-2">
                     <p className="text-xs text-muted-foreground">{formatDate(v.validFrom)}</p>
@@ -309,14 +312,14 @@ export default function AdminVouchersPage() {
                   </div>
                   <div className="col-span-1">
                     <Badge variant={v.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                      {v.status === 'ACTIVE' ? 'Hoạt động' : 'Vô hiệu'}
+                      {v.status === 'ACTIVE' ? t('ui.admin_vouchers.status_active') : t('ui.admin_vouchers.status_inactive')}
                     </Badge>
                   </div>
                   <div className="col-span-2 flex items-center gap-1.5">
-                    <Button size="sm" variant="outline" onClick={() => { setEditVoucher(v); setShowForm(true); }} title="Sửa">
+                    <Button size="sm" variant="outline" onClick={() => { setEditVoucher(v); setShowForm(true); }} title={t('ui.admin_vouchers.action_edit')}>
                       <Pencil className="size-3 mr-1" />Sửa
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(v)} disabled={deleteLoading[v.id]} title="Vô hiệu hóa">
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(v)} disabled={deleteLoading[v.id]} title={t('ui.admin_vouchers.action_delete')}>
                       {deleteLoading[v.id] ? <Loader2 className="size-3 animate-spin mr-1" /> : <Trash2 className="size-3 mr-1" />}
                       Xóa
                     </Button>

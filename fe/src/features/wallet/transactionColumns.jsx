@@ -1,19 +1,19 @@
 import { Badge } from '@/components/ui/badge';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
-export const SOURCE_LABELS = {
-  MOCK: 'Nạp tiền (Mock)',
-  VIETQR: 'Nạp qua QR',
-  ADMIN: 'Admin cộng tiền',
-  PURCHASE: 'Mua khóa học',
-};
+export const getSourceLabels = (t) => ({
+  MOCK: t('ui.transactions.source_mock'),
+  VIETQR: t('ui.transactions.source_vietqr'),
+  ADMIN: t('ui.transactions.source_admin'),
+  PURCHASE: t('ui.transactions.source_purchase'),
+});
 
-export const STATUS_LABELS = {
-  COMPLETED: 'Thành công',
-  PENDING: 'Đang xử lý',
-  EXPIRED: 'Hết hạn',
-  FAILED: 'Thất bại',
-};
+export const getStatusLabels = (t) => ({
+  COMPLETED: t('ui.transactions.status_completed'),
+  PENDING: t('ui.transactions.status_pending'),
+  EXPIRED: t('ui.transactions.status_expired'),
+  FAILED: t('ui.transactions.status_failed'),
+});
 
 // Badge của dự án không có variant "success" → COMPLETED dùng secondary + class xanh.
 const STATUS_VARIANT = {
@@ -38,17 +38,17 @@ const fmtDate = (s) => {
   return new Date(s).toLocaleString('vi-VN');
 };
 
-export const transactionColumns = [
+export const getTransactionColumns = (t) => [
   {
     accessorKey: 'createdAt',
-    header: 'Thời gian',
+    header: t('ui.transactions.col_time'),
     cell: ({ row }) => (
       <span className="text-sm text-muted-foreground">{fmtDate(row.original.createdAt)}</span>
     ),
   },
   {
     accessorKey: 'source',
-    header: 'Loại giao dịch',
+    header: t('ui.transactions.col_type'),
     cell: ({ row }) => {
       const isCredit = row.original.direction === 'CREDIT';
       const Icon = isCredit ? ArrowDownLeft : ArrowUpRight;
@@ -62,7 +62,7 @@ export const transactionColumns = [
             <Icon className={`size-4 ${isCredit ? 'text-emerald-500' : 'text-red-500'}`} />
           </span>
           <span className="text-sm font-medium">
-            {SOURCE_LABELS[row.original.source] ?? row.original.source}
+            {getSourceLabels(t)[row.original.source] ?? row.original.source}
           </span>
           {row.original.note && (
             <span className="text-xs text-muted-foreground truncate max-w-[160px]">
@@ -75,19 +75,19 @@ export const transactionColumns = [
   },
   {
     accessorKey: 'status',
-    header: 'Trạng thái',
+    header: t('ui.transactions.col_status'),
     cell: ({ row }) => (
       <Badge
         variant={STATUS_VARIANT[row.original.status] ?? 'secondary'}
         className={STATUS_CLASS[row.original.status]}
       >
-        {STATUS_LABELS[row.original.status] ?? row.original.status}
+        {getStatusLabels(t)[row.original.status] ?? row.original.status}
       </Badge>
     ),
   },
   {
     accessorKey: 'amount',
-    header: () => <div className="text-right">Số tiền</div>,
+    header: () => <div className="text-right">{t('ui.transactions.col_amount')}</div>,
     cell: ({ row }) => {
       const isCredit = row.original.direction === 'CREDIT';
       return (
@@ -101,34 +101,34 @@ export const transactionColumns = [
 ];
 
 // ─── Cột phụ tái dùng ──────────────────────────────────────
-const userColumn = {
+const getUserColumn = (t) => ({
   accessorKey: 'username',
-  header: 'Người dùng',
+  header: t('ui.transactions.col_user'),
   cell: ({ row }) => (
     <div className="min-w-0">
       <p className="text-sm font-medium truncate">{row.original.username ?? '—'}</p>
       <p className="text-xs text-muted-foreground truncate">{row.original.email ?? ''}</p>
     </div>
   ),
-};
+});
 
-const refColumn = {
+const getRefColumn = (t) => ({
   accessorKey: 'referenceCode',
-  header: 'Mã tham chiếu',
+  header: t('ui.transactions.col_ref'),
   cell: ({ row }) => (
     <code className="text-xs font-mono text-muted-foreground">{row.original.referenceCode}</code>
   ),
-};
+});
 
 /**
  * Biến thể cột cho trang admin xem giao dịch toàn hệ thống:
  * Thời gian · Người dùng · Loại · Trạng thái · Mã tham chiếu · Số tiền.
  */
-export const adminTransactionColumns = [
-  transactionColumns[0], // createdAt
-  userColumn,
-  transactionColumns[1], // source + note
-  transactionColumns[2], // status
-  refColumn,
-  transactionColumns[3], // amount
+export const getAdminTransactionColumns = (t) => [
+  getTransactionColumns(t)[0],
+  getUserColumn(t),
+  getTransactionColumns(t)[1],
+  getTransactionColumns(t)[2],
+  getRefColumn(t),
+  getTransactionColumns(t)[3],
 ];

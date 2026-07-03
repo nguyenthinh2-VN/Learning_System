@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useCourseDetailStore from '@/store/useCourseDetailStore';
 import { getCourseProgressApi, markLessonCompleteApi, unmarkLessonCompleteApi } from '@/api/course';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,6 +61,7 @@ function VideoPlayer({ url }) {
 }
 
 export default function EnrolledCourseDetailPage() {
+  const { t } = useTranslation();
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { currentCourse, loading, error, fetchEnrolledDetail } = useCourseDetailStore();
@@ -295,7 +297,7 @@ export default function EnrolledCourseDetailPage() {
         {/* ── Right: Sidebar danh sách sections + lessons ─────────── */}
         <div className="border rounded-xl overflow-hidden h-fit max-h-[70vh] flex flex-col">
           <div className="px-4 py-3 border-b bg-muted/30 shrink-0">
-            <p className="font-semibold text-sm">Nội dung khóa học</p>
+            <p className="font-semibold text-sm">{t('ui.course.course_content')}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {sortedSections.length} chương · {totalLessons} bài
             </p>

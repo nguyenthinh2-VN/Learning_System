@@ -34,4 +34,5 @@ public interface CourseRepository {
     List<Course> findByIdIn(List<Long> ids);
     Course save(Course course);
     void deleteById(Long id);
+    List<Course> findMandatoryCoursesByDepartment(String department);
 }

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useEnrollmentStore from '@/store/useEnrollmentStore';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -83,6 +84,7 @@ function EnrolledCourseCard({ enrollment, onClick }) {
 }
 
 export default function MyCoursesPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isPublicAuthenticated } = useAuth();
   const { enrollments, loading, initialized, fetchEnrollments } = useEnrollmentStore();
@@ -111,7 +113,7 @@ export default function MyCoursesPage() {
     <div className="max-w-5xl mx-auto px-6 py-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">Khóa học của tôi</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('ui.course.my_courses')}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Danh sách khóa học bạn đã đăng ký
         </p>

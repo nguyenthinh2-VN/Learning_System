@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import {
   adminGetCourseDetailApi,
   adminGetSectionsApi,
@@ -16,8 +17,8 @@ import {
   PlayCircle, Loader2, CheckCircle2, Eye, Video,
 } from 'lucide-react';
 
-function formatPrice(price) {
-  if (price === 0) return 'Miễn phí';
+function formatPrice(price, t) {
+  if (price === 0) return t('ui.admin_preview.free');
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency', currency: 'VND', maximumFractionDigits: 0,
   }).format(price ?? 0);
@@ -31,6 +32,7 @@ function formatDate(dateStr) {
 }
 
 export default function AdminCoursePreviewPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { adminUser } = useAuth();
@@ -53,7 +55,7 @@ export default function AdminCoursePreviewPage() {
       const sectionsData = sectionsRes.data.data;
       setSections(Array.isArray(sectionsData) ? sectionsData : []);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Không thể tải nội dung khóa học.');
+      setError(err?.response?.data?.message || t('ui.admin_preview.err_load'));
     } finally { setLoading(false); }
   }, [id]);
 
@@ -68,7 +70,7 @@ export default function AdminCoursePreviewPage() {
       await publishCourseApi(id);
       navigate('/admin/courses/pending');
     } catch (err) {
-      alert(err?.response?.data?.message || 'Duyệt xuất bản thất bại.');
+      alert(err?.response?.data?.message || t('ui.admin_preview.err_publish'));
     } finally { setPublishing(false); }
   };
 
@@ -100,7 +102,7 @@ export default function AdminCoursePreviewPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-900">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Eye className="size-4" />
-            Chế độ xem trước {isPublished ? '(đã xuất bản)' : '(chưa xuất bản)'}
+            {t('ui.admin_preview.preview_mode')} {isPublished ? t('ui.admin_preview.published') : t('ui.admin_preview.unpublished')}
           </div>
           {!isPublished && (
             <Button size="sm" onClick={handlePublish} disabled={publishing}>
@@ -136,12 +138,12 @@ export default function AdminCoursePreviewPage() {
                   </span>
                   <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <BookOpen className="size-4" />
-                    {sortedSections.length} chương · {totalLessons} bài học
+                    {t('ui.admin_preview.curriculum_summary').replace('{sections}', sortedSections.length).replace('{lessons}', totalLessons)}
                   </span>
                   {course.publishedAt && (
                     <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                       <Calendar className="size-4" />
-                      Ngày đăng: {formatDate(course.publishedAt)}
+                      {t('ui.admin_preview.published_date')} {formatDate(course.publishedAt)}
                     </span>
                   )}
                 </div>
@@ -161,9 +163,9 @@ export default function AdminCoursePreviewPage() {
                     <BookOpen className="size-10 text-muted-foreground/20" />
                   )}
                 </div>
-                <p className="text-2xl font-bold">{formatPrice(course.price)}</p>
+                <p className="text-2xl font-bold">{formatPrice(course.price, t)}</p>
                 <Badge variant="outline" className="w-fit">
-                  {isPublished ? 'Đã xuất bản' : 'Chưa xuất bản'}
+                  {isPublished ? t('ui.admin_preview.status_published') : t('ui.admin_preview.status_unpublished')}
                 </Badge>
               </div>
             </div>
@@ -171,9 +173,9 @@ export default function AdminCoursePreviewPage() {
             {/* Curriculum — admin xem đầy đủ section + lesson */}
             {sortedSections.length > 0 && (
               <div className="mt-2">
-                <h2 className="text-lg font-semibold mb-1">Nội dung khóa học</h2>
+                <h2 className="text-lg font-semibold mb-1">{t('ui.admin_preview.curriculum')}</h2>
                 <p className="text-xs text-muted-foreground mb-4">
-                  {sortedSections.length} chương · {totalLessons} bài học
+                  {t('ui.admin_preview.curriculum_summary').replace('{sections}', sortedSections.length).replace('{lessons}', totalLessons)}
                 </p>
                 <div className="border rounded-xl overflow-hidden divide-y">
                   {sortedSections.map((section, idx) => {
@@ -191,7 +193,7 @@ export default function AdminCoursePreviewPage() {
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="font-medium text-sm truncate">{section.title}</span>
                             <Badge variant="outline" className="text-[10px] font-normal shrink-0">
-                              {lessonCount} bài
+                              {lessonCount} {t('ui.admin_preview.lessons_count')}
                             </Badge>
                           </div>
                           <ChevronDown
@@ -203,7 +205,7 @@ export default function AdminCoursePreviewPage() {
                         {isOpen && (
                           <div className="bg-muted/20 px-4 py-3 space-y-1">
                             {lessons.length === 0 ? (
-                              <p className="text-xs text-muted-foreground">Chưa có bài học.</p>
+                              <p className="text-xs text-muted-foreground">{t('ui.admin_preview.no_lessons')}</p>
                             ) : (
                               lessons.map((lesson) => (
                                 <div key={lesson.id} className="flex items-start gap-2 px-2 py-1.5">

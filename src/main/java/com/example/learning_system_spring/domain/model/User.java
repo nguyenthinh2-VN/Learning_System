@@ -22,6 +22,7 @@ public class User {
     private boolean enabled = true;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String department;
 
     private User(Long id, String username, String email, String password, String name, Role role, boolean isInternal, BigDecimal balance) {
         this.id = id;
@@ -81,10 +82,11 @@ public class User {
      */
     public static User reconstitute(Long id, String username, String email, String password, String name,
                                      Role role, boolean isInternal, BigDecimal balance, String avatarUrl,
-                                     boolean enabled, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                                     boolean enabled, String department, LocalDateTime createdAt, LocalDateTime updatedAt) {
         User user = reconstitute(id, username, email, password, name, role, isInternal, balance, createdAt, updatedAt);
         user.avatarUrl = avatarUrl;
         user.enabled = enabled;
+        user.department = department;
         return user;
     }
 
@@ -112,6 +114,13 @@ public class User {
         if (newAvatarUrl != null) {
             this.avatarUrl = newAvatarUrl.isBlank() ? null : newAvatarUrl.trim();
         }
+    }
+
+    /**
+     * Cập nhật phòng ban.
+     */
+    public void changeDepartment(String department) {
+        this.department = department != null && !department.isBlank() ? department.trim() : null;
     }
 
     /**
@@ -183,6 +192,7 @@ public class User {
     public BigDecimal getBalance() { return balance; }
     public String getAvatarUrl() { return avatarUrl; }
     public boolean isEnabled() { return enabled; }
+    public String getDepartment() { return department; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

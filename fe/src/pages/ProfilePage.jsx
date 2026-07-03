@@ -22,18 +22,24 @@ function formatBalance(amount) {
   }).format(amount);
 }
 
-// ─── Edit Name Modal ──────────────────────────────────────
-function EditNameModal({ currentName, onClose, onSaved }) {
-  const [name, setName] = useState(currentName || '');
+// ─── Edit Profile Modal ──────────────────────────────────────
+function EditProfileModal({ currentName, currentDepartment, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    name: currentName || '',
+    department: currentDepartment || ''
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) { setError('Tên không được để trống.'); return; }
+    if (!form.name.trim()) { setError('Tên không được để trống.'); return; }
     setLoading(true);
     try {
-      const res = await updateProfileApi({ name: name.trim() });
+      const res = await updateProfileApi({
+        name: form.name.trim(),
+        department: form.department.trim() || null
+      });
       onSaved(res.data.data);
     } catch (err) {
       setError(err?.response?.data?.message || 'Cập nhật thất bại.');
@@ -61,14 +67,23 @@ function EditNameModal({ currentName, onClose, onSaved }) {
             <Label htmlFor="edit-name">Họ tên mới</Label>
             <Input
               id="edit-name"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setError(''); }}
+              value={form.name}
+              onChange={(e) => { setForm({ ...form, name: e.target.value }); setError(''); }}
               placeholder="Nguyễn Văn A"
               autoFocus
             />
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-department">Phòng ban</Label>
+            <Input
+              id="edit-department"
+              value={form.department}
+              onChange={(e) => { setForm({ ...form, department: e.target.value }); setError(''); }}
+              placeholder="VD: Khối Kỹ Thuật"
+            />
+          </div>
           <div className="flex gap-2 pt-1">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Hủy</Button>
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">{t('ui.profile.cancel')}</Button>
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? <RefreshCw className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
               Lưu
@@ -82,6 +97,7 @@ function EditNameModal({ currentName, onClose, onSaved }) {
 
 // ─── Change Password Modal ────────────────────────────────
 function ChangePasswordModal({ onClose }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -96,7 +112,7 @@ function ChangePasswordModal({ onClose }) {
     e.preventDefault();
     if (!form.currentPassword || !form.newPassword) { setError('Vui lòng nhập đầy đủ.'); return; }
     if (form.newPassword.length < 6) { setError('Mật khẩu mới tối thiểu 6 ký tự.'); return; }
-    if (form.newPassword !== form.confirmPassword) { setError('Mật khẩu xác nhận không khớp.'); return; }
+    if (form.newPassword !== form.confirmPassword) { setError(t('ui.profile.confirm_pw_not_match')); return; }
     setLoading(true);
     try {
       await changePasswordApi({
@@ -134,19 +150,19 @@ function ChangePasswordModal({ onClose }) {
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="cur-pw">Mật khẩu hiện tại</Label>
+              <Label htmlFor="cur-pw">{t('ui.profile.current_pw')}</Label>
               <Input id="cur-pw" name="currentPassword" type="password" value={form.currentPassword} onChange={handleChange} placeholder="••••••••" autoFocus />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="new-pw">Mật khẩu mới</Label>
+              <Label htmlFor="new-pw">{t('ui.profile.new_pw')}</Label>
               <Input id="new-pw" name="newPassword" type="password" value={form.newPassword} onChange={handleChange} placeholder="Tối thiểu 6 ký tự" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="confirm-pw">Xác nhận mật khẩu mới</Label>
+              <Label htmlFor="confirm-pw">{t('ui.profile.confirm_new_pw')}</Label>
               <Input id="confirm-pw" name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="Nhập lại mật khẩu mới" />
             </div>
             <div className="flex gap-2 pt-1">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">Hủy</Button>
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1">{t('ui.profile.cancel')}</Button>
               <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? <RefreshCw className="size-4 animate-spin mr-2" /> : <Lock className="size-4 mr-2" />}
                 Đổi mật khẩu
@@ -195,13 +211,14 @@ function InfoRow({ icon: Icon, label, value, mono = false, action }) {
 
 // ─── Main Page ────────────────────────────────────────────
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isPublicAuthenticated, fetchProfile } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [showEditName, setShowEditName] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState('');
@@ -215,7 +232,7 @@ export default function ProfilePage() {
       const res = await getProfileApi();
       setProfile(res.data.data);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Không thể tải thông tin cá nhân.');
+      setError(err?.response?.data?.message || t('ui.profile.not_load_profile'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -232,7 +249,7 @@ export default function ProfilePage() {
 
     setAvatarError('');
     if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
-      setAvatarError('Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.');
+      setAvatarError(t('ui.profile.invalid_avatar'));
       return;
     }
     if (file.size > MAX_AVATAR_SIZE) {
@@ -368,7 +385,7 @@ export default function ProfilePage() {
                   {profile.name}
                 </h2>
                 <button
-                  onClick={() => setShowEditName(true)}
+                  onClick={() => setShowEditProfile(true)}
                   className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg border transition-colors"
                   style={{
                     borderColor: 'var(--brand-primary-mid)',
@@ -436,13 +453,19 @@ export default function ProfilePage() {
             icon={User}
             label="Họ tên"
             value={profile.name}
-            action={{ label: 'Chỉnh sửa', onClick: () => setShowEditName(true) }}
+            action={{ label: 'Chỉnh sửa', onClick: () => setShowEditProfile(true) }}
           />
           <InfoRow icon={Mail} label="Email" value={profile.email} />
           <InfoRow icon={Shield} label="Tên đăng nhập" value={profile.username} mono />
           <InfoRow
+            icon={User}
+            label="Phòng ban"
+            value={profile.department || 'Chưa cập nhật'}
+            action={{ label: 'Cập nhật', onClick: () => setShowEditProfile(true) }}
+          />
+          <InfoRow
             icon={Wallet}
-            label="Số dư ví"
+            label={t('ui.profile.wallet_balance')}
             value={formatBalance(profile.balance)}
           />
         </div>
@@ -516,15 +539,16 @@ export default function ProfilePage() {
       )}
 
       {/* Modals */}
-      {showEditName && (
-        <EditNameModal
+      {showEditProfile && (
+        <EditProfileModal
           currentName={profile?.name}
-          onClose={() => setShowEditName(false)}
+          currentDepartment={profile?.department}
+          onClose={() => setShowEditProfile(false)}
           onSaved={(updatedProfile) => {
             setProfile((p) => ({ ...p, ...updatedProfile }));
             // Đồng bộ context để sidebar/header cập nhật tên ngay
             fetchProfile();
-            setShowEditName(false);
+            setShowEditProfile(false);
           }}
         />
       )}

@@ -1,25 +1,28 @@
+import { useTranslation } from 'react-i18next';
 import '@/styles/brand.css';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Star, Users, GraduationCap, PlayCircle, TrendingUp } from 'lucide-react';
-
-// Dữ liệu giả định cho floating card
-const FEATURED_COURSE = {
-  title: 'Spring Boot Clean Architecture',
-  students: 512,
-  rating: 4.9,
-  tag: 'Bán chạy nhất',
-};
-
-const STATS = [
-  { icon: BookOpen, value: '500+', label: 'Khóa học' },
-  { icon: Users,    value: '10k+', label: 'Học viên' },
-  { icon: Star,     value: '4.8',  label: 'Đánh giá' },
-];
 
 // Avatar stack giả định
 const AVATARS = ['N', 'T', 'A', 'M'];
 
 export default function HeroSection() {
+  const { t } = useTranslation();
+
+  // Dữ liệu giả định cho floating card
+  const FEATURED_COURSE = {
+    title: 'Spring Boot Clean Architecture',
+    students: 512,
+    rating: 4.9,
+    tag: t('ui.home.best_seller'),
+  };
+
+  const STATS = [
+    { icon: BookOpen, value: '500+', label: t('ui.home.course') },
+    { icon: Users, value: '10k+', label: t('ui.home.student') },
+    { icon: Star, value: '4.8', label: t('ui.home.rating') },
+  ];
+
   const scrollToCourses = () => {
     const el = document.getElementById('course-list-section');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -47,7 +50,7 @@ export default function HeroSection() {
                 className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight"
                 style={{ color: 'var(--brand-text-primary)' }}
               >
-                Học mọi lúc,
+                {t('ui.home.hero_title_1')}
                 <br />
                 <span style={{
                   background: 'var(--brand-gradient-btn)',
@@ -55,15 +58,15 @@ export default function HeroSection() {
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                 }}>
-                  mọi nơi
+                  {t('ui.home.hero_title_2')}
                 </span>
               </h1>
               <p
                 className="mt-4 text-base leading-relaxed max-w-md"
                 style={{ color: 'var(--brand-text-secondary)' }}
               >
-                Khám phá hàng trăm khóa học chất lượng cao từ các giảng viên hàng đầu.
-                Nâng cao kỹ năng và phát triển sự nghiệp ngay hôm nay.
+                {t('ui.home.hero_desc_1')}
+                {t('ui.home.hero_desc_2')}
               </p>
             </div>
 
@@ -181,7 +184,7 @@ export default function HeroSection() {
 
                   {/* Rating */}
                   <div className="flex items-center gap-1.5">
-                    {[1,2,3,4,5].map((s) => (
+                    {[1, 2, 3, 4, 5].map((s) => (
                       <Star
                         key={s}
                         className="size-3 fill-current"
@@ -196,7 +199,7 @@ export default function HeroSection() {
                   {/* Progress */}
                   <div>
                     <div className="flex justify-between text-[11px] mb-1" style={{ color: 'var(--brand-text-secondary)' }}>
-                      <span>Tiến độ học</span>
+                      <span>{t('ui.home.learning_progress')}</span>
                       <span style={{ color: 'var(--brand-success)' }}>78%</span>
                     </div>
                     <div className="h-1.5 rounded-full" style={{ background: 'var(--brand-primary-mid)' }}>

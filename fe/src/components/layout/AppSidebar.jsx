@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useWalletWebSocket } from '@/hooks/useWalletWebSocket';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 import '@/styles/brand.css';
 
 import {
@@ -47,6 +49,7 @@ export default function AppSidebar() {
   const navigate = useNavigate();
   const { publicUser, publicToken, balance, isPublicAuthenticated, publicLogout, updateBalance } = useAuth();
   const [coursesOpen, setCoursesOpen] = useState(true);
+  const { t } = useTranslation();
 
   // Kết nối WebSocket — chỉ reconnect khi token thay đổi
   useWalletWebSocket({
@@ -87,7 +90,7 @@ export default function AppSidebar() {
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-bold text-lg">LearnSpace</span>
                 <span className="truncate text-xs text-muted-foreground">
-                  Nền tảng học trực tuyến
+                  {t('ui.sidebar.platform_name')}
                 </span>
               </div>
             </SidebarMenuButton>
@@ -99,18 +102,18 @@ export default function AppSidebar() {
       <SidebarContent>
         {/* Menu chính */}
         <SidebarGroup>
-          <SidebarGroupLabel>Menu chính</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('ui.sidebar.main_menu')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {/* Trang chủ */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={isActive('/')}
-                  tooltip="Trang chủ"
+                  tooltip={t('ui.sidebar.home')}
                   render={<Link to="/" />}
                 >
                   <Home />
-                  <span>Trang chủ</span>
+                  <span>{t('ui.sidebar.home')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -119,11 +122,11 @@ export default function AppSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     isActive={isActive('/progress')}
-                    tooltip="Tiến độ"
+                    tooltip={t('ui.sidebar.progress')}
                     render={<Link to="/progress" />}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>
-                    <span>Tiến độ</span>
+                    <span>{t('ui.sidebar.progress')}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
@@ -131,11 +134,11 @@ export default function AppSidebar() {
               {/* Khóa học — Toggle dropdown bằng useState */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  tooltip="Khóa học"
+                  tooltip={t('ui.sidebar.courses')}
                   onClick={() => setCoursesOpen((v) => !v)}
                 >
                   <BookOpen />
-                  <span>Khóa học</span>
+                  <span>{t('ui.sidebar.courses')}</span>
                   <ChevronRight
                     className="ml-auto transition-transform duration-200"
                     style={{ transform: coursesOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
@@ -147,7 +150,7 @@ export default function AppSidebar() {
                   <SidebarMenuSub>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton onClick={scrollToCourses}>
-                        <span>Tất cả khóa học</span>
+                        <span>{t('ui.sidebar.all_courses')}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
 
@@ -155,12 +158,12 @@ export default function AppSidebar() {
                       <>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton render={<Link to="/my-courses" />}>
-                            <span>Khóa học đã mua</span>
+                            <span>{t('ui.sidebar.purchased_courses')}</span>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton render={<Link to="/" />}>
-                            <span>Yêu thích</span>
+                            <span>{t('ui.sidebar.favorites')}</span>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       </>
@@ -174,11 +177,11 @@ export default function AppSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     isActive={isActive('/wallet')}
-                    tooltip="Ví tiền"
+                    tooltip={t('ui.sidebar.wallet')}
                     render={<Link to="/wallet" />}
                   >
                     <Wallet />
-                    <span>Ví tiền</span>
+                    <span>{t('ui.sidebar.wallet')}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
@@ -189,32 +192,37 @@ export default function AppSidebar() {
         {/* Tài khoản — cần login */}
         {isPublicAuthenticated && (
           <SidebarGroup>
-            <SidebarGroupLabel>Tài khoản</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('ui.sidebar.account')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Thông tin cá nhân" render={<Link to="/profile" />}>
+                  <SidebarMenuButton tooltip={t('ui.sidebar.my_profile')} render={<Link to="/profile" />}>
                     <User />
-                    <span>Thông tin cá nhân</span>
+                    <span>{t('ui.sidebar.my_profile')}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Đổi mật khẩu" render={<Link to="/" />}>
+                  <SidebarMenuButton tooltip={t('ui.sidebar.change_pw')} render={<Link to="/" />}>
                     <Lock />
-                    <span>Đổi mật khẩu</span>
+                    <span>{t('ui.sidebar.change_pw')}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    tooltip="Đăng xuất"
+                    tooltip={t('ui.sidebar.logout')}
                     onClick={() => {
                       publicLogout();
                       window.location.href = '/login';
                     }}
                   >
                     <LogOut />
-                    <span>Đăng xuất</span>
+                    <span>{t('ui.sidebar.logout')}</span>
                   </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                {/* Chọn ngôn ngữ */}
+                <SidebarMenuItem>
+                  <LanguageSwitcher />
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
@@ -222,9 +230,14 @@ export default function AppSidebar() {
         )}
       </SidebarContent>
 
-      {/* Footer — User info hoặc Đăng nhập */}
+      {/* Footer — User Profile & Settings */}
       <SidebarFooter>
         <SidebarMenu>
+          {!isPublicAuthenticated && (
+            <SidebarMenuItem>
+              <LanguageSwitcher />
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             {isPublicAuthenticated ? (
               <SidebarMenuButton
@@ -263,14 +276,14 @@ export default function AppSidebar() {
             ) : (
               <SidebarMenuButton
                 size="lg"
-                tooltip="Đăng nhập"
+                tooltip={t('ui.sidebar.login')}
                 render={<Link to="/login" />}
               >
                 <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-foreground text-background shrink-0">
                   <LogIn className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Đăng nhập</span>
+                  <span className="truncate font-semibold">{t('ui.sidebar.login')}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     Truy cập tài khoản
                   </span>

@@ -26,9 +26,13 @@ public class GetProgressUseCase {
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
     private final CourseLessonRepository courseLessonRepository;
+    private final com.example.learning_system_spring.application.repository.User.UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public ProgressDataOutput execute(Long userId) {
+        com.example.learning_system_spring.domain.model.User user = userRepository.findById(userId)
+                .orElseThrow(
+                        () -> new com.example.learning_system_spring.domain.exception.UserNotFoundException(userId));
         List<LessonProgress> progresses = lessonProgressRepository.findByUserId(userId);
         List<Enrollment> enrollments = enrollmentRepository.findAllByUserId(userId);
 
@@ -84,13 +88,40 @@ public class GetProgressUseCase {
                     .max(LocalDateTime::compareTo)
                     .orElse(enrollment.getEnrolledAt());
 
+            boolean isMandatoryForUser = course.isMandatory() && user.getDepartment() != null
+                    && user.getDepartment().equals(course.getAssignedDepartment());
+            String statusMessage = null;
+            if (isMandatoryForUser && progressPercentage < 100) {
+                statusMessage = "Chưa đạt kết quả do khóa bắt buộc";
+            }
+
             ongoingCourses.add(ProgressDataOutput.OngoingCourseDTO.builder()
                     .id(course.getId())
                     .title(course.getTitle())
                     .thumbnailUrl(course.getThumbnailUrl())
                     .progressPercentage(progressPercentage)
                     .lastAccessed(lastAccessed)
+                    .isMandatory(isMandatoryForUser)
+                    .statusMessage(statusMessage)
                     .build());
+        }
+
+        // Add mandatory courses not enrolled
+        if (user.getDepartment() != null && !user.getDepartment().isBlank()) {
+            List<Course> mandatoryCourses = courseRepository.findMandatoryCoursesByDepartment(user.getDepartment());
+            for (Course course : mandatoryCourses) {
+                if (!courseMap.containsKey(course.getId())) {
+                    ongoingCourses.add(ProgressDataOutput.OngoingCourseDTO.builder()
+                            .id(course.getId())
+                            .title(course.getTitle())
+                            .thumbnailUrl(course.getThumbnailUrl())
+                            .progressPercentage(0)
+                            .lastAccessed(LocalDateTime.now()) // Default cho lên đầu hoặc xử lý riêng
+                            .isMandatory(true)
+                            .statusMessage("Chưa được đăng ký học do khóa bắt buộc")
+                            .build());
+                }
+            }
         }
 
         // Sort ongoing courses by last accessed
@@ -105,11 +136,7 @@ public class GetProgressUseCase {
                 .streakDays(streakDays)
                 .build();
 
-        return ProgressDataOutput.builder()
-                .overview(overview)
-                .heatmap(heatmap)
-                .ongoingCourses(ongoingCourses)
-                .build();
+        return ProgressDataOutput.builder().overview(overview).heatmap(heatmap).ongoingCourses(ongoingCourses).build();
     }
 
     private int calculateHeatmapLevel(int count) {

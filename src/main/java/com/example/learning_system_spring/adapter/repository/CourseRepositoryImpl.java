@@ -100,4 +100,11 @@ public class CourseRepositoryImpl implements CourseRepository {
     public void deleteById(Long id) {
         jpaCourseRepository.deleteById(id);
     }
+
+    @Override
+    public List<Course> findMandatoryCoursesByDepartment(String department) {
+        return jpaCourseRepository.findByIsMandatoryTrueAndAssignedDepartment(department).stream()
+                .map(courseMapper::toDomain)
+                .toList();
+    }
 }

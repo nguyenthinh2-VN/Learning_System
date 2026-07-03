@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import { Flame, Play, TrendingUp, ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function ProgressSection() {
+  const { t } = useTranslation();
   const { isPublicAuthenticated } = useAuth();
 
   if (!isPublicAuthenticated) return null;
@@ -27,8 +29,8 @@ export default function ProgressSection() {
               <Flame className="w-6 h-6 text-indigo-500" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Chuỗi học tập</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">14 Ngày</h3>
+              <p className="text-xs text-slate-500 font-medium">{t('ui.home.learning_streak')}</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">14 {t('ui.home.days')}</h3>
             </div>
           </div>
 
@@ -39,7 +41,7 @@ export default function ProgressSection() {
             </div>
             <div className="flex-1 w-full">
               <h3 className="text-base font-bold text-slate-900">React & Spring Boot Fullstack</h3>
-              <p className="text-xs text-slate-500 mt-1">Chương 4: Authentication & Authorization</p>
+              <p className="text-xs text-slate-500 mt-1">{t('ui.home.chapter')} 4: Authentication & Authorization</p>
 
               <div className="mt-3 flex items-center gap-3">
                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">

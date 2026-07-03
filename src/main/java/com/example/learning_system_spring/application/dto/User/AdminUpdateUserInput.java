@@ -10,5 +10,6 @@ public record AdminUpdateUserInput(
         String requesterRole,
         String name,
         String roleName,
-        Boolean isInternal
+        Boolean isInternal,
+        String department
 ) {}

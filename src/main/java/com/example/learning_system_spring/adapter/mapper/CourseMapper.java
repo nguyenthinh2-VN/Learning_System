@@ -35,6 +35,9 @@ public class CourseMapper {
                 entity.isPublished(),
                 entity.isPriceLocked(),
                 entity.isFreeForInternal(),
+                entity.isMandatory(),
+                entity.getAssignedDepartment(),
+                entity.getMandatoryDeadline(),
                 entity.getPublishedAt(),
                 entity.getPublishedBy(),
                 sections);
@@ -85,6 +88,9 @@ public class CourseMapper {
         entity.setPublished(course.isPublished());
         entity.setPriceLocked(course.isPriceLocked());
         entity.setFreeForInternal(course.isFreeForInternal());
+        entity.setMandatory(course.isMandatory());
+        entity.setAssignedDepartment(course.getAssignedDepartment());
+        entity.setMandatoryDeadline(course.getMandatoryDeadline());
         entity.setPublishedAt(course.getPublishedAt());
         entity.setPublishedBy(course.getPublishedBy());
 

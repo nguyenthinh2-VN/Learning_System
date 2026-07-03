@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Clock,
   Award,
@@ -11,11 +12,20 @@ import {
 } from 'lucide-react';
 import { ActivityCalendar } from 'react-activity-calendar';
 import progressApi from '@/api/progressApi';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ProgressPage() {
+  const { t } = useTranslation();
   const { isPublicAuthenticated } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [filterMandatory, setFilterMandatory] = useState(false);
 
   useEffect(() => {
     if (isPublicAuthenticated) {
@@ -60,6 +70,8 @@ export default function ProgressPage() {
     const date = new Date(isoString);
     return date.toLocaleDateString('vi-VN');
   };
+
+  const displayedCourses = ongoingCourses ? ongoingCourses.filter(c => !filterMandatory || c.isMandatory) : [];
 
   return (
     <div className="container mx-auto px-4 max-w-7xl py-8">
@@ -141,10 +153,24 @@ export default function ProgressPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Ongoing Courses */}
         <div className="lg:col-span-2">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Khóa học đang diễn ra</h2>
-          {ongoingCourses && ongoingCourses.length > 0 ? (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-900">Khóa học đang diễn ra</h2>
+            <Select
+              value={filterMandatory ? 'mandatory' : 'all'}
+              onValueChange={(v) => setFilterMandatory(v === 'mandatory')}
+            >
+              <SelectTrigger className="w-[180px] bg-white h-9">
+                <SelectValue placeholder="Lọc khóa học" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả khóa học</SelectItem>
+                <SelectItem value="mandatory">Chỉ khóa bắt buộc</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {displayedCourses.length > 0 ? (
             <div className="space-y-4">
-              {ongoingCourses.map((course) => (
+              {displayedCourses.map((course) => (
                 <Link to={`/courses/${course.id}`} key={course.id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-4 hover:border-indigo-100 hover:shadow-md transition-all cursor-pointer block">
                   <div className="w-24 h-16 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden">
                     {course.thumbnailUrl ? (
@@ -154,8 +180,20 @@ export default function ProgressPage() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-slate-900 line-clamp-1">{course.title}</h3>
-                    <p className="text-xs text-slate-500 mt-1">Học lần cuối: {formatDate(course.lastAccessed)}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold text-slate-900 line-clamp-1">{course.title}</h3>
+                      {course.isMandatory && (
+                        <span className="shrink-0 inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">
+                          Bắt buộc
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">Học lần cuối: {formatDate(course.lastAccessed)}</p>
+                    {course.statusMessage && (
+                      <p className="text-xs text-red-500 mt-1 font-medium bg-red-50 inline-block px-2 py-0.5 rounded border border-red-100">
+                        {course.statusMessage}
+                      </p>
+                    )}
                   </div>
                   <div className="w-24 md:w-32 flex flex-col items-end gap-2 shrink-0">
                     <div className="flex items-center justify-between w-full text-xs">

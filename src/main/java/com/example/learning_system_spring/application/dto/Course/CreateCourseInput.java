@@ -15,5 +15,8 @@ public record CreateCourseInput(
                 Long requestedInstructorId,
                 String thumbnailUrl,
                 boolean freeForInternal,
+                boolean isMandatory,
+                String assignedDepartment,
+                java.time.LocalDateTime mandatoryDeadline,
                 List<CourseSectionDto> sections) {
 }

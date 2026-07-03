@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { getPermissionMatrixApi, updateRolePermissionsApi } from '@/api/adminApi';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -9,6 +10,7 @@ import { getRoleTextClass } from '@/lib/roleColors';
 import { PERMISSION_LABELS, PERMISSION_GROUPS, ROLE_LABELS_PERM } from '@/lib/permissions';
 
 export default function AdminPermissionsPage() {
+  const { t } = useTranslation();
   const { adminUser } = useAuth();
   const [allPermissions, setAllPermissions] = useState([]);
   const [roles, setRoles] = useState([]); // [{ roleName, permissions: [], locked }]
@@ -32,7 +34,7 @@ export default function AdminPermissionsPage() {
       });
       setDraft(initialDraft);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Không thể tải ma trận phân quyền.');
+      setError(err?.response?.data?.message || t('ui.admin_permissions.err_load'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ export default function AdminPermissionsPage() {
 
     const grouped = new Set(groups.flatMap((g) => g.permissions));
     const others = allPermissions.map((p) => p.name).filter((p) => !grouped.has(p));
-    if (others.length) groups.push({ label: 'Khác', permissions: others });
+    if (others.length) groups.push({ label: t('ui.admin_permissions.other_group'), permissions: others });
     return groups;
   }, [allPermissions]);
 
@@ -88,11 +90,11 @@ export default function AdminPermissionsPage() {
     try {
       const perms = [...(draft[roleName] ?? new Set())];
       await updateRolePermissionsApi(roleName, perms);
-      setSuccessMsg(`Đã cập nhật phân quyền cho ${ROLE_LABELS_PERM[roleName] || roleName}.`);
+      setSuccessMsg(t('ui.admin_permissions.msg_updated').replace('{role}', ROLE_LABELS_PERM[roleName] || roleName));
       setTimeout(() => setSuccessMsg(''), 4000);
       await fetchMatrix();
     } catch (err) {
-      setError(err?.response?.data?.message || 'Cập nhật phân quyền thất bại.');
+      setError(err?.response?.data?.message || t('ui.admin_permissions.err_update'));
     } finally {
       setSavingRole(null);
     }
@@ -111,7 +113,7 @@ export default function AdminPermissionsPage() {
       <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <span className="text-sm font-medium">Phân quyền</span>
+        <span className="text-sm font-medium">{t('ui.admin_permissions.title')}</span>
         <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
@@ -122,7 +124,7 @@ export default function AdminPermissionsPage() {
               <ShieldCheck className="size-6" />Phân quyền động
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Gán / gỡ quyền cho từng vai trò. Thay đổi có hiệu lực ngay (người dùng không cần đăng nhập lại).
+              {t('ui.admin_permissions.subtitle')}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={fetchMatrix} disabled={loading}>
@@ -151,7 +153,7 @@ export default function AdminPermissionsPage() {
               <thead>
                 <tr className="bg-muted/50 border-b">
                   <th className="text-left px-4 py-3 font-medium sticky left-0 bg-muted/50 min-w-[280px] z-10">
-                    Quyền
+                    {t('ui.admin_permissions.col_permission')}
                   </th>
                   {roles.map((r) => (
                     <th key={r.roleName} className="px-3 py-3 font-medium text-center min-w-[140px]">
@@ -163,7 +165,7 @@ export default function AdminPermissionsPage() {
                             <Lock className="size-2.5" />full quyền
                           </span>
                         ) : (
-                          <span className="text-[10px] text-muted-foreground">{countFor(r.roleName)} quyền</span>
+                          <span className="text-[10px] text-muted-foreground">{t('ui.admin_permissions.rights_count').replace('{count}', countFor(r.roleName))}</span>
                         )}
                       </div>
                     </th>
@@ -183,7 +185,7 @@ export default function AdminPermissionsPage() {
               </tbody>
               <tfoot>
                 <tr className="border-t-2 bg-muted/40">
-                  <td className="px-4 py-3 sticky left-0 bg-muted/40 font-medium z-10">Lưu thay đổi</td>
+                  <td className="px-4 py-3 sticky left-0 bg-muted/40 font-medium z-10">{t('ui.admin_permissions.save_changes')}</td>
                   {roles.map((r) => (
                     <td key={r.roleName} className="px-3 py-3 text-center align-top">
                       {r.locked ? (
@@ -199,7 +201,7 @@ export default function AdminPermissionsPage() {
                             {savingRole === r.roleName
                               ? <Loader2 className="size-3 animate-spin mr-1" />
                               : <Save className="size-3 mr-1" />}
-                            Lưu
+                            {t('ui.admin_permissions.save')}
                           </Button>
                           {dirtyRoles[r.roleName] && (
                             <button
@@ -222,13 +224,12 @@ export default function AdminPermissionsPage() {
         {anyDirty && !loading && (
           <p className="text-xs text-amber-600 flex items-center gap-1.5">
             <AlertCircle className="size-3.5" />
-            Có thay đổi chưa lưu. Bấm "Lưu" ở cột tương ứng để áp dụng.
+            {t('ui.admin_permissions.unsaved_changes')}
           </p>
         )}
 
         <p className="text-xs text-muted-foreground">
-          Lưu ý: <code className="font-mono">SUPER_ADMIN</code> luôn có toàn bộ quyền và không thể chỉnh sửa (tránh tự khóa).
-          Việc ẩn/hiện menu chỉ là gợi ý giao diện — quyền thật được kiểm tra ở phía máy chủ.
+          <span dangerouslySetInnerHTML={{ __html: t('ui.admin_permissions.note') }} />
         </p>
       </div>
     </div>

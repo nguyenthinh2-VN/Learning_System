@@ -67,6 +67,7 @@ export default function ChatbotWidget() {
   const [inputStr, setInputStr] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef(null);
+  const skipNextFetchRef = useRef(false);
 
   // Cuộn xuống tin nhắn cuối cùng
   const scrollToBottom = () => {
@@ -82,6 +83,11 @@ export default function ChatbotWidget() {
   // Load lịch sử tin nhắn khi mở nếu có sessionId
   useEffect(() => {
     const loadMessages = async () => {
+      if (skipNextFetchRef.current) {
+        skipNextFetchRef.current = false;
+        return;
+      }
+
       if (isOpen && isPublicAuthenticated && sessionId) {
         try {
           const res = await getMessagesApi(sessionId);
@@ -118,6 +124,7 @@ export default function ChatbotWidget() {
     try {
       setIsLoading(true);
       const res = await createSessionApi();
+      skipNextFetchRef.current = true;
       setSessionId(res.data.data.id);
       setMessages([]);
     } catch (error) {
@@ -140,6 +147,7 @@ export default function ChatbotWidget() {
         setIsLoading(true);
         const res = await createSessionApi();
         currentSessionId = res.data.data.id;
+        skipNextFetchRef.current = true;
         setSessionId(currentSessionId);
       }
 

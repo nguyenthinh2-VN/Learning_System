@@ -1,15 +1,17 @@
+import { useTranslation } from 'react-i18next';
 import '@/styles/brand.css';
 import { useNavigate } from 'react-router-dom';
 import { Users, BookOpen } from 'lucide-react';
 
-function formatPrice(price) {
-  if (price === 0) return 'Miễn phí';
+function formatPrice(price, t) {
+  if (price === 0) return t('ui.course.free');
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency', currency: 'VND', maximumFractionDigits: 0,
   }).format(price);
 }
 
-export default function CourseCard({ id, title, description, price, enrolledCount, maxStudents, thumbnailUrl }) {
+export default function CourseCard({ id, title, description, price, enrolledCount, maxStudents, thumbnailUrl, isMandatory }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const progress = maxStudents > 0 ? Math.round((enrolledCount / maxStudents) * 100) : 0;
   const isFull = enrolledCount >= maxStudents;
@@ -48,7 +50,7 @@ export default function CourseCard({ id, title, description, price, enrolledCoun
             className="absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full text-white"
             style={{ background: '#EF4444' }}
           >
-            Hết chỗ
+            {t('ui.home.sold_out')}
           </span>
         )}
       </div>
@@ -68,9 +70,17 @@ export default function CourseCard({ id, title, description, price, enrolledCoun
           </p>
         )}
 
+        {isMandatory && (
+          <div>
+            <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px] font-medium uppercase tracking-wider">
+              {t('ui.home.mandatory')}
+            </span>
+          </div>
+        )}
+
         {/* Price */}
-        <p className="text-sm font-bold" style={{ color: price === 0 ? 'var(--brand-success)' : 'var(--brand-success)' }}>
-          {formatPrice(price)}
+        <p className="text-sm font-bold" style={{ color: price === 0 ? 'var(--brand-success)' : 'var(--brand-text-primary)' }}>
+          {formatPrice(price, t)}
         </p>
 
         {/* Progress */}
@@ -78,7 +88,7 @@ export default function CourseCard({ id, title, description, price, enrolledCoun
           <div className="flex items-center justify-between text-[11px]" style={{ color: 'var(--brand-text-secondary)' }}>
             <span className="flex items-center gap-1">
               <Users className="size-3" />
-              {enrolledCount}/{maxStudents} học viên
+              {enrolledCount}/{maxStudents} {t('ui.home.students')}
             </span>
             <span>{progress}%</span>
           </div>

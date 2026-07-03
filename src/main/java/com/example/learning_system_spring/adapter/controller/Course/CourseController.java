@@ -51,7 +51,8 @@ public class CourseController {
         }
 
         /**
-         * Lấy claims nếu request có Authorization header, ngược lại trả null (anonymous).
+         * Lấy claims nếu request có Authorization header, ngược lại trả null
+         * (anonymous).
          */
         private Claims getClaimsOptional(HttpServletRequest request) {
                 String header = request.getHeader("Authorization");
@@ -83,7 +84,8 @@ public class CourseController {
 
         @GetMapping("/{id}")
         public ResponseEntity<?> getCourseDetail(@PathVariable Long id, HttpServletRequest request) {
-                // Có thể là anonymous hoặc đăng nhập. Owner / admin xem được course chưa publish.
+                // Có thể là anonymous hoặc đăng nhập. Owner / admin xem được course chưa
+                // publish.
                 Claims claims = getClaimsOptional(request);
                 Long requesterId = claims != null ? claims.get("userId", Long.class) : null;
                 Role requesterRole = claims != null
@@ -109,7 +111,9 @@ public class CourseController {
                 CreateCourseInput input = new CreateCourseInput(
                                 requesterId, requesterRole, req.getTitle(), req.getDescription(),
                                 req.getMaxStudents(), req.getPrice(), req.getRequestedInstructorId(),
-                                req.getThumbnailUrl(), req.isFreeForInternal(), req.getSections());
+                                req.getThumbnailUrl(), req.isFreeForInternal(),
+                                req.isMandatory(), req.getAssignedDepartment(), req.getMandatoryDeadline(),
+                                req.getSections());
 
                 CourseOutput output = createCourseUseCase.execute(input);
 
@@ -130,7 +134,9 @@ public class CourseController {
                 UpdateCourseInput input = new UpdateCourseInput(
                                 id, requesterId, requesterRole, req.getTitle(), req.getDescription(),
                                 req.getMaxStudents(), req.getPrice(), req.getThumbnailUrl(),
-                                req.isFreeForInternal(), req.getSections());
+                                req.isFreeForInternal(),
+                                req.isMandatory(), req.getAssignedDepartment(), req.getMandatoryDeadline(),
+                                req.getSections());
 
                 CourseOutput output = updateCourseUseCase.execute(input);
 
@@ -158,8 +164,8 @@ public class CourseController {
 
         @PostMapping("/{id}/purchase")
         public ResponseEntity<?> purchaseCourse(@PathVariable Long id,
-                                                @Valid @RequestBody(required = false) PurchaseCourseRequest req,
-                                                HttpServletRequest request) {
+                        @Valid @RequestBody(required = false) PurchaseCourseRequest req,
+                        HttpServletRequest request) {
                 Claims claims = getClaims(request);
                 Long requesterId = claims.get("userId", Long.class);
                 Role requesterRole = Role.reconstitute(null, claims.get("role", String.class), null);

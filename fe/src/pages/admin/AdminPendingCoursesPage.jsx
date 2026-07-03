@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { getPendingCoursesApi, publishCourseApi } from '@/api/adminApi';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -17,6 +18,7 @@ function formatMoney(amount) {
 }
 
 export default function AdminPendingCoursesPage() {
+  const { t } = useTranslation();
   const { adminUser } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
@@ -31,7 +33,7 @@ export default function AdminPendingCoursesPage() {
       const data = res.data.data;
       setCourses(data?.items ?? data?.content ?? (Array.isArray(data) ? data : []));
     } catch (err) {
-      setError(err?.response?.data?.message || 'Không thể tải danh sách khóa học chờ duyệt.');
+      setError(err?.response?.data?.message || t('ui.admin_pending.err_load'));
     } finally { setLoading(false); }
   };
 
@@ -43,7 +45,7 @@ export default function AdminPendingCoursesPage() {
       await publishCourseApi(course.id);
       setCourses((prev) => prev.filter((c) => c.id !== course.id));
     } catch (err) {
-      alert(err?.response?.data?.message || 'Duyệt thất bại.');
+      alert(err?.response?.data?.message || t('ui.admin_pending.err_approve'));
     } finally {
       setActionLoading((p) => ({ ...p, [course.id]: false }));
     }
@@ -54,19 +56,19 @@ export default function AdminPendingCoursesPage() {
       <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <span className="text-sm font-medium">Chờ duyệt</span>
+        <span className="text-sm font-medium">{t('ui.admin_pending.title')}</span>
         <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
       <div className="p-6 max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Khóa học chờ duyệt</h1>
-            <p className="text-sm text-muted-foreground mt-1">{courses.length} khóa học đang chờ xét duyệt</p>
+            <h1 className="text-2xl font-bold">{t('ui.admin_pending.heading')}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t('ui.admin_pending.subtitle').replace('{count}', courses.length)}</p>
           </div>
           <Button variant="outline" size="sm" onClick={fetchCourses} disabled={loading}>
             <RefreshCw className={`size-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Làm mới
+            {t('ui.admin_pending.refresh')}
           </Button>
         </div>
 
@@ -83,7 +85,7 @@ export default function AdminPendingCoursesPage() {
         ) : courses.length === 0 ? (
           <div className="py-20 text-center border border-dashed rounded-xl text-sm text-muted-foreground">
             <CheckCircle2 className="size-8 mx-auto mb-2 opacity-20" />
-            Không có khóa học nào đang chờ duyệt.
+            {t('ui.admin_pending.no_courses')}
           </div>
         ) : (
           <div className="rounded-xl border overflow-hidden divide-y">
@@ -93,19 +95,19 @@ export default function AdminPendingCoursesPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold line-clamp-1">{course.title}</p>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {course.description || 'Không có mô tả.'}
+                      {course.description || t('ui.admin_pending.no_desc')}
                     </p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                       <span>ID: {course.id}</span>
                       <span>&bull;</span>
                       <span>{formatMoney(course.price)}</span>
                       <span>&bull;</span>
-                      <span>Tối đa {course.maxStudents ?? '?'} học viên</span>
+                      <span>{t('ui.admin_pending.max_students').replace('{count}', course.maxStudents ?? '?')}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Button size="sm" variant="outline" onClick={() => navigate(`/admin/courses/${course.id}/preview`)}>
-                      <Eye className="size-3 mr-1" />Xem trước
+                      <Eye className="size-3 mr-1" />{t('ui.admin_pending.preview')}
                     </Button>
                     <Button
                       size="sm"
@@ -114,7 +116,7 @@ export default function AdminPendingCoursesPage() {
                       disabled={!!actionLoading[course.id]}
                     >
                       {actionLoading[course.id] ? <Loader2 className="size-3 animate-spin mr-1" /> : <CheckCircle2 className="size-3 mr-1" />}
-                      Duyệt xuất bản
+                      {t('ui.admin_pending.approve')}
                     </Button>
                   </div>
                 </div>

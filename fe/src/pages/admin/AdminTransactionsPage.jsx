@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { getAdminTransactionsApi } from '@/api/adminApi';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,20 +10,26 @@ import {
   Search, RefreshCw, Loader2, AlertCircle, ChevronLeft, ChevronRight, Receipt, X,
 } from 'lucide-react';
 import { getRoleTextClass } from '@/lib/roleColors';
-import { adminTransactionColumns, SOURCE_LABELS, STATUS_LABELS } from '@/features/wallet/transactionColumns';
+import { getAdminTransactionColumns, getSourceLabels, getStatusLabels } from '@/features/wallet/transactionColumns';
+import { useTranslation } from 'react-i18next';
 
-const SOURCE_OPTIONS = Object.entries(SOURCE_LABELS); // [value, label]
-const STATUS_OPTIONS = Object.entries(STATUS_LABELS);
-const DIRECTION_OPTIONS = [
-  ['CREDIT', 'Tiền vào (nạp)'],
-  ['DEBIT', 'Tiền ra (mua)'],
-];
+
+
+
 const PAGE_SIZE = 20;
 
 const selectClass =
   'rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export default function AdminTransactionsPage() {
+  const { t } = useTranslation();
+  const adminTransactionColumns = React.useMemo(() => getAdminTransactionColumns(t), [t]);
+  const SOURCE_OPTIONS = React.useMemo(() => Object.entries(getSourceLabels(t)), [t]);
+  const STATUS_OPTIONS = React.useMemo(() => Object.entries(getStatusLabels(t)), [t]);
+  const DIRECTION_OPTIONS = React.useMemo(() => [
+    ['CREDIT', t('ui.admin_transactions.credit')],
+    ['DEBIT', t('ui.admin_transactions.debit')],
+  ], [t]);
   const { adminUser } = useAuth();
 
   const [rows, setRows] = useState([]);
@@ -61,7 +67,7 @@ export default function AdminTransactionsPage() {
       setTotalPages(data?.totalPages ?? 0);
       setTotalElements(data?.totalElements ?? 0);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Không thể tải danh sách giao dịch.');
+      setError(err?.response?.data?.message || t('ui.admin_transactions.err_load'));
     } finally {
       setLoading(false);
     }
@@ -94,16 +100,16 @@ export default function AdminTransactionsPage() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Receipt className="size-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Giao dịch hệ thống</span>
+        <span className="text-sm font-medium">{t('ui.admin_transactions.title')}</span>
         <span className={`text-xs font-medium ml-auto ${getRoleTextClass(adminUser?.role)}`}>{adminUser?.name}</span>
       </header>
 
       <div className="p-6 max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Giao dịch toàn hệ thống</h1>
+            <h1 className="text-2xl font-bold">{t('ui.admin_transactions.heading')}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {totalElements > 0 ? `${totalElements} giao dịch` : 'Xem mọi giao dịch ví của người dùng'}
+              {totalElements > 0 ? t('ui.admin_transactions.count_transactions').replace('{count}', totalElements) : t('ui.admin_transactions.subtitle')}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => fetchData(page)} disabled={loading}>
@@ -116,7 +122,7 @@ export default function AdminTransactionsPage() {
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm theo username, email, mã giao dịch..."
+              placeholder={t('ui.admin_transactions.search_placeholder')}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               className="pl-9"
@@ -124,21 +130,21 @@ export default function AdminTransactionsPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <select value={source} onChange={(e) => setSource(e.target.value)} className={selectClass}>
-              <option value="">Tất cả loại</option>
+              <option value="">{t('ui.admin_transactions.all_types')}</option>
               {SOURCE_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
             </select>
             <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectClass}>
-              <option value="">Tất cả trạng thái</option>
+              <option value="">{t('ui.admin_transactions.all_statuses')}</option>
               {STATUS_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
             </select>
             <select value={direction} onChange={(e) => setDirection(e.target.value)} className={selectClass}>
-              <option value="">Vào / Ra</option>
+              <option value="">{t('ui.admin_transactions.in_out')}</option>
               {DIRECTION_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
             </select>
             <div className="flex items-center gap-1.5 text-sm">
-              <span className="text-muted-foreground text-xs">Từ</span>
+              <span className="text-muted-foreground text-xs">{t('ui.admin_transactions.from')}</span>
               <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-auto" />
-              <span className="text-muted-foreground text-xs">đến</span>
+              <span className="text-muted-foreground text-xs">{t('ui.admin_transactions.to')}</span>
               <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-auto" />
             </div>
             {hasFilter && (
@@ -164,7 +170,7 @@ export default function AdminTransactionsPage() {
           <DataTable
             columns={adminTransactionColumns}
             data={rows}
-            emptyMessage={hasFilter ? 'Không tìm thấy giao dịch phù hợp.' : 'Chưa có giao dịch nào.'}
+            emptyMessage={hasFilter ? t('ui.admin_transactions.no_matching') : t('ui.admin_transactions.no_transactions')}
           />
         )}
 
@@ -172,7 +178,7 @@ export default function AdminTransactionsPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
-              Trang {page + 1} / {totalPages} &bull; {totalElements} giao dịch
+              {t('ui.admin_transactions.pagination_info').replace('{page}', page + 1).replace('{totalPages}', totalPages).replace('{total}', totalElements)}
             </p>
             <div className="flex items-center gap-1">
               <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0 || loading}>

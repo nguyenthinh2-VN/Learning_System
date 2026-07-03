@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminLoginApi } from '@/api/adminApi';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
@@ -22,6 +23,7 @@ const ADMIN_ROLES = ['INSTRUCTOR', 'STAFF', 'ADMIN_USER', 'SUPER_ADMIN'];
 export default function AdminLoginPage() {
   const navigate = useNavigate();
   const { adminLogin, isAdminAuthenticated } = useAuth();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -36,8 +38,8 @@ export default function AdminLoginPage() {
 
   const validate = () => {
     const errs = {};
-    if (!form.identifier.trim()) errs.identifier = 'Vui lòng nhập email hoặc tên đăng nhập.';
-    if (!form.password) errs.password = 'Vui lòng nhập mật khẩu.';
+    if (!form.identifier.trim()) errs.identifier = t('ui.admin_auth.err_empty_id');
+    if (!form.password) errs.password = t('ui.admin_auth.err_empty_pw');
     return errs;
   };
 
@@ -62,7 +64,7 @@ export default function AdminLoginPage() {
       const data = res.data.data;
 
       if (!ADMIN_ROLES.includes(data.role)) {
-        setApiError('Tài khoản này không có quyền truy cập hệ thống quản trị.');
+        setApiError(t('ui.admin_auth.err_no_access'));
         return;
       }
 
@@ -82,9 +84,9 @@ export default function AdminLoginPage() {
       navigate('/admin', { replace: true });
     } catch (err) {
       if (err?.response?.status === 401) {
-        setApiError('Email/tên đăng nhập hoặc mật khẩu không đúng.');
+        setApiError(t('ui.admin_auth.err_invalid_creds'));
       } else {
-        setApiError(err?.response?.data?.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+        setApiError(err?.response?.data?.message || t('ui.admin_auth.err_general'));
       }
     } finally {
       setLoading(false);
@@ -110,7 +112,7 @@ export default function AdminLoginPage() {
 
           <Card>
             <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-lg font-semibold">Đăng nhập quản trị</CardTitle>
+              <CardTitle className="text-lg font-semibold">{t('ui.admin_auth.login_title')}</CardTitle>
               <CardDescription>
                 Dành cho giảng viên, nhân viên và quản trị viên
               </CardDescription>
@@ -131,7 +133,7 @@ export default function AdminLoginPage() {
                 )}
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="admin-identifier">Email hoặc tên đăng nhập</Label>
+                  <Label htmlFor="admin-identifier">{t('ui.admin_auth.email_or_username')}</Label>
                   <Input
                     id="admin-identifier"
                     name="identifier"
@@ -149,7 +151,7 @@ export default function AdminLoginPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="admin-password">Mật khẩu</Label>
+                  <Label htmlFor="admin-password">{t('ui.admin_auth.password')}</Label>
                   <div className="relative">
                     <Input
                       id="admin-password"
@@ -186,14 +188,14 @@ export default function AdminLoginPage() {
                   disabled={loading}
                 >
                   {loading && <Loader2 className="size-4 animate-spin mr-2" />}
-                  {loading ? 'Đang xác minh…' : 'Đăng nhập'}
+                  {loading ? t('ui.admin_auth.verifying') : t('ui.admin_auth.login_btn')}
                 </Button>
               </CardFooter>
             </form>
           </Card>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
-            Truy cập trái phép sẽ bị ghi nhận và xử lý.
+            {t('ui.admin_auth.unauthorized_warning')}
           </p>
         </div>
       </div>

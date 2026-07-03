@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { loginApi } from '@/api/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -15,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { publicLogin, fetchProfile } = useAuth();
 
@@ -26,13 +28,13 @@ export default function LoginPage() {
   // Thông báo khi bị đẩy về do token hết hạn (?expired=1)
   const expired = new URLSearchParams(window.location.search).get('expired') === '1';
   const [notice, setNotice] = useState(
-    expired ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.' : ''
+    expired ? t('ui.auth.session_expired') : ''
   );
 
   const validate = () => {
     const errs = {};
-    if (!form.identifier.trim()) errs.identifier = 'Vui lòng nhập email hoặc tên đăng nhập.';
-    if (!form.password) errs.password = 'Vui lòng nhập mật khẩu.';
+    if (!form.identifier.trim()) errs.identifier = t('ui.auth.enter_email');
+    if (!form.password) errs.password = t('ui.auth.enter_password');
     return errs;
   };
 
@@ -80,9 +82,9 @@ export default function LoginPage() {
     } catch (err) {
       const msg = err?.response?.data?.message;
       if (err?.response?.status === 401) {
-        setApiError('Email/tên đăng nhập hoặc mật khẩu không đúng.');
+        setApiError(t('ui.auth.invalid_credentials'));
       } else {
-        setApiError(msg || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+        setApiError(msg || t('ui.auth.generic_error'));
       }
     } finally {
       setLoading(false);
@@ -96,14 +98,14 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">LearnSpace</h1>
-          <p className="text-sm text-muted-foreground mt-1">Nền tảng học trực tuyến</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('ui.auth.platform_subtitle')}</p>
         </div>
 
         <Card className="shadow-sm">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-lg font-semibold">Đăng nhập</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('ui.auth.login_title')}</CardTitle>
             <CardDescription className="text-sm">
-              Nhập thông tin để truy cập tài khoản của bạn
+              {t('ui.auth.login_description')}
             </CardDescription>
           </CardHeader>
 
@@ -132,7 +134,7 @@ export default function LoginPage() {
 
               {/* Identifier */}
               <div className="space-y-1.5">
-                <Label htmlFor="identifier">Email hoặc tên đăng nhập</Label>
+                <Label htmlFor="identifier">{t('ui.auth.email_or_username')}</Label>
                 <Input
                   id="identifier"
                   name="identifier"
@@ -154,7 +156,7 @@ export default function LoginPage() {
 
               {/* Password */}
               <div className="space-y-1.5">
-                <Label htmlFor="password">Mật khẩu</Label>
+                <Label htmlFor="password">{t('ui.auth.password_label')}</Label>
                 <Input
                   id="password"
                   name="password"
@@ -182,16 +184,16 @@ export default function LoginPage() {
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? 'Đang đăng nhập…' : 'Đăng nhập'}
+                {loading ? t('ui.auth.logging_in') : t('ui.auth.login_title')}
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">
-                Chưa có tài khoản?{' '}
+                {t('ui.auth.no_account')}{' '}
                 <Link
                   to="/register"
                   className="font-medium text-foreground underline-offset-4 hover:underline"
                 >
-                  Đăng ký ngay
+                  {t('ui.auth.register_now')}
                 </Link>
               </p>
             </CardFooter>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import {
   adminGetCourseDetailApi,
   adminGetSectionsApi,
@@ -50,6 +51,7 @@ function InlineEdit({ value, onSave, onCancel, placeholder = '' }) {
 
 // ─── Lesson Row ───────────────────────────────────────────
 function LessonRow({ lesson, courseId, sectionId, onUpdated, onDeleted }) {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ title: lesson.title, contentUrl: lesson.contentUrl, orderIndex: lesson.orderIndex });
   const [loading, setLoading] = useState(false);
@@ -84,7 +86,7 @@ function LessonRow({ lesson, courseId, sectionId, onUpdated, onDeleted }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Xóa bài giảng "${lesson.title}"?`)) return;
+    if (!confirm(t('ui.admin_course_content.delete_lesson_confirm').replace('{title}', lesson.title))) return;
     setLoading(true);
     try {
       await adminDeleteLessonApi(courseId, sectionId, lesson.id);
@@ -99,17 +101,17 @@ function LessonRow({ lesson, courseId, sectionId, onUpdated, onDeleted }) {
       <Video className="size-3.5 text-muted-foreground mt-1 shrink-0" />
       <div className="flex-1 min-w-0">
         {editing ? (
-          <InlineEdit value={lesson.title} onSave={handleSaveTitle} onCancel={() => setEditing(false)} placeholder="Tên bài giảng" />
+          <InlineEdit value={lesson.title} onSave={handleSaveTitle} onCancel={() => setEditing(false)} placeholder={t('ui.admin_course_content.lesson_title_placeholder')} />
         ) : (
           <p className="text-sm leading-tight">{lesson.title}</p>
         )}
         {showUrlEdit ? (
           <div className="mt-1">
-            <InlineEdit value={lesson.contentUrl || ''} onSave={handleSaveUrl} onCancel={() => setShowUrlEdit(false)} placeholder="URL nội dung (YouTube, Vimeo...)" />
+            <InlineEdit value={lesson.contentUrl || ''} onSave={handleSaveUrl} onCancel={() => setShowUrlEdit(false)} placeholder={t('ui.admin_course_content.url_placeholder')} />
           </div>
         ) : (
           <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-xs">
-            {lesson.contentUrl || <span className="italic">Chưa có URL</span>}
+            {lesson.contentUrl || <span className="italic">{t('ui.admin_course_content.no_url')}</span>}
           </p>
         )}
       </div>
@@ -118,13 +120,13 @@ function LessonRow({ lesson, courseId, sectionId, onUpdated, onDeleted }) {
           <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
         ) : (
           <>
-            <button onClick={() => setEditing(true)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Sửa tên">
+            <button onClick={() => setEditing(true)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title={t('ui.admin_course_content.edit_title')}>
               <Pencil className="size-3" />
             </button>
-            <button onClick={() => setShowUrlEdit(true)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Sửa URL">
+            <button onClick={() => setShowUrlEdit(true)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title={t('ui.admin_course_content.edit_url')}>
               <Video className="size-3" />
             </button>
-            <button onClick={handleDelete} className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive" title="Xóa">
+            <button onClick={handleDelete} className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive" title={t('ui.admin_course_content.delete')}>
               <Trash2 className="size-3" />
             </button>
           </>
@@ -136,14 +138,15 @@ function LessonRow({ lesson, courseId, sectionId, onUpdated, onDeleted }) {
 
 // ─── Add Lesson Form ──────────────────────────────────────
 function AddLessonForm({ courseId, sectionId, nextOrder, onAdded, onCancel }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ title: '', contentUrl: '', orderIndex: nextOrder });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) { setError('Tên bài giảng không được để trống.'); return; }
-    if (!form.contentUrl.trim()) { setError('URL nội dung không được để trống.'); return; }
+    if (!form.title.trim()) { setError(t('ui.admin_course_content.err_empty_lesson_title')); return; }
+    if (!form.contentUrl.trim()) { setError(t('ui.admin_course_content.err_empty_url')); return; }
     setLoading(true);
     try {
       await adminCreateLessonApi(courseId, sectionId, {
@@ -153,7 +156,7 @@ function AddLessonForm({ courseId, sectionId, nextOrder, onAdded, onCancel }) {
       });
       onAdded();
     } catch (err) {
-      setError(err?.response?.data?.message || 'Thêm bài giảng thất bại.');
+      setError(err?.response?.data?.message || t('ui.admin_course_content.err_add_lesson_fail'));
     } finally { setLoading(false); }
   };
 
@@ -164,7 +167,7 @@ function AddLessonForm({ courseId, sectionId, nextOrder, onAdded, onCancel }) {
         <Input
           value={form.title}
           onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-          placeholder="Tên bài giảng *"
+          placeholder={t('ui.admin_course_content.lesson_title_req')}
           className="h-8 text-sm"
           autoFocus
         />
@@ -172,7 +175,7 @@ function AddLessonForm({ courseId, sectionId, nextOrder, onAdded, onCancel }) {
           value={form.orderIndex}
           onChange={(e) => setForm((p) => ({ ...p, orderIndex: e.target.value }))}
           type="number"
-          placeholder="Thứ tự"
+          placeholder={t('ui.admin_course_content.order')}
           className="h-8 text-sm"
           min={0}
         />
@@ -180,14 +183,14 @@ function AddLessonForm({ courseId, sectionId, nextOrder, onAdded, onCancel }) {
       <Input
         value={form.contentUrl}
         onChange={(e) => setForm((p) => ({ ...p, contentUrl: e.target.value }))}
-        placeholder="URL nội dung (YouTube, Vimeo, S3...) *"
+        placeholder={t('ui.admin_course_content.url_req')}
         className="h-8 text-sm"
       />
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={loading} className="h-7 text-xs">
           {loading && <Loader2 className="size-3 animate-spin mr-1" />}Thêm bài
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={onCancel} className="h-7 text-xs">Hủy</Button>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel} className="h-7 text-xs">{t('ui.admin_course_content.cancel')}</Button>
       </div>
     </form>
   );
@@ -195,6 +198,7 @@ function AddLessonForm({ courseId, sectionId, nextOrder, onAdded, onCancel }) {
 
 // ─── Section Card ─────────────────────────────────────────
 function SectionCard({ section, courseId, onUpdated, onDeleted }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(true);
   const [editingTitle, setEditingTitle] = useState(false);
   const [addingLesson, setAddingLesson] = useState(false);
@@ -215,7 +219,7 @@ function SectionCard({ section, courseId, onUpdated, onDeleted }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Xóa chương "${section.title}"?\nTất cả ${lessons.length} bài giảng bên trong cũng sẽ bị xóa.`)) return;
+    if (!confirm(t('ui.admin_course_content.delete_section_confirm').replace('{title}', section.title).replace('{count}', lessons.length))) return;
     setLoading(true);
     try {
       await adminDeleteSectionApi(courseId, section.id);
@@ -238,21 +242,21 @@ function SectionCard({ section, courseId, onUpdated, onDeleted }) {
         <BookOpen className="size-4 text-muted-foreground shrink-0" />
 
         {editingTitle ? (
-          <InlineEdit value={section.title} onSave={handleSaveTitle} onCancel={() => setEditingTitle(false)} placeholder="Tên chương" />
+          <InlineEdit value={section.title} onSave={handleSaveTitle} onCancel={() => setEditingTitle(false)} placeholder={t('ui.admin_course_content.section_name_placeholder')} />
         ) : (
           <span className="flex-1 text-sm font-medium">{section.title}</span>
         )}
 
-        <span className="text-xs text-muted-foreground shrink-0">{lessons.length} bài</span>
+        <span className="text-xs text-muted-foreground shrink-0">{lessons.length} {t('ui.admin_course_content.lessons_count')}</span>
 
         {loading ? (
           <Loader2 className="size-4 animate-spin text-muted-foreground" />
         ) : (
           <div className="flex items-center gap-1">
-            <button onClick={() => setEditingTitle(true)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title="Sửa tên chương">
+            <button onClick={() => setEditingTitle(true)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground" title={t('ui.admin_course_content.edit_section_title')}>
               <Pencil className="size-3.5" />
             </button>
-            <button onClick={handleDelete} className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive" title="Xóa chương">
+            <button onClick={handleDelete} className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive" title={t('ui.admin_course_content.delete_section')}>
               <Trash2 className="size-3.5" />
             </button>
           </div>
@@ -263,7 +267,7 @@ function SectionCard({ section, courseId, onUpdated, onDeleted }) {
       {open && (
         <div className="px-2 py-2 space-y-0.5">
           {lessons.length === 0 && !addingLesson && (
-            <p className="text-xs text-muted-foreground text-center py-3">Chưa có bài giảng nào.</p>
+            <p className="text-xs text-muted-foreground text-center py-3">{t('ui.admin_course_content.no_lessons_yet')}</p>
           )}
           {lessons.map((lesson) => (
             <LessonRow
@@ -301,13 +305,14 @@ function SectionCard({ section, courseId, onUpdated, onDeleted }) {
 
 // ─── Add Section Form ─────────────────────────────────────
 function AddSectionForm({ courseId, nextOrder, onAdded, onCancel }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ title: '', orderIndex: nextOrder });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) { setError('Tên chương không được để trống.'); return; }
+    if (!form.title.trim()) { setError(t('ui.admin_course_content.err_empty_section_title')); return; }
     setLoading(true);
     try {
       await adminCreateSectionApi(courseId, {
@@ -316,13 +321,13 @@ function AddSectionForm({ courseId, nextOrder, onAdded, onCancel }) {
       });
       onAdded();
     } catch (err) {
-      setError(err?.response?.data?.message || 'Thêm chương thất bại.');
+      setError(err?.response?.data?.message || t('ui.admin_course_content.err_add_section_fail'));
     } finally { setLoading(false); }
   };
 
   return (
     <form onSubmit={handleSubmit} className="rounded-xl border border-dashed border-border p-4 space-y-3">
-      <p className="text-sm font-medium">Thêm chương mới</p>
+      <p className="text-sm font-medium">{t('ui.admin_course_content.add_new_section')}</p>
       {error && (
         <div className="flex items-center gap-2 text-xs text-destructive">
           <AlertCircle className="size-3.5" />{error}
@@ -330,17 +335,17 @@ function AddSectionForm({ courseId, nextOrder, onAdded, onCancel }) {
       )}
       <div className="grid grid-cols-3 gap-2">
         <div className="col-span-2 space-y-1">
-          <Label className="text-xs">Tên chương *</Label>
+          <Label className="text-xs">{t('ui.admin_course_content.section_name_req')}</Label>
           <Input
             value={form.title}
             onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-            placeholder="VD: Phần 1: Giới thiệu"
+            placeholder={t('ui.admin_course_content.section_name_example')}
             className="h-8 text-sm"
             autoFocus
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Thứ tự</Label>
+          <Label className="text-xs">{t('ui.admin_course_content.order')}</Label>
           <Input
             value={form.orderIndex}
             onChange={(e) => setForm((p) => ({ ...p, orderIndex: e.target.value }))}
@@ -354,7 +359,7 @@ function AddSectionForm({ courseId, nextOrder, onAdded, onCancel }) {
         <Button type="submit" size="sm" disabled={loading}>
           {loading && <Loader2 className="size-4 animate-spin mr-2" />}Thêm chương
         </Button>
-        <Button type="button" size="sm" variant="outline" onClick={onCancel}>Hủy</Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>{t('ui.admin_course_content.cancel')}</Button>
       </div>
     </form>
   );
@@ -362,6 +367,7 @@ function AddSectionForm({ courseId, nextOrder, onAdded, onCancel }) {
 
 // ─── Main Page ────────────────────────────────────────────
 export default function AdminCourseContentPage() {
+  const { t } = useTranslation();
   const { id: courseId } = useParams();
   const { adminUser } = useAuth();
   const [course, setCourse] = useState(null);
@@ -381,7 +387,7 @@ export default function AdminCourseContentPage() {
       const sectionsData = sectionsRes.data.data;
       setSections(Array.isArray(sectionsData) ? sectionsData : []);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Không thể tải nội dung khóa học.');
+      setError(err?.response?.data?.message || t('ui.admin_course_content.err_load_content_fail'));
     } finally { setLoading(false); }
   }, [courseId]);
 
@@ -409,11 +415,11 @@ export default function AdminCourseContentPage() {
         {/* Page title */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Quản lý nội dung</h1>
+            <h1 className="text-2xl font-bold">{t('ui.admin_course_content.manage_content')}</h1>
             {course && (
               <p className="text-sm text-muted-foreground mt-1">
-                {course.title} &bull; {sections.length} chương &bull;{' '}
-                {sections.reduce((acc, s) => acc + (s.lessons?.length || 0), 0)} bài giảng
+                {t('ui.admin_course_content.course_summary').replace('{title}', course.title).replace('{sections}', sections.length).replace('{lessons}', sections.reduce((acc, s) => acc + (s.lessons?.length || 0), 0))}
+                
               </p>
             )}
           </div>

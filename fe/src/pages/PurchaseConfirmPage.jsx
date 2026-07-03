@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { quoteApi, purchaseApi } from '@/api/wallet';
 import useCourseDetailStore from '@/store/useCourseDetailStore';
 import { useAuth } from '@/context/AuthContext';
@@ -38,6 +39,7 @@ function formatBalance(amount) {
 }
 
 export default function PurchaseConfirmPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { publicUser, balance, fetchProfile } = useAuth();

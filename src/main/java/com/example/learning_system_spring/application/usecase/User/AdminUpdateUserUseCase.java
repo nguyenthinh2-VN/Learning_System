@@ -59,6 +59,11 @@ public class AdminUpdateUserUseCase {
             target.setInternalFlag(input.isInternal());
         }
 
+        // Đổi phòng ban
+        if (input.department() != null) {
+            target.changeDepartment(input.department());
+        }
+
         User saved = userRepository.save(target);
         return AdminUserDetailOutput.from(saved);
     }

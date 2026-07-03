@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerApi } from '@/api/auth';
 import {
@@ -14,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 
 export default function RegisterPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: '',
@@ -28,14 +30,14 @@ export default function RegisterPage() {
 
   const validate = () => {
     const errs = {};
-    if (!form.name.trim()) errs.name = 'Vui lòng nhập họ tên.';
+    if (!form.name.trim()) errs.name = t('ui.auth.enter_name');
     if (!form.email.trim()) {
-      errs.email = 'Vui lòng nhập email.';
+      errs.email = t('ui.auth.enter_email');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      errs.email = 'Email không đúng định dạng.';
+      errs.email = t('ui.auth.enter_valid_email');
     }
     if (!form.password) {
-      errs.password = 'Vui lòng nhập mật khẩu.';
+      errs.password = t('ui.auth.enter_password');
     } else if (form.password.length < 6) {
       errs.password = 'Mật khẩu phải có ít nhất 6 ký tự.';
     }
@@ -79,7 +81,7 @@ export default function RegisterPage() {
       } else if (code === 'VALIDATION_ERROR') {
         setApiError(msg || 'Dữ liệu không hợp lệ.');
       } else {
-        setApiError(msg || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+        setApiError(msg || t('ui.auth.generic_error'));
       }
     } finally {
       setLoading(false);
@@ -92,14 +94,14 @@ export default function RegisterPage() {
         {/* Brand */}
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">LearnSpace</h1>
-          <p className="text-sm text-muted-foreground mt-1">Nền tảng học trực tuyến</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('ui.auth.platform_subtitle')}</p>
         </div>
 
         <Card className="shadow-sm">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-lg font-semibold">Tạo tài khoản</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('ui.auth.register_title')}</CardTitle>
             <CardDescription className="text-sm">
-              Điền thông tin để bắt đầu học ngay hôm nay
+              {t('ui.auth.register_description')}
             </CardDescription>
           </CardHeader>
 
@@ -129,7 +131,7 @@ export default function RegisterPage() {
 
               {/* Name */}
               <div className="space-y-1.5">
-                <Label htmlFor="name">Họ và tên</Label>
+                <Label htmlFor="name">{t('ui.auth.name_label')}</Label>
                 <Input
                   id="name"
                   name="name"
@@ -148,7 +150,7 @@ export default function RegisterPage() {
 
               {/* Email */}
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('ui.auth.email_label')}</Label>
                 <Input
                   id="email"
                   name="email"
@@ -167,7 +169,7 @@ export default function RegisterPage() {
 
               {/* Password */}
               <div className="space-y-1.5">
-                <Label htmlFor="reg-password">Mật khẩu</Label>
+                <Label htmlFor="reg-password">{t('ui.auth.password_label')}</Label>
                 <Input
                   id="reg-password"
                   name="password"
@@ -211,11 +213,11 @@ export default function RegisterPage() {
                 className="w-full"
                 disabled={loading || !!successMsg}
               >
-                {loading ? 'Đang đăng ký…' : 'Đăng ký'}
+                {loading ? t('ui.auth.registering') : t('ui.auth.register_title')}
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">
-                Đã có tài khoản?{' '}
+                {t('ui.auth.have_account')}{' '}
                 <Link
                   to="/login"
                   className="font-medium text-foreground underline-offset-4 hover:underline"

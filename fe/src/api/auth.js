@@ -1,7 +1,8 @@
 import axios from 'axios';
+import i18n from '../i18n';
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: 'http://localhost:8080/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -22,8 +23,24 @@ api.interceptors.request.use((config) => {
 // nghĩa là token đã hết hạn → xóa phiên và chuyển về trang đăng nhập.
 // Bỏ qua chính endpoint /auth/** để lỗi sai mật khẩu vẫn hiển thị trên form.
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Tự động dịch success message nếu có
+    if (response.data && response.data.code) {
+      const translated = i18n.t(`api.${response.data.code}`);
+      if (translated && translated !== `api.${response.data.code}`) {
+        response.data.message = translated;
+      }
+    }
+    return response;
+  },
   (error) => {
+    // Tự động dịch error message nếu có
+    if (error.response && error.response.data && error.response.data.code) {
+      const translated = i18n.t(`api.${error.response.data.code}`);
+      if (translated && translated !== `api.${error.response.data.code}`) {
+        error.response.data.message = translated;
+      }
+    }
     const status = error?.response?.status;
     const url = error?.config?.url || '';
     const isAuthCall = url.includes('/auth/');

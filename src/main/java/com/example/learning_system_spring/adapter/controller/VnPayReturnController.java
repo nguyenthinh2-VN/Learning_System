@@ -51,11 +51,11 @@ public class VnPayReturnController {
             case PAYMENT_FAILED ->
                     ResponseEntity.ok(ApiResponse.success("Thanh toán không thành công", body));
             case INVALID_SIGNATURE ->
-                    ResponseEntity.status(400).body(ApiResponse.error(400, "Chữ ký không hợp lệ"));
+                    ResponseEntity.status(400).body(ApiResponse.error(400, "INVALID_SIGNATURE", "Chữ ký không hợp lệ"));
             case TX_NOT_FOUND ->
-                    ResponseEntity.status(404).body(ApiResponse.error(404, "Không tìm thấy giao dịch"));
+                    ResponseEntity.status(404).body(ApiResponse.error(404, "TX_NOT_FOUND", "Không tìm thấy giao dịch"));
             case AMOUNT_MISMATCH ->
-                    ResponseEntity.status(400).body(ApiResponse.error(400, "Số tiền không khớp giao dịch"));
+                    ResponseEntity.status(400).body(ApiResponse.error(400, "AMOUNT_MISMATCH", "Số tiền không khớp giao dịch"));
         };
     }
 

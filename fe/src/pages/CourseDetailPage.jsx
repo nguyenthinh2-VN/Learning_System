@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useCourseDetailStore from '@/store/useCourseDetailStore';
 import useEnrollmentStore from '@/store/useEnrollmentStore';
 import { useAuth } from '@/context/AuthContext';
@@ -11,8 +12,8 @@ import {
   DollarSign, Calendar, LogIn, PlayCircle,
 } from 'lucide-react';
 
-function formatPrice(price) {
-  if (price === 0) return 'Miễn phí';
+function formatPrice(price, t) {
+  if (price === 0) return t('ui.course.free');
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency', currency: 'VND', maximumFractionDigits: 0,
   }).format(price);
@@ -26,6 +27,7 @@ function formatDate(dateStr) {
 }
 
 export default function CourseDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { isPublicAuthenticated, publicUser } = useAuth();
@@ -163,7 +165,7 @@ export default function CourseDetailPage() {
             {currentCourse.publishedAt && (
               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Calendar className="size-4" />
-                Ngày đăng: {formatDate(currentCourse.publishedAt)}
+                {t('ui.course.published_date')} {formatDate(currentCourse.publishedAt)}
               </span>
             )}
           </div>
@@ -171,7 +173,7 @@ export default function CourseDetailPage() {
           {/* Progress */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Đã đăng ký</span><span>{progress}%</span>
+              <span>{t('ui.course.enrolled')}</span><span>{progress}%</span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div className="h-full bg-foreground/70 rounded-full transition-all duration-300"
@@ -194,7 +196,7 @@ export default function CourseDetailPage() {
               <BookOpen className="size-10 text-muted-foreground/20" />
             )}
           </div>
-          <p className="text-2xl font-bold">{formatPrice(currentCourse.price)}</p>
+          <p className="text-2xl font-bold">{formatPrice(currentCourse.price, t)}</p>
           {currentCourse.freeForInternal && (
             <Badge className="bg-sky-100 text-sky-800 border-sky-200 hover:bg-sky-100 w-fit">
               {publicUser?.isInternal
@@ -212,7 +214,7 @@ export default function CourseDetailPage() {
       {/* ── Curriculum (public — chỉ section + badge bài) ──────────────── */}
       {sortedSections.length > 0 && (
         <div className="mt-10">
-          <h2 className="text-lg font-semibold mb-1">Nội dung khóa học</h2>
+          <h2 className="text-lg font-semibold mb-1">{t('ui.course.course_content')}</h2>
           <p className="text-xs text-muted-foreground mb-4">
             {sortedSections.length} chương · {totalLessons} bài học
           </p>

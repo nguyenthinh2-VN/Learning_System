@@ -14,8 +14,8 @@ public record UserProfileOutput(
         boolean isInternal,
         BigDecimal balance,
         String avatarUrl,
-        List<String> permissions
-) {
+        String department,
+        List<String> permissions) {
     public static UserProfileOutput from(User user) {
         return from(user, List.of());
     }
@@ -30,7 +30,7 @@ public record UserProfileOutput(
                 user.isInternal(),
                 user.getBalance(),
                 user.getAvatarUrl(),
-                permissions == null ? List.of() : permissions
-        );
+                user.getDepartment(),
+                permissions == null ? List.of() : permissions);
     }
 }

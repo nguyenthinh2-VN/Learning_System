@@ -1,6 +1,7 @@
 package com.example.learning_system_spring.infrastructure.exception;
 
 import com.example.learning_system_spring.domain.exception.*;
+import com.example.learning_system_spring.adapter.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -14,206 +15,205 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidEmailException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidEmail(InvalidEmailException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.INVALID_EMAIL, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleInvalidEmail(InvalidEmailException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.INVALID_EMAIL.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
-        return ResponseEntity.status(409).body(ErrorResponse.of(ErrorCode.EMAIL_ALREADY_EXISTS, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        return ResponseEntity.status(409).body(ApiResponse.error(409, ErrorCode.EMAIL_ALREADY_EXISTS.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
-        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.USER_NOT_FOUND, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(404).body(ApiResponse.error(404, ErrorCode.USER_NOT_FOUND.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(CourseNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleCourseNotFound(CourseNotFoundException ex) {
-        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.COURSE_NOT_FOUND, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleCourseNotFound(CourseNotFoundException ex) {
+        return ResponseEntity.status(404).body(ApiResponse.error(404, ErrorCode.COURSE_NOT_FOUND.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(RoleNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleRoleNotFound(RoleNotFoundException ex) {
-        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.ROLE_NOT_FOUND, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleRoleNotFound(RoleNotFoundException ex) {
+        return ResponseEntity.status(404).body(ApiResponse.error(404, ErrorCode.ROLE_NOT_FOUND.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(PermissionNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handlePermissionNotFound(PermissionNotFoundException ex) {
-        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.PERMISSION_NOT_FOUND, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handlePermissionNotFound(PermissionNotFoundException ex) {
+        return ResponseEntity.status(404).body(ApiResponse.error(404, ErrorCode.PERMISSION_NOT_FOUND.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(ProtectedRoleException.class)
-    public ResponseEntity<ErrorResponse> handleProtectedRole(ProtectedRoleException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.PROTECTED_ROLE, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleProtectedRole(ProtectedRoleException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.PROTECTED_ROLE.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(CourseAccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleCourseAccessDenied(CourseAccessDeniedException ex) {
-        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleCourseAccessDenied(CourseAccessDeniedException ex) {
+        return ResponseEntity.status(403).body(ApiResponse.error(403, ErrorCode.ACCESS_DENIED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(SectionNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleSectionNotFound(SectionNotFoundException ex) {
-        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.SECTION_NOT_FOUND, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleSectionNotFound(SectionNotFoundException ex) {
+        return ResponseEntity.status(404).body(ApiResponse.error(404, ErrorCode.SECTION_NOT_FOUND.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(SectionAccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleSectionAccessDenied(SectionAccessDeniedException ex) {
-        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.SECTION_ACCESS_DENIED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleSectionAccessDenied(SectionAccessDeniedException ex) {
+        return ResponseEntity.status(403).body(ApiResponse.error(403, ErrorCode.SECTION_ACCESS_DENIED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(LessonNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleLessonNotFound(LessonNotFoundException ex) {
-        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.LESSON_NOT_FOUND, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleLessonNotFound(LessonNotFoundException ex) {
+        return ResponseEntity.status(404).body(ApiResponse.error(404, ErrorCode.LESSON_NOT_FOUND.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(LessonAccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleLessonAccessDenied(LessonAccessDeniedException ex) {
-        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.LESSON_ACCESS_DENIED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleLessonAccessDenied(LessonAccessDeniedException ex) {
+        return ResponseEntity.status(403).body(ApiResponse.error(403, ErrorCode.LESSON_ACCESS_DENIED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(CourseNotPublishedException.class)
-    public ResponseEntity<ErrorResponse> handleCourseNotPublished(CourseNotPublishedException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.COURSE_NOT_PUBLISHED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleCourseNotPublished(CourseNotPublishedException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.COURSE_NOT_PUBLISHED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(CoursePriceLockedException.class)
-    public ResponseEntity<ErrorResponse> handleCoursePriceLocked(CoursePriceLockedException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.COURSE_PRICE_LOCKED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleCoursePriceLocked(CoursePriceLockedException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.COURSE_PRICE_LOCKED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(CourseAlreadyPublishedException.class)
-    public ResponseEntity<ErrorResponse> handleCourseAlreadyPublished(CourseAlreadyPublishedException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.COURSE_ALREADY_PUBLISHED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleCourseAlreadyPublished(CourseAlreadyPublishedException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.COURSE_ALREADY_PUBLISHED.name(), ex.getMessage()));
     }
 
     // ==== Voucher exceptions ====
 
     @ExceptionHandler(VoucherNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherNotFound(VoucherNotFoundException ex) {
-        return ResponseEntity.status(404).body(ErrorResponse.of(ErrorCode.VOUCHER_NOT_FOUND, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherNotFound(VoucherNotFoundException ex) {
+        return ResponseEntity.status(404).body(ApiResponse.error(404, ErrorCode.VOUCHER_NOT_FOUND.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherInactiveException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherInactive(VoucherInactiveException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_INACTIVE, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherInactive(VoucherInactiveException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.VOUCHER_INACTIVE.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherNotYetActiveException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherNotYetActive(VoucherNotYetActiveException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_NOT_YET_ACTIVE, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherNotYetActive(VoucherNotYetActiveException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.VOUCHER_NOT_YET_ACTIVE.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherExpiredException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherExpired(VoucherExpiredException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_EXPIRED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherExpired(VoucherExpiredException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.VOUCHER_EXPIRED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherNotApplicableException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherNotApplicable(VoucherNotApplicableException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_NOT_APPLICABLE, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherNotApplicable(VoucherNotApplicableException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.VOUCHER_NOT_APPLICABLE.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherMinOrderNotMetException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherMinOrderNotMet(VoucherMinOrderNotMetException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_MIN_ORDER_NOT_MET, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherMinOrderNotMet(VoucherMinOrderNotMetException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.VOUCHER_MIN_ORDER_NOT_MET.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherUsageLimitReachedException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherUsageLimitReached(VoucherUsageLimitReachedException ex) {
-        return ResponseEntity.status(409).body(ErrorResponse.of(ErrorCode.VOUCHER_USAGE_LIMIT_REACHED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherUsageLimitReached(VoucherUsageLimitReachedException ex) {
+        return ResponseEntity.status(409).body(ApiResponse.error(409, ErrorCode.VOUCHER_USAGE_LIMIT_REACHED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherUsagePerUserExceededException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherUsagePerUser(VoucherUsagePerUserExceededException ex) {
-        return ResponseEntity.status(409).body(ErrorResponse.of(ErrorCode.VOUCHER_USAGE_PER_USER_EXCEEDED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherUsagePerUser(VoucherUsagePerUserExceededException ex) {
+        return ResponseEntity.status(409).body(ApiResponse.error(409, ErrorCode.VOUCHER_USAGE_PER_USER_EXCEEDED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherUseDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherUseDenied(VoucherUseDeniedException ex) {
-        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.VOUCHER_USE_DENIED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherUseDenied(VoucherUseDeniedException ex) {
+        return ResponseEntity.status(403).body(ApiResponse.error(403, ErrorCode.VOUCHER_USE_DENIED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherCodeAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherCodeExists(VoucherCodeAlreadyExistsException ex) {
-        return ResponseEntity.status(409).body(ErrorResponse.of(ErrorCode.VOUCHER_CODE_ALREADY_EXISTS, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherCodeExists(VoucherCodeAlreadyExistsException ex) {
+        return ResponseEntity.status(409).body(ApiResponse.error(409, ErrorCode.VOUCHER_CODE_ALREADY_EXISTS.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherUsageLimitTooLowException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherUsageLimitTooLow(VoucherUsageLimitTooLowException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_USAGE_LIMIT_TOO_LOW, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherUsageLimitTooLow(VoucherUsageLimitTooLowException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.VOUCHER_USAGE_LIMIT_TOO_LOW.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(VoucherImmutableFieldException.class)
-    public ResponseEntity<ErrorResponse> handleVoucherImmutable(VoucherImmutableFieldException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VOUCHER_IMMUTABLE_FIELD, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleVoucherImmutable(VoucherImmutableFieldException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.VOUCHER_IMMUTABLE_FIELD.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(AlreadyEnrolledException.class)
-    public ResponseEntity<ErrorResponse> handleAlreadyEnrolled(AlreadyEnrolledException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.ALREADY_ENROLLED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleAlreadyEnrolled(AlreadyEnrolledException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.ALREADY_ENROLLED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(InsufficientBalanceException.class)
-    public ResponseEntity<ErrorResponse> handleInsufficientBalance(InsufficientBalanceException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.INSUFFICIENT_BALANCE, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleInsufficientBalance(InsufficientBalanceException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.INSUFFICIENT_BALANCE.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
-        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, "Bạn không có quyền thực hiện hành động này."));
+    public ResponseEntity<ApiResponse<Void>> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+        return ResponseEntity.status(403).body(ApiResponse.error(403, ErrorCode.ACCESS_DENIED.name(), "Bạn không có quyền thực hiện hành động này."));
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
-        return ResponseEntity.status(401).body(ErrorResponse.of(ErrorCode.INVALID_CREDENTIALS, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleInvalidCredentials(InvalidCredentialsException ex) {
+        return ResponseEntity.status(401).body(ApiResponse.error(401, ErrorCode.INVALID_CREDENTIALS.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(InvalidPasswordException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidPassword(InvalidPasswordException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.INVALID_PASSWORD, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleInvalidPassword(InvalidPasswordException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.INVALID_PASSWORD.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(AccountDisabledException.class)
-    public ResponseEntity<ErrorResponse> handleAccountDisabled(AccountDisabledException ex) {
-        return ResponseEntity.status(403).body(ErrorResponse.of(ErrorCode.ACCOUNT_DISABLED, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleAccountDisabled(AccountDisabledException ex) {
+        return ResponseEntity.status(403).body(ApiResponse.error(403, ErrorCode.ACCOUNT_DISABLED.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(InvalidFileTypeException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidFileType(InvalidFileTypeException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.INVALID_FILE_TYPE, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleInvalidFileType(InvalidFileTypeException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.INVALID_FILE_TYPE.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.FILE_TOO_LARGE,
-                "File vượt quá kích thước tối đa cho phép (2MB)."));
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.FILE_TOO_LARGE.name(), "File vượt quá kích thước tối đa cho phép (2MB)."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .reduce((a, b) -> a + "; " + b)
                 .orElse("Validation failed");
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.VALIDATION_ERROR, message));
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.VALIDATION_ERROR.name(), message));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.BAD_REQUEST, ex.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.BAD_REQUEST.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException ex) {
         log.warn("Business rule violation: {}", ex.getMessage());
-        return ResponseEntity.status(400).body(ErrorResponse.of(ErrorCode.BAD_REQUEST, ex.getMessage()));
+        return ResponseEntity.status(400).body(ApiResponse.error(400, ErrorCode.BAD_REQUEST.name(), ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleUnknown(Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleUnknown(Exception ex) {
         log.error("Unhandled exception", ex);
-        return ResponseEntity.status(500).body(ErrorResponse.of(ErrorCode.INTERNAL_ERROR, "Internal server error"));
+        return ResponseEntity.status(500).body(ApiResponse.error(500, ErrorCode.INTERNAL_ERROR.name(), "Internal server error"));
     }
 }

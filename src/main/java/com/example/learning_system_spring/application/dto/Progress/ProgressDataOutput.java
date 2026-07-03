@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Data
 @Builder
@@ -47,5 +48,8 @@ public class ProgressDataOutput {
         private String thumbnailUrl;
         private int progressPercentage;
         private LocalDateTime lastAccessed;
+        @JsonProperty("isMandatory")
+        private boolean isMandatory;
+        private String statusMessage; // "Chưa đạt kết quả...", "Chưa được đăng ký học do khóa bắt buộc"
     }
 }

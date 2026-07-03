@@ -74,6 +74,9 @@ public class UpdateCourseUseCase {
                 course.isPublished(),
                 course.isPriceLocked(),
                 input.freeForInternal(),
+                input.isMandatory(),
+                input.assignedDepartment(),
+                input.mandatoryDeadline(),
                 course.getPublishedAt(),
                 course.getPublishedBy(),
                 domainSections);

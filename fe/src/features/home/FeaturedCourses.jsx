@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import '@/styles/brand.css';
 import useCourseStore from '@/store/useCourseStore';
 import CourseCard from './CourseCard';
@@ -5,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Flame } from 'lucide-react';
 
 export default function FeaturedCourses() {
+  const { t } = useTranslation();
   const { featured, featuredLoading } = useCourseStore();
 
   if (featuredLoading) {
@@ -60,6 +62,7 @@ export default function FeaturedCourses() {
               enrolledCount={course.enrolledCount}
               maxStudents={course.maxStudents}
               thumbnailUrl={course.thumbnailUrl}
+              isMandatory={course.isMandatory}
             />
           ))}
         </div>

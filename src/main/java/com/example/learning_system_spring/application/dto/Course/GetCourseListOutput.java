@@ -4,6 +4,7 @@ import com.example.learning_system_spring.domain.model.Course;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record GetCourseListOutput(
         Long id,
@@ -17,8 +18,10 @@ public record GetCourseListOutput(
         boolean published,
         boolean priceLocked,
         boolean freeForInternal,
-        LocalDateTime publishedAt
-) {
+        @JsonProperty("isMandatory") boolean isMandatory,
+        String assignedDepartment,
+        LocalDateTime mandatoryDeadline,
+        LocalDateTime publishedAt) {
     public static GetCourseListOutput from(Course course) {
         return new GetCourseListOutput(
                 course.getId(),
@@ -32,7 +35,9 @@ public record GetCourseListOutput(
                 course.isPublished(),
                 course.isPriceLocked(),
                 course.isFreeForInternal(),
-                course.getPublishedAt()
-        );
+                course.isMandatory(),
+                course.getAssignedDepartment(),
+                course.getMandatoryDeadline(),
+                course.getPublishedAt());
     }
 }

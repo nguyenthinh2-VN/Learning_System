@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import '@/styles/brand.css';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -8,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable } from '@/components/ui/data-table';
-import { transactionColumns } from '@/features/wallet/transactionColumns';
+import { getTransactionColumns } from '@/features/wallet/transactionColumns';
+import React from 'react';
 import {
   Wallet,
   Plus,
@@ -31,6 +33,8 @@ function formatMoney(amount) {
 }
 
 export default function WalletPage() {
+  const { t } = useTranslation();
+  const transactionColumns = React.useMemo(() => getTransactionColumns(t), [t]);
   const { publicUser, balance } = useAuth();
   const {
     initTopUp, triggerMockWebhook,
@@ -185,13 +189,13 @@ export default function WalletPage() {
         <div className="relative">
           <div className="flex items-center gap-2 mb-1">
             <Wallet className="size-4" style={{ color: 'rgba(255,255,255,0.7)' }} />
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Số dư hiện tại</p>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>{t('ui.wallet.current_balance')}</p>
           </div>
           <p className="text-4xl font-bold tracking-tight text-white">
             {balance !== null ? formatMoney(balance) : '...'}
           </p>
           <p className="text-xs mt-2 flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            <span>Tài khoản: {publicUser?.name || 'Người dùng'}</span>
+            <span>{t('ui.admin_transactions.account_lbl')}{publicUser?.name || 'Người dùng'}</span>
             {balance === null && <RefreshCw className="size-3 animate-spin ml-1" />}
           </p>
         </div>
@@ -201,22 +205,21 @@ export default function WalletPage() {
       <div className="border rounded-xl p-6 space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Plus className="size-5" />
-          <h2 className="font-semibold">Nạp tiền</h2>
+          <h2 className="font-semibold">{t('ui.wallet.deposit')}</h2>
         </div>
 
         {/* Quick amounts */}
         <div>
-          <p className="text-xs text-muted-foreground mb-2">Chọn nhanh:</p>
+          <p className="text-xs text-muted-foreground mb-2">{t('ui.admin_transactions.quick_amounts')}</p>
           <div className="grid grid-cols-4 gap-2">
             {QUICK_AMOUNTS.map((v) => (
               <button
                 key={v}
                 onClick={() => setAmount(String(v))}
-                className={`text-xs py-2 px-3 rounded-lg border transition-colors ${
-                  amount === String(v)
+                className={`text-xs py-2 px-3 rounded-lg border transition-colors ${amount === String(v)
                     ? 'bg-foreground text-background border-foreground'
                     : 'bg-background hover:bg-muted border-border'
-                }`}
+                  }`}
               >
                 {formatMoney(v)}
               </button>
@@ -226,12 +229,12 @@ export default function WalletPage() {
 
         {/* Custom amount */}
         <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">Hoặc nhập số tiền (VND, tối thiểu 10.000d):</p>
+          <p className="text-xs text-muted-foreground">{t('ui.admin_transactions.or_enter_amount')}</p>
           <div className="flex gap-2">
             <Input
               id="topup-amount"
               type="number"
-              placeholder="Ví dụ: 200000"
+              placeholder="{t('ui.admin_transactions.amount_placeholder')}"
               value={amount}
               min={10000}
               onChange={(e) => setAmount(e.target.value)}
@@ -243,7 +246,7 @@ export default function WalletPage() {
               disabled={topUpLoading || !amount || parseFloat(amount) < 10000}
               className="min-w-24"
             >
-              {topUpLoading ? 'Đang xử lý...' : 'Tiếp tục'}
+              {topUpLoading ? t('ui.wallet.deposit_processing') : t('ui.admin_transactions.continue')}
             </Button>
           </div>
         </div>
@@ -263,11 +266,10 @@ export default function WalletPage() {
               <div className="flex flex-col items-center gap-3 text-center">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <ExternalLink className="size-4" />
-                  <span>Đang chờ thanh toán qua VNPay…</span>
+                  <span>{t('ui.admin_transactions.waiting_vnpay')}</span>
                 </div>
                 <p className="text-xs text-muted-foreground max-w-sm">
-                  Một tab thanh toán VNPay đã được mở. Hoàn tất thanh toán ở tab đó, bạn sẽ được
-                  đưa về trang xác nhận. Số dư cập nhật tự động khi thành công.
+                  {t('ui.admin_transactions.vnpay_instruction')}
                 </p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={openVnpayTab}>
@@ -281,7 +283,7 @@ export default function WalletPage() {
                     disabled={cancelLoading}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
-                    {cancelLoading ? 'Đang huỷ...' : 'Huỷ giao dịch'}
+                    {cancelLoading ? t('ui.admin_transactions.canceling') : t('ui.admin_transactions.cancel_transaction')}
                   </Button>
                 </div>
               </div>
@@ -289,7 +291,7 @@ export default function WalletPage() {
               <div className="flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <QrCode className="size-4" />
-                  <span>Quét mã QR để thanh toán</span>
+                  <span>{t('ui.admin_transactions.scan_qr')}</span>
                 </div>
                 <img
                   src={topUpResult.displayData}
@@ -301,7 +303,7 @@ export default function WalletPage() {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Terminal className="size-4" />
-                  <span>Hướng dẫn (Dev mode)</span>
+                  <span>{t('ui.admin_transactions.dev_instruction')}</span>
                 </div>
                 <p className="text-xs text-muted-foreground bg-muted rounded p-3 font-mono break-all">
                   {topUpResult.displayData}
@@ -316,7 +318,7 @@ export default function WalletPage() {
             {/* Dev: mock webhook trigger — chỉ hiện ở mock mode (displayType=MESSAGE) */}
             {topUpResult.displayType === 'MESSAGE' && (
               <div className="border-t pt-3 space-y-2">
-                <p className="text-xs text-muted-foreground font-medium">Dev: Kich hoat thanh toan gia lap</p>
+                <p className="text-xs text-muted-foreground font-medium">{t('ui.admin_transactions.dev_mock_trigger')}</p>
                 <div className="flex gap-2">
                   <Input
                     id="mock-ref-input"
@@ -334,7 +336,7 @@ export default function WalletPage() {
                     disabled={mockLoading}
                     className="whitespace-nowrap"
                   >
-                    {mockLoading ? 'Đang gửi...' : 'Kích hoạt'}
+                    {mockLoading ? t('ui.admin_transactions.sending') : t('ui.admin_transactions.trigger')}
                   </Button>
                 </div>
                 {mockError && <p className="text-xs text-red-600">{mockError}</p>}
@@ -355,7 +357,7 @@ export default function WalletPage() {
       {/* Lich su giao dich */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Lịch sử giao dịch</h2>
+          <h2 className="font-semibold">{t('ui.wallet.transaction_history')}</h2>
           <Button
             variant="outline"
             size="sm"
@@ -393,12 +395,12 @@ export default function WalletPage() {
             <DataTable
               columns={transactionColumns}
               data={txData.items}
-              emptyMessage="Chưa có giao dịch nào."
+              emptyMessage={t('ui.admin_transactions.no_transactions')}
             />
             {txData.totalPages > 1 && (
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-muted-foreground">
-                  Trang {txData.page + 1}/{txData.totalPages} · {txData.totalElements} giao dịch
+                  {t('ui.admin_transactions.pagination_info').replace('{page}', txData.page + 1).replace('{totalPages}', txData.totalPages).replace('{total}', txData.totalElements)}
                 </span>
                 <div className="flex gap-2">
                   <Button

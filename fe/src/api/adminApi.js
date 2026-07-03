@@ -1,11 +1,12 @@
 import axios from 'axios';
+import i18n from '../i18n';
 
 /**
  * Axios instance riêng cho Admin Portal.
  * Dùng adminToken (tách biệt khỏi publicToken của website học viên).
  */
 const adminApi = axios.create({
-  baseURL: '/api/v1',
+  baseURL: 'http://localhost:8080/api/v1',
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -20,8 +21,24 @@ adminApi.interceptors.request.use((config) => {
 // Token admin hết hạn / không hợp lệ (401) → xóa phiên admin, về /admin/login.
 // Bỏ qua /auth/** để lỗi sai mật khẩu vẫn hiển thị trên form đăng nhập admin.
 adminApi.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Tự động dịch success message nếu có
+    if (response.data && response.data.code) {
+      const translated = i18n.t(`api.${response.data.code}`);
+      if (translated && translated !== `api.${response.data.code}`) {
+        response.data.message = translated;
+      }
+    }
+    return response;
+  },
   (error) => {
+    // Tự động dịch error message nếu có
+    if (error.response && error.response.data && error.response.data.code) {
+      const translated = i18n.t(`api.${error.response.data.code}`);
+      if (translated && translated !== `api.${error.response.data.code}`) {
+        error.response.data.message = translated;
+      }
+    }
     const status = error?.response?.status;
     const url = error?.config?.url || '';
     const isAuthCall = url.includes('/auth/');

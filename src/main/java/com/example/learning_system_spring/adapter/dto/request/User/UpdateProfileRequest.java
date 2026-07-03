@@ -19,7 +19,9 @@ public class UpdateProfileRequest {
     @Size(max = 500)
     private String avatarUrl; // tùy chọn: null = giữ nguyên, "" = xóa avatar
 
+    private String department;
+
     public UpdateMyProfileInput toInput(Long userId) {
-        return new UpdateMyProfileInput(userId, name, avatarUrl);
+        return new UpdateMyProfileInput(userId, name, avatarUrl, department);
     }
 }

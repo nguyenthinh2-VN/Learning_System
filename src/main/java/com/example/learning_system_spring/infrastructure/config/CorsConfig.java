@@ -24,6 +24,7 @@ public class CorsConfig {
                 "http://127.0.0.1:5173",
                 "http://180.93.225.119",
                 "http://180.93.225.119:8080",
+                "https://learning.lotusai.com.vn",
                 "https://learning.lotusai.com.vn/"
 
         ));
