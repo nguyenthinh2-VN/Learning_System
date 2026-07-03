@@ -2,6 +2,7 @@ import '@/styles/brand.css';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { getProfileApi, updateProfileApi, changePasswordApi, uploadAvatarApi } from '@/api/wallet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ function formatBalance(amount) {
 
 // ─── Edit Profile Modal ──────────────────────────────────────
 function EditProfileModal({ currentName, currentDepartment, onClose, onSaved }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: currentName || '',
     department: currentDepartment || ''
@@ -83,10 +85,10 @@ function EditProfileModal({ currentName, currentDepartment, onClose, onSaved }) 
             />
           </div>
           <div className="flex gap-2 pt-1">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">{t('ui.profile.cancel')}</Button>
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">{t('ui.profile.cancel', 'Hủy')}</Button>
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? <RefreshCw className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
-              Lưu
+              {t('ui.profile.save', 'Lưu')}
             </Button>
           </div>
         </form>
@@ -165,7 +167,7 @@ function ChangePasswordModal({ onClose }) {
               <Button type="button" variant="outline" onClick={onClose} className="flex-1">{t('ui.profile.cancel')}</Button>
               <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? <RefreshCw className="size-4 animate-spin mr-2" /> : <Lock className="size-4 mr-2" />}
-                Đổi mật khẩu
+                {t('ui.profile.change_pw_btn', 'Đổi mật khẩu')}
               </Button>
             </div>
           </form>
@@ -298,15 +300,15 @@ export default function ProfilePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--brand-text-primary)' }}>
-            Thông tin cá nhân
+            {t('ui.profile.title', 'Thông tin cá nhân')}
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--brand-text-secondary)' }}>
-            Quản lý thông tin tài khoản của bạn
+            {t('ui.profile.subtitle', 'Quản lý thông tin tài khoản của bạn')}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => loadProfile(true)} disabled={refreshing}>
           <RefreshCw className={`size-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Làm mới
+          {t('ui.profile.refresh', 'Làm mới')}
         </Button>
       </div>
 
@@ -451,17 +453,17 @@ export default function ProfilePage() {
         >
           <InfoRow
             icon={User}
-            label="Họ tên"
+            label={t('ui.profile.full_name', 'Họ tên')}
             value={profile.name}
-            action={{ label: 'Chỉnh sửa', onClick: () => setShowEditProfile(true) }}
+            action={{ label: t('ui.profile.edit_btn', 'Chỉnh sửa'), onClick: () => setShowEditProfile(true) }}
           />
-          <InfoRow icon={Mail} label="Email" value={profile.email} />
-          <InfoRow icon={Shield} label="Tên đăng nhập" value={profile.username} mono />
+          <InfoRow icon={Mail} label={t('ui.profile.email', 'Email')} value={profile.email} />
+          <InfoRow icon={Shield} label={t('ui.profile.username', 'Tên đăng nhập')} value={profile.username} mono />
           <InfoRow
             icon={User}
-            label="Phòng ban"
-            value={profile.department || 'Chưa cập nhật'}
-            action={{ label: 'Cập nhật', onClick: () => setShowEditProfile(true) }}
+            label={t('ui.profile.department', 'Phòng ban')}
+            value={profile.department || t('ui.profile.not_updated', 'Chưa cập nhật')}
+            action={{ label: t('ui.profile.update_btn', 'Cập nhật'), onClick: () => setShowEditProfile(true) }}
           />
           <InfoRow
             icon={Wallet}
@@ -488,10 +490,10 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium" style={{ color: 'var(--brand-text-primary)' }}>
-                Đổi mật khẩu
+                {t('ui.profile.change_pw_btn', 'Đổi mật khẩu')}
               </p>
               <p className="text-xs" style={{ color: 'var(--brand-text-secondary)' }}>
-                Cập nhật mật khẩu để bảo mật tài khoản
+                {t('ui.profile.change_pw_desc', 'Cập nhật mật khẩu để bảo mật tài khoản')}
               </p>
             </div>
             <Pencil className="size-4 opacity-40 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--brand-primary)' }} />
@@ -511,7 +513,7 @@ export default function ProfilePage() {
                 <Wallet className="size-5" style={{ color: 'var(--brand-primary)' }} />
               </div>
               <div>
-                <p className="text-sm font-medium" style={{ color: 'var(--brand-text-primary)' }}>Ví tiền</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--brand-text-primary)' }}>{t('ui.profile.wallet', 'Ví tiền')}</p>
                 <p className="text-xs" style={{ color: 'var(--brand-success)' }}>
                   {formatBalance(profile.balance)}
                 </p>
@@ -530,8 +532,8 @@ export default function ProfilePage() {
                 <BookOpen className="size-5" style={{ color: 'var(--brand-primary)' }} />
               </div>
               <div>
-                <p className="text-sm font-medium" style={{ color: 'var(--brand-text-primary)' }}>Khóa học</p>
-                <p className="text-xs" style={{ color: 'var(--brand-text-secondary)' }}>Đã đăng ký</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--brand-text-primary)' }}>{t('ui.profile.my_courses', 'Khóa học')}</p>
+                <p className="text-xs" style={{ color: 'var(--brand-text-secondary)' }}>{t('ui.profile.enrolled', 'Đã đăng ký')}</p>
               </div>
             </button>
           </div>
