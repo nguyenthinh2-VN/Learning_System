@@ -47,3 +47,5 @@ uploads/
 .agent/
 .agents/
 .claude/
+# CocoIndex Code (ccc)
+/.cocoindex_code/

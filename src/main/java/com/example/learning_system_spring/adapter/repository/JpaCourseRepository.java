@@ -41,5 +41,5 @@ interface JpaCourseRepository extends JpaRepository<CourseJpaEntity, Long> {
     @Query("SELECT c FROM CourseJpaEntity c WHERE c.id IN :ids ORDER BY c.id ASC")
     java.util.List<CourseJpaEntity> findByIdInOrderByIdForUpdate(@Param("ids") java.util.List<Long> ids);
 
-    java.util.List<CourseJpaEntity> findByIsMandatoryTrueAndAssignedDepartment(String department);
+    java.util.List<CourseJpaEntity> findByIsMandatoryTrueAndAssignedDepartmentIdIn(java.util.List<Long> departmentIds);
 }

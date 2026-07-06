@@ -31,7 +31,7 @@ public class Course {
     /** Nếu true: thành viên nội bộ (user.isInternal) được học miễn phí khóa này. */
     private boolean freeForInternal;
     private boolean isMandatory;
-    private String assignedDepartment;
+    private Long assignedDepartmentId;
     private LocalDateTime mandatoryDeadline;
     @Builder.Default
     private List<CourseSection> sections = new ArrayList<>();
@@ -66,10 +66,11 @@ public class Course {
      */
     public static Course create(String title, String description, int maxStudents, BigDecimal price,
             Long instructorId, String thumbnailUrl, boolean freeForInternal, boolean isMandatory,
-            String assignedDepartment, LocalDateTime mandatoryDeadline, List<CourseSection> sections) {
-        Course course = create(title, description, maxStudents, price, instructorId, thumbnailUrl, freeForInternal, sections);
+            Long assignedDepartmentId, LocalDateTime mandatoryDeadline, List<CourseSection> sections) {
+        Course course = create(title, description, maxStudents, price, instructorId, thumbnailUrl, freeForInternal,
+                sections);
         course.isMandatory = isMandatory;
-        course.assignedDepartment = assignedDepartment;
+        course.assignedDepartmentId = assignedDepartmentId;
         course.mandatoryDeadline = mandatoryDeadline;
         return course;
     }
@@ -104,12 +105,13 @@ public class Course {
     /** Overload cho các trường bắt buộc. */
     public static Course reconstitute(Long id, String title, String description, int maxStudents, int enrolledCount,
             BigDecimal price, Long instructorId, String thumbnailUrl, boolean published, boolean priceLocked,
-            boolean freeForInternal, boolean isMandatory, String assignedDepartment, LocalDateTime mandatoryDeadline,
+            boolean freeForInternal, boolean isMandatory, Long assignedDepartmentId, LocalDateTime mandatoryDeadline,
             LocalDateTime publishedAt, Long publishedBy, List<CourseSection> sections) {
-        Course course = reconstitute(id, title, description, maxStudents, enrolledCount, price, instructorId, thumbnailUrl,
+        Course course = reconstitute(id, title, description, maxStudents, enrolledCount, price, instructorId,
+                thumbnailUrl,
                 published, priceLocked, freeForInternal, publishedAt, publishedBy, sections);
         course.isMandatory = isMandatory;
-        course.assignedDepartment = assignedDepartment;
+        course.assignedDepartmentId = assignedDepartmentId;
         course.mandatoryDeadline = mandatoryDeadline;
         return course;
     }
@@ -159,7 +161,8 @@ public class Course {
     }
 
     /**
-     * Cập nhật giá. Nếu priceLocked = true (sau publish), chỉ admin (isAdmin = true)
+     * Cập nhật giá. Nếu priceLocked = true (sau publish), chỉ admin (isAdmin =
+     * true)
      * mới được sửa. INSTRUCTOR khi đó phải nhờ admin.
      */
     public void updatePrice(BigDecimal newPrice, boolean isAdmin) {
@@ -172,9 +175,9 @@ public class Course {
         this.price = newPrice;
     }
 
-    public void updateMandatoryConfig(boolean isMandatory, String assignedDepartment, LocalDateTime mandatoryDeadline) {
+    public void updateMandatoryConfig(boolean isMandatory, Long assignedDepartmentId, LocalDateTime mandatoryDeadline) {
         this.isMandatory = isMandatory;
-        this.assignedDepartment = assignedDepartment;
+        this.assignedDepartmentId = assignedDepartmentId;
         this.mandatoryDeadline = mandatoryDeadline;
     }
 }

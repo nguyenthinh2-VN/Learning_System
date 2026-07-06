@@ -26,6 +26,8 @@ import AdminVouchersPage from '@/pages/admin/AdminVouchersPage';
 import AdminTopUpPage from '@/pages/admin/AdminTopUpPage';
 import AdminTransactionsPage from '@/pages/admin/AdminTransactionsPage';
 import AdminPermissionsPage from '@/pages/admin/AdminPermissionsPage';
+import AdminDepartmentsPage from '@/pages/admin/AdminDepartmentsPage';
+import AdminTestsPage from '@/pages/admin/AdminTestsPage';
 
 function InstructorPlaceholder() {
   return (
@@ -71,12 +73,14 @@ function App() {
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/courses" element={<AdminCoursesPage />} />
             <Route path="/admin/courses/:id/content" element={<AdminCourseContentPage />} />
+            <Route path="/admin/tests" element={<AdminTestsPage />} />
             <Route path="/admin/courses/pending" element={<AdminPendingCoursesPage />} />
             <Route path="/admin/courses/:id/preview" element={<AdminCoursePreviewPage />} />
             <Route path="/admin/vouchers" element={<AdminVouchersPage />} />
             <Route path="/admin/wallet" element={<AdminTopUpPage />} />
             <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
             <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
+            <Route path="/admin/departments" element={<AdminDepartmentsPage />} />
           </Route>
 
           {/* Instructor portal (sẽ build sau) */}

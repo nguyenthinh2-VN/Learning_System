@@ -21,7 +21,7 @@ public record CourseOutput(
                 boolean priceLocked,
                 boolean freeForInternal,
                 @JsonProperty("isMandatory") boolean isMandatory,
-                String assignedDepartment,
+                Long assignedDepartmentId,
                 LocalDateTime mandatoryDeadline,
                 LocalDateTime publishedAt,
                 Long publishedBy,
@@ -32,10 +32,12 @@ public record CourseOutput(
 
                 List<CourseSectionDto> sectionDtos = course.getSections().stream()
                                 .map(s -> new CourseSectionDto(
+                                                s.getId(),
                                                 s.getTitle(),
                                                 s.getOrderIndex(),
+                                                s.getTestContent() != null && !s.getTestContent().isBlank(),
                                                 s.getLessons().stream()
-                                                                .map(l -> new CourseLessonDto(l.getTitle(),
+                                                                .map(l -> new CourseLessonDto(l.getId(), l.getTitle(),
                                                                                 l.getContentUrl(), l.getOrderIndex()))
                                                                 .collect(Collectors.toList())))
                                 .collect(Collectors.toList());
@@ -53,7 +55,7 @@ public record CourseOutput(
                                 course.isPriceLocked(),
                                 course.isFreeForInternal(),
                                 course.isMandatory(),
-                                course.getAssignedDepartment(),
+                                course.getAssignedDepartmentId(),
                                 course.getMandatoryDeadline(),
                                 course.getPublishedAt(),
                                 course.getPublishedBy(),

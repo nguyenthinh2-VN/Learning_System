@@ -15,6 +15,7 @@ public class CourseSection {
     private Long id;
     private String title;
     private int orderIndex;
+    private String testContent; // JSON string
     @Builder.Default
     private List<CourseLesson> lessons = new ArrayList<>();
 
@@ -25,6 +26,7 @@ public class CourseSection {
         return CourseSection.builder()
                 .title(title)
                 .orderIndex(orderIndex)
+                .testContent(null)
                 .lessons(lessons != null ? new ArrayList<>(lessons) : new ArrayList<>())
                 .build();
     }
@@ -34,7 +36,22 @@ public class CourseSection {
                 .id(id)
                 .title(title)
                 .orderIndex(orderIndex)
+                .testContent(null)
                 .lessons(lessons != null ? new ArrayList<>(lessons) : new ArrayList<>())
                 .build();
+    }
+
+    public static CourseSection reconstitute(Long id, String title, int orderIndex, String testContent, List<CourseLesson> lessons) {
+        return CourseSection.builder()
+                .id(id)
+                .title(title)
+                .orderIndex(orderIndex)
+                .testContent(testContent)
+                .lessons(lessons != null ? new ArrayList<>(lessons) : new ArrayList<>())
+                .build();
+    }
+
+    public void updateTestContent(String testContent) {
+        this.testContent = testContent;
     }
 }

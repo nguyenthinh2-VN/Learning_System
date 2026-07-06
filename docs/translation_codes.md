@@ -44,17 +44,22 @@ File này tổng hợp toàn bộ các `code` trả về từ Backend. Frontend 
 | Mã Code (BE trả về) | Tiếng Việt (VN) | Tiếng Trung Phồn Thể (TW) | Tiếng Anh (EN) |
 | :--- | :--- | :--- | :--- |
 | `COURSE_NOT_FOUND` | Không tìm thấy khóa học | 找不到課程 | Course not found |
-| `COURSE_NOT_PUBLISHED` | Khóa học chưa được xuất bản | 課程尚未發布 | Course not published |
-| `COURSE_PRICE_LOCKED` | Giá khóa học đã bị khóa | 課程價格已鎖定 | Course price locked |
-| `COURSE_ALREADY_PUBLISHED` | Khóa học đã được xuất bản | 課程已發布 | Course already published |
-
-### Section & Lesson (Chương & Bài học)
-| Mã Code (BE trả về) | Tiếng Việt (VN) | Tiếng Trung Phồn Thể (TW) | Tiếng Anh (EN) |
-| :--- | :--- | :--- | :--- |
 | `SECTION_NOT_FOUND` | Không tìm thấy chương học | 找不到章節 | Section not found |
-| `SECTION_ACCESS_DENIED` | Không có quyền truy cập chương | 無權訪問章節 | Section access denied |
-| `LESSON_NOT_FOUND` | Không tìm thấy bài học | 找不到課程單元 | Lesson not found |
-| `LESSON_ACCESS_DENIED` | Không có quyền truy cập bài học | 無權訪問課程單元 | Lesson access denied |
+| `LESSON_NOT_FOUND` | Không tìm thấy bài giảng | 找不到課程 | Lesson not found |
+| `SECTION_TEST_NOT_FOUND` | Không tìm thấy bài kiểm tra | 找不到測驗 | Section test not found |
+| `INVALID_TEST_FORMAT` | Định dạng bài kiểm tra không hợp lệ | 測驗格式無效 | Invalid test format |
+| `TEST_HAS_NO_QUESTIONS` | Bài kiểm tra không có câu hỏi | 測驗沒有問題 | Test has no questions |
+| `SECTION_ACCESS_DENIED` | Không có quyền truy cập chương này | 無權訪問此章節 | Section access denied |
+| `LESSON_ACCESS_DENIED` | Không có quyền truy cập bài giảng này | 無權訪問此課程 | Lesson access denied |
+| `COURSE_NOT_PUBLISHED` | Khóa học chưa được xuất bản | 課程未發布 | Course not published |
+| `COURSE_PRICE_LOCKED` | Không thể đổi giá khi khóa học đã được duyệt | 課程發布後無法更改價格 | Cannot change price when course is published |
+| `COURSE_ALREADY_PUBLISHED` | Khóa học đã được xuất bản | 課程已發布 | Course is already published |
+| `ALREADY_ENROLLED` | Bạn đã mua/đăng ký khóa học này rồi | 您已購買/報名此課程 | You have already enrolled in this course |
+| `VOUCHER_EXPIRED` | Mã giảm giá đã hết hạn | 優惠券已過期 | Voucher expired |
+| `VOUCHER_NOT_APPLICABLE` | Mã giảm giá không áp dụng cho đơn này | 優惠券不適用 | Voucher not applicable |
+| `VOUCHER_MIN_ORDER_NOT_MET` | Đơn hàng chưa đạt giá trị tối thiểu | 未達最低消費金額 | Min order amount not met |
+| `VOUCHER_USAGE_LIMIT_REACHED` | Mã giảm giá đã hết lượt sử dụng | 優惠券已達使用上限 | Usage limit reached |
+| `VOUCHER_USAGE_PER_USER_EXCEEDED` | Bạn đã hết lượt dùng mã này | 您已超過使用次數限制 | User usage limit exceeded |
 
 ### Voucher (Mã giảm giá)
 | Mã Code (BE trả về) | Tiếng Việt (VN) | Tiếng Trung Phồn Thể (TW) | Tiếng Anh (EN) |
@@ -62,12 +67,6 @@ File này tổng hợp toàn bộ các `code` trả về từ Backend. Frontend 
 | `VOUCHER_NOT_FOUND` | Không tìm thấy mã giảm giá | 找不到優惠券 | Voucher not found |
 | `VOUCHER_INACTIVE` | Mã giảm giá không hoạt động | 優惠券未啟用 | Voucher inactive |
 | `VOUCHER_NOT_YET_ACTIVE` | Mã giảm giá chưa đến thời gian áp dụng | 優惠券尚未生效 | Voucher not yet active |
-| `VOUCHER_EXPIRED` | Mã giảm giá đã hết hạn | 優惠券已過期 | Voucher expired |
-| `VOUCHER_NOT_APPLICABLE` | Mã giảm giá không áp dụng cho đơn này | 優惠券不適用 | Voucher not applicable |
-| `VOUCHER_MIN_ORDER_NOT_MET` | Đơn hàng chưa đạt giá trị tối thiểu | 未達最低消費金額 | Min order amount not met |
-| `VOUCHER_USAGE_LIMIT_REACHED` | Mã giảm giá đã hết lượt sử dụng | 優惠券已達使用上限 | Usage limit reached |
-| `VOUCHER_USAGE_PER_USER_EXCEEDED` | Bạn đã hết lượt dùng mã này | 您已超過使用次數限制 | User usage limit exceeded |
-| `VOUCHER_USE_DENIED` | Không thể sử dụng mã giảm giá này | 無法使用此優惠券 | Voucher use denied |
 | `VOUCHER_CODE_ALREADY_EXISTS` | Mã giảm giá đã tồn tại | 優惠券代碼已存在 | Voucher code already exists |
 | `VOUCHER_USAGE_LIMIT_TOO_LOW` | Giới hạn sử dụng quá thấp | 使用限制過低 | Usage limit too low |
 | `VOUCHER_IMMUTABLE_FIELD` | Không thể sửa đổi trường này của Voucher | 無法修改此欄位 | Immutable field |

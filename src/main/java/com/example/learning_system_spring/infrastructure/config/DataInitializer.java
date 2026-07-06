@@ -45,17 +45,27 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initSuperAdmin() {
-        Long count = em.createQuery("SELECT COUNT(u) FROM UserJpaEntity u", Long.class).getSingleResult();
-        if (count > 0)
-            return;
-
-        RoleJpaEntity superAdminRole = getRole("SUPER_ADMIN");
         String encodedPassword = passwordEncoder.encode("123456");
-        User superAdmin = User.create("superadmin", "superadmin@learning.com", encodedPassword, "Super Admin",
-                superAdminRole.toDomain(), true);
-        em.persist(UserJpaEntity.fromDomain(superAdmin));
 
-        log.info("Seeded default superadmin account: superadmin / 123456");
+        Long count = em.createQuery("SELECT COUNT(u) FROM UserJpaEntity u WHERE u.username = 'superadmin'", Long.class)
+                .getSingleResult();
+
+        if (count == 0) {
+            // Chưa tồn tại → tạo mới
+            RoleJpaEntity superAdminRole = getRole("SUPER_ADMIN");
+            User superAdmin = User.create("superadmin", "superadmin@learning.com", encodedPassword, "Super Admin",
+                    superAdminRole.toDomain(), true);
+            em.persist(UserJpaEntity.fromDomain(superAdmin));
+            log.info("Seeded default superadmin account: superadmin / 123456");
+        } else {
+            // Đã tồn tại → cập nhật lại password để đảm bảo đúng
+            int updated = em.createQuery("UPDATE UserJpaEntity u SET u.password = :pwd WHERE u.username = 'superadmin'")
+                    .setParameter("pwd", encodedPassword)
+                    .executeUpdate();
+            if (updated > 0) {
+                log.info("Reset superadmin password to default (123456)");
+            }
+        }
     }
 
     /**
@@ -92,6 +102,7 @@ public class DataInitializer implements CommandLineRunner {
         seedPermission("VIEW_TRANSACTION", "Xem giao dịch toàn hệ thống");
         seedPermission("VIEW_REVENUE", "Xem báo cáo doanh thu");
         seedPermission("MANAGE_WALLET", "Admin cộng tiền thủ công vào ví user");
+        seedPermission("MANAGE_DEPARTMENT", "Quản lý phòng ban");
     }
 
     private void assignPermissionsToRoles() {
@@ -127,6 +138,7 @@ public class DataInitializer implements CommandLineRunner {
         PermissionJpaEntity viewTransaction = getPermission("VIEW_TRANSACTION");
         PermissionJpaEntity viewRevenue = getPermission("VIEW_REVENUE");
         PermissionJpaEntity manageWallet = getPermission("MANAGE_WALLET");
+        PermissionJpaEntity manageDepartment = getPermission("MANAGE_DEPARTMENT");
 
         // Gán permission theo ma trận phân quyền
         // MEMBER: VIEW_COURSE, USE_VOUCHER, VIEW_LESSON, TRACK_PROGRESS
@@ -178,6 +190,7 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(adminUserRole, viewUser);
         assignPermission(adminUserRole, editUser);
         assignPermission(adminUserRole, createUser);
+        assignPermission(adminUserRole, manageDepartment);
 
         // SUPER_ADMIN: Tất cả permissions
         assignPermission(superAdminRole, viewCourse);
@@ -204,6 +217,7 @@ public class DataInitializer implements CommandLineRunner {
         assignPermission(superAdminRole, viewTransaction);
         assignPermission(superAdminRole, viewRevenue);
         assignPermission(superAdminRole, manageWallet);
+        assignPermission(superAdminRole, manageDepartment);
 
         log.info("Assigned permissions to roles according to permission matrix");
     }

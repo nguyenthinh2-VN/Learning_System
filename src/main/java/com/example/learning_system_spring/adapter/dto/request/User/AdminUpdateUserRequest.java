@@ -21,9 +21,9 @@ public class AdminUpdateUserRequest {
 
     private Boolean isInternal;
 
-    private String department;
+    private Long departmentId;
 
     public AdminUpdateUserInput toInput(Long targetUserId, Long requesterId, String requesterRole) {
-        return new AdminUpdateUserInput(targetUserId, requesterId, requesterRole, name, roleName, isInternal, department);
+        return new AdminUpdateUserInput(targetUserId, requesterId, requesterRole, name, roleName, isInternal, departmentId);
     }
 }

@@ -28,6 +28,9 @@ public class CourseSectionJpaEntity {
     @Column(name = "order_index", nullable = false)
     private int orderIndex;
 
+    @Column(name = "test_content", columnDefinition = "TEXT")
+    private String testContent;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", nullable = false)
     private CourseJpaEntity course;
@@ -49,7 +52,7 @@ public class CourseSectionJpaEntity {
         List<CourseLesson> domainLessons = lessons.stream()
                 .map(CourseLessonJpaEntity::toDomain)
                 .collect(Collectors.toList());
-        return CourseSection.reconstitute(id, title, orderIndex, domainLessons);
+        return CourseSection.reconstitute(id, title, orderIndex, testContent, domainLessons);
     }
 
     public static CourseSectionJpaEntity fromDomain(CourseSection section) {
@@ -57,6 +60,7 @@ public class CourseSectionJpaEntity {
         entity.id = section.getId();
         entity.title = section.getTitle();
         entity.orderIndex = section.getOrderIndex();
+        entity.testContent = section.getTestContent();
         if (section.getLessons() != null) {
             section.getLessons().forEach(lesson -> {
                 CourseLessonJpaEntity lessonEntity = CourseLessonJpaEntity.fromDomain(lesson);

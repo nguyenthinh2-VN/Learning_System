@@ -3,14 +3,19 @@ package com.example.learning_system_spring.application.usecase.Progress;
 import com.example.learning_system_spring.application.dto.Progress.ProgressDataOutput;
 import com.example.learning_system_spring.application.repository.Course.CourseLessonRepository;
 import com.example.learning_system_spring.application.repository.Course.CourseRepository;
+import com.example.learning_system_spring.application.repository.Course.CourseSectionRepository;
 import com.example.learning_system_spring.application.repository.Course.EnrollmentRepository;
 import com.example.learning_system_spring.application.repository.Course.LessonProgressRepository;
 import com.example.learning_system_spring.domain.model.Course;
 import com.example.learning_system_spring.domain.model.Enrollment;
 import com.example.learning_system_spring.domain.model.LessonProgress;
+import com.example.learning_system_spring.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.learning_system_spring.application.repository.Course.SectionTestProgressRepository;
+import com.example.learning_system_spring.application.repository.User.UserRepository;
+import com.example.learning_system_spring.application.repository.Department.DepartmentRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,12 +30,15 @@ public class GetProgressUseCase {
     private final LessonProgressRepository lessonProgressRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
+    private final CourseSectionRepository courseSectionRepository;
     private final CourseLessonRepository courseLessonRepository;
-    private final com.example.learning_system_spring.application.repository.User.UserRepository userRepository;
+    private final SectionTestProgressRepository sectionTestProgressRepository;
+    private final UserRepository userRepository;
+    private final DepartmentRepository departmentRepository;
 
     @Transactional(readOnly = true)
     public ProgressDataOutput execute(Long userId) {
-        com.example.learning_system_spring.domain.model.User user = userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(
                         () -> new com.example.learning_system_spring.domain.exception.UserNotFoundException(userId));
         List<LessonProgress> progresses = lessonProgressRepository.findByUserId(userId);
@@ -65,6 +73,7 @@ public class GetProgressUseCase {
 
         int completedCourses = 0;
         List<ProgressDataOutput.OngoingCourseDTO> ongoingCourses = new ArrayList<>();
+        Map<Long, Boolean> resultMap = new HashMap<>();
 
         for (Enrollment enrollment : enrollments) {
             Course course = courseMap.get(enrollment.getCourseId());
@@ -75,6 +84,10 @@ public class GetProgressUseCase {
             long completedLessons = progresses.stream()
                     .filter(p -> p.getCourseId().equals(course.getId()))
                     .count();
+
+            int totalTests = (int) courseSectionRepository.countTotalTestsByCourseId(course.getId());
+            int passedTests = (int) sectionTestProgressRepository.countPassedByUserIdAndCourseId(userId,
+                    course.getId());
 
             int progressPercentage = totalLessons > 0 ? (int) ((completedLessons * 100) / totalLessons) : 0;
 
@@ -88,8 +101,10 @@ public class GetProgressUseCase {
                     .max(LocalDateTime::compareTo)
                     .orElse(enrollment.getEnrolledAt());
 
-            boolean isMandatoryForUser = course.isMandatory() && user.getDepartment() != null
-                    && user.getDepartment().equals(course.getAssignedDepartment());
+            boolean isMandatoryForUser = false;
+            if (course.isMandatory() && course.getAssignedDepartmentId() != null && user.getDepartmentId() != null) {
+                isMandatoryForUser = isDepartmentInHierarchy(user.getDepartmentId(), course.getAssignedDepartmentId());
+            }
             String statusMessage = null;
             if (isMandatoryForUser && progressPercentage < 100) {
                 statusMessage = "Chưa đạt kết quả do khóa bắt buộc";
@@ -103,24 +118,35 @@ public class GetProgressUseCase {
                     .lastAccessed(lastAccessed)
                     .isMandatory(isMandatoryForUser)
                     .statusMessage(statusMessage)
+                    .totalTests(totalTests)
+                    .passedTests(passedTests)
                     .build());
+
+            resultMap.put(course.getId(), true);
         }
 
         // Add mandatory courses not enrolled
-        if (user.getDepartment() != null && !user.getDepartment().isBlank()) {
-            List<Course> mandatoryCourses = courseRepository.findMandatoryCoursesByDepartment(user.getDepartment());
-            for (Course course : mandatoryCourses) {
-                if (!courseMap.containsKey(course.getId())) {
-                    ongoingCourses.add(ProgressDataOutput.OngoingCourseDTO.builder()
-                            .id(course.getId())
-                            .title(course.getTitle())
-                            .thumbnailUrl(course.getThumbnailUrl())
-                            .progressPercentage(0)
-                            .lastAccessed(LocalDateTime.now()) // Default cho lên đầu hoặc xử lý riêng
-                            .isMandatory(true)
-                            .statusMessage("Chưa được đăng ký học do khóa bắt buộc")
-                            .build());
+        if (user.getDepartmentId() != null) {
+            // Find all mandatory courses assigned to this department or its parents
+            List<Long> hierarchyIds = getDepartmentHierarchy(user.getDepartmentId());
+            List<Course> mandatoryCourses = courseRepository.findMandatoryCoursesByDepartmentIds(hierarchyIds);
+
+            for (Course mCourse : mandatoryCourses) {
+                // If it's already in the result, skip
+                if (resultMap.containsKey(mCourse.getId())) {
+                    continue;
                 }
+                ongoingCourses.add(ProgressDataOutput.OngoingCourseDTO.builder()
+                        .id(mCourse.getId())
+                        .title(mCourse.getTitle())
+                        .thumbnailUrl(mCourse.getThumbnailUrl())
+                        .progressPercentage(0)
+                        .lastAccessed(LocalDateTime.now()) // Default cho lên đầu hoặc xử lý riêng
+                        .isMandatory(true)
+                        .statusMessage("Chưa được đăng ký học do khóa bắt buộc")
+                        .totalTests(0)
+                        .passedTests(0)
+                        .build());
             }
         }
 
@@ -137,6 +163,28 @@ public class GetProgressUseCase {
                 .build();
 
         return ProgressDataOutput.builder().overview(overview).heatmap(heatmap).ongoingCourses(ongoingCourses).build();
+    }
+
+    // --- Helper methods for department hierarchy ---
+    private boolean isDepartmentInHierarchy(Long userDepartmentId, Long courseDepartmentId) {
+        if (userDepartmentId.equals(courseDepartmentId))
+            return true;
+
+        List<Long> hierarchy = getDepartmentHierarchy(userDepartmentId);
+        return hierarchy.contains(courseDepartmentId);
+    }
+
+    private List<Long> getDepartmentHierarchy(Long departmentId) {
+        java.util.List<Long> hierarchy = new java.util.ArrayList<>();
+        Long currentId = departmentId;
+
+        while (currentId != null) {
+            hierarchy.add(currentId);
+            currentId = departmentRepository.findById(currentId)
+                    .map(com.example.learning_system_spring.domain.model.Department::getParentId)
+                    .orElse(null);
+        }
+        return hierarchy;
     }
 
     private int calculateHeatmapLevel(int count) {
@@ -182,4 +230,5 @@ public class GetProgressUseCase {
 
         return streak;
     }
+
 }

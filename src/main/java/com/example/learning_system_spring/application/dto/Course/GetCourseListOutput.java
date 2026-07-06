@@ -19,7 +19,7 @@ public record GetCourseListOutput(
         boolean priceLocked,
         boolean freeForInternal,
         @JsonProperty("isMandatory") boolean isMandatory,
-        String assignedDepartment,
+        Long assignedDepartmentId,
         LocalDateTime mandatoryDeadline,
         LocalDateTime publishedAt) {
     public static GetCourseListOutput from(Course course) {
@@ -36,7 +36,7 @@ public record GetCourseListOutput(
                 course.isPriceLocked(),
                 course.isFreeForInternal(),
                 course.isMandatory(),
-                course.getAssignedDepartment(),
+                course.getAssignedDepartmentId(),
                 course.getMandatoryDeadline(),
                 course.getPublishedAt());
     }

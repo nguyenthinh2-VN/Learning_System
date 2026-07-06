@@ -7,8 +7,7 @@ import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
 public class User {
-    private static final Pattern EMAIL_PATTERN =
-        Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     private Long id;
     private String username;
@@ -22,9 +21,10 @@ public class User {
     private boolean enabled = true;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String department;
+    private Long departmentId;
 
-    private User(Long id, String username, String email, String password, String name, Role role, boolean isInternal, BigDecimal balance) {
+    private User(Long id, String username, String email, String password, String name, Role role, boolean isInternal,
+            BigDecimal balance) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -35,7 +35,8 @@ public class User {
         this.balance = balance != null ? balance : BigDecimal.ZERO;
     }
 
-    public static User create(String username, String email, String password, String name, Role role, boolean isInternal) {
+    public static User create(String username, String email, String password, String name, Role role,
+            boolean isInternal) {
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
             throw new InvalidEmailException(email);
         }
@@ -51,14 +52,15 @@ public class User {
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("Username must not be blank");
         }
-        User user = new User(null, username.trim(), email.toLowerCase().trim(), password, name.trim(), role, isInternal, BigDecimal.ZERO);
+        User user = new User(null, username.trim(), email.toLowerCase().trim(), password, name.trim(), role, isInternal,
+                BigDecimal.ZERO);
         user.createdAt = LocalDateTime.now();
         user.updatedAt = LocalDateTime.now();
         return user;
     }
 
     public static User reconstitute(Long id, String username, String email, String password, String name,
-                                     Role role, boolean isInternal, BigDecimal balance, LocalDateTime createdAt, LocalDateTime updatedAt) {
+            Role role, boolean isInternal, BigDecimal balance, LocalDateTime createdAt, LocalDateTime updatedAt) {
         User user = new User(id, username, email, password, name, role, isInternal, balance);
         user.createdAt = createdAt;
         user.updatedAt = updatedAt;
@@ -67,26 +69,28 @@ public class User {
 
     /**
      * Overload có avatarUrl — dùng khi tái dựng từ DB (UserJpaEntity).
-     * Overload cũ (không avatarUrl) giữ nguyên cho code/test hiện hữu; avatarUrl mặc định null.
+     * Overload cũ (không avatarUrl) giữ nguyên cho code/test hiện hữu; avatarUrl
+     * mặc định null.
      */
     public static User reconstitute(Long id, String username, String email, String password, String name,
-                                     Role role, boolean isInternal, BigDecimal balance, String avatarUrl,
-                                     LocalDateTime createdAt, LocalDateTime updatedAt) {
+            Role role, boolean isInternal, BigDecimal balance, String avatarUrl,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
         User user = reconstitute(id, username, email, password, name, role, isInternal, balance, createdAt, updatedAt);
         user.avatarUrl = avatarUrl;
         return user;
     }
 
     /**
-     * Overload đầy đủ có avatarUrl + enabled — dùng khi tái dựng từ DB (UserJpaEntity).
+     * Overload đầy đủ có avatarUrl + enabled — dùng khi tái dựng từ DB
+     * (UserJpaEntity).
      */
     public static User reconstitute(Long id, String username, String email, String password, String name,
-                                     Role role, boolean isInternal, BigDecimal balance, String avatarUrl,
-                                     boolean enabled, String department, LocalDateTime createdAt, LocalDateTime updatedAt) {
+            Role role, boolean isInternal, BigDecimal balance, String avatarUrl,
+            boolean enabled, Long departmentId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         User user = reconstitute(id, username, email, password, name, role, isInternal, balance, createdAt, updatedAt);
         user.avatarUrl = avatarUrl;
         user.enabled = enabled;
-        user.department = department;
+        user.departmentId = departmentId;
         return user;
     }
 
@@ -106,8 +110,8 @@ public class User {
 
     /**
      * Cập nhật avatar.
-     * - null  = giữ nguyên (no-op).
-     * - ""    = xóa avatar (về null).
+     * - null = giữ nguyên (no-op).
+     * - "" = xóa avatar (về null).
      * - chuỗi = set giá trị mới (đã trim).
      */
     public void changeAvatar(String newAvatarUrl) {
@@ -119,8 +123,8 @@ public class User {
     /**
      * Cập nhật phòng ban.
      */
-    public void changeDepartment(String department) {
-        this.department = department != null && !department.isBlank() ? department.trim() : null;
+    public void changeDepartment(Long departmentId) {
+        this.departmentId = departmentId;
     }
 
     /**
@@ -182,17 +186,55 @@ public class User {
         this.balance = this.balance.subtract(amount);
     }
 
-    public Long getId() { return id; }
-    public String getUsername() { return username; }
-    public String getEmail() { return email; }
-    public String getPassword() { return password; }
-    public String getName() { return name; }
-    public Role getRole() { return role; }
-    public boolean isInternal() { return isInternal; }
-    public BigDecimal getBalance() { return balance; }
-    public String getAvatarUrl() { return avatarUrl; }
-    public boolean isEnabled() { return enabled; }
-    public String getDepartment() { return department; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public Long getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public boolean isInternal() {
+        return isInternal;
+    }
+
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 }

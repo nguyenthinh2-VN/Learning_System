@@ -65,8 +65,8 @@ public class CourseJpaEntity {
     @Column(name = "is_mandatory", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean isMandatory = false;
 
-    @Column(name = "assigned_department", length = 255)
-    private String assignedDepartment;
+    @Column(name = "assigned_department_id")
+    private Long assignedDepartmentId;
 
     @Column(name = "mandatory_deadline")
     private LocalDateTime mandatoryDeadline;

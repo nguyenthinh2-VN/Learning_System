@@ -69,3 +69,13 @@ export const unmarkLessonCompleteApi = (courseId, lessonId) =>
 export const getCourseProgressApi = (courseId) =>
   api.get(`/courses/${courseId}/progress`);
 
+// ═══════════════════════════════════════════
+// SECTION TEST API
+// ═══════════════════════════════════════════
+
+export const getSectionTestApi = (sectionId) =>
+  api.get(`/sections/${sectionId}/test`);
+
+export const submitSectionTestApi = (sectionId, answers) =>
+  api.post(`/sections/${sectionId}/submit-test`, { answers });
+

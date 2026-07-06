@@ -25,6 +25,7 @@ Hệ thống xoay quanh 5 nhóm đối tượng (Roles) chính, mỗi nhóm có 
 ### 2.1. Cấp phát tài khoản
 Việc tạo tài khoản phần lớn được thực hiện bởi `ADMIN_USER` hoặc `STAFF` thay vì người dùng tự đăng ký tự do.
 - Khi Admin tạo một tài khoản mới, họ phải chọn **Vai trò (Role)** cho người đó.
+- Đối với nhân viên nội bộ, Admin có thể gán họ vào một **Phòng ban (Department)** cụ thể (VD: HR, IT, Sales).
 - Hệ thống sẽ dựa vào Role để **tự động sinh ra Mã đăng nhập (Username)** có tính tuần tự và duy nhất. Cụ thể:
   - Nếu là Học viên (MEMBER): Sinh mã bắt đầu bằng `MEM` (VD: `MEM001`, `MEM002`). Đồng thời, Admin bắt buộc phải chọn phân loại học viên này là **Nội bộ** hay **Bên ngoài**.
   - Nếu là Giảng viên (INSTRUCTOR): Sinh mã bắt đầu bằng `GV` (VD: `GV001`).
@@ -44,9 +45,18 @@ Hệ thống quản lý nội dung học tập theo mô hình phân cấp, từ 
 ### 3.1. Quản trị Nội dung
 - **INSTRUCTOR (Giảng viên)** là người trực tiếp tạo ra Khóa học.
 - Họ sẽ thiết lập thông tin cơ bản (Tên, Mô tả, Số lượng tối đa).
+- Giảng viên có thể gán khóa học này làm **Khóa học bắt buộc (Mandatory)** cho một số **Phòng ban (Department)** cụ thể và thiết lập hạn chót (Deadline).
 - Sau đó, họ tiếp tục tạo các Chương (Section) và upload các video hoặc đính kèm link video lưu trữ ngoài (Youtube/Vimeo/S3) vào từng Bài giảng (Lesson).
 
-### 3.2. Đăng ký & Tham gia học (Enrollment)
+### 3.2. Kiểm tra và Đánh giá (Section Tests)
+- Cuối mỗi chương học, Giảng viên có thể thiết lập các bài kiểm tra trắc nghiệm (Multiple Choice).
+- Nội dung bài kiểm tra được lưu trữ toàn vẹn (để bảo mật đáp án). Học viên chỉ thấy được kết quả (Đạt/Chưa đạt) và điểm số của mình sau khi nộp bài.
+- Học viên phải đạt đủ điểm để qua bài kiểm tra. Hệ thống lưu trữ lịch sử và tiến độ (SectionTestProgress) để đánh giá năng lực của học viên.
+
+### 3.3. Đăng ký & Tham gia học (Enrollment)
 - Một Học viên (`MEMBER`) có thể đăng ký (Enroll) vào nhiều Khóa học khác nhau.
 - Ngược lại, một Khóa học có nhiều Học viên theo học.
+- Đối với **Khóa học bắt buộc (Mandatory Courses)**:
+  - Hệ thống tự động so khớp phòng ban của Học viên với danh sách phòng ban bị bắt buộc học khóa đó.
+  - Nếu Học viên chưa hoàn thành (chưa đạt 100% tiến độ và vượt qua bài kiểm tra), hệ thống sẽ tính toán và hiển thị cảnh báo chưa hoàn thành để Học viên phải tham gia học.
 - Dữ liệu này được lưu vết chặt chẽ để phục vụ cho việc: Theo dõi tiến độ học (Progress), Chấm điểm (Grade), và Báo cáo thống kê (Report) sau này.

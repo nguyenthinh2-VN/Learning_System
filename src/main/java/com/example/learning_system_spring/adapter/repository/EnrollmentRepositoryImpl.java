@@ -8,6 +8,7 @@ import com.example.learning_system_spring.application.repository.Course.Enrollme
 import com.example.learning_system_spring.domain.model.Enrollment;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -68,4 +69,5 @@ public class EnrollmentRepositoryImpl implements EnrollmentRepository {
                 .map(EnrollmentJpaEntity::toDomain)
                 .toList();
     }
+
 }

@@ -46,8 +46,8 @@ public class UserJpaEntity {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
-    @Column(length = 255)
-    private String department;
+    @Column(name = "department_id")
+    private Long departmentId;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean enabled = true;
@@ -70,7 +70,8 @@ public class UserJpaEntity {
     }
 
     public User toDomain() {
-        return User.reconstitute(id, username, email, password, name, role.toDomain(), isInternal, balance, avatarUrl, enabled, department, createdAt, updatedAt);
+        return User.reconstitute(id, username, email, password, name, role.toDomain(), isInternal, balance, avatarUrl,
+                enabled, departmentId, createdAt, updatedAt);
     }
 
     public static UserJpaEntity fromDomain(User user) {
@@ -85,7 +86,7 @@ public class UserJpaEntity {
         e.balance = user.getBalance();
         e.avatarUrl = user.getAvatarUrl();
         e.enabled = user.isEnabled();
-        e.department = user.getDepartment();
+        e.departmentId = user.getDepartmentId();
         e.createdAt = user.getCreatedAt();
         e.updatedAt = user.getUpdatedAt();
         return e;

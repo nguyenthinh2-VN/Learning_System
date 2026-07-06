@@ -16,7 +16,7 @@ public record UpdateCourseInput(
                 String thumbnailUrl,
                 boolean freeForInternal,
                 boolean isMandatory,
-                String assignedDepartment,
+                Long assignedDepartmentId,
                 java.time.LocalDateTime mandatoryDeadline,
                 List<CourseSectionDto> sections) {
 }

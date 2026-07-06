@@ -10,6 +10,7 @@ import {
   ArrowLeft, ArrowRight, PlayCircle, BookOpen,
   ChevronDown, CheckCircle2, Circle, Loader2,
 } from 'lucide-react';
+import SectionTestView from '@/components/course/SectionTestView';
 
 function VideoPlayer({ url }) {
   if (!url) {
@@ -98,12 +99,24 @@ export default function EnrolledCourseDetailPage() {
     ? [...currentCourse.sections].sort((a, b) => a.orderIndex - b.orderIndex)
     : [];
 
-  const flatLessons = sortedSections.flatMap((section) =>
-    (section.lessons || [])
+  const flatLessons = sortedSections.flatMap((section) => {
+    const lessons = (section.lessons || [])
       .slice()
       .sort((a, b) => a.orderIndex - b.orderIndex)
-      .map((lesson) => ({ ...lesson, sectionTitle: section.title }))
-  );
+      .map((lesson) => ({ ...lesson, sectionTitle: section.title, isTest: false }));
+    
+    if (section.hasTest) {
+      lessons.push({
+        id: `test-${section.id}`,
+        sectionId: section.id,
+        title: 'Bài Kiểm Tra Chương',
+        sectionTitle: section.title,
+        isTest: true,
+        orderIndex: 9999
+      });
+    }
+    return lessons;
+  });
 
   const currentLesson = flatLessons[currentLessonIndex] ?? null;
   const totalLessons = flatLessons.length;
@@ -228,9 +241,16 @@ export default function EnrolledCourseDetailPage() {
       {/* ── Main layout: [Video + nav] | [Sidebar] ──────────────────── */}
       <div className="grid lg:grid-cols-3 gap-6">
 
-        {/* ── Left: Video player + controls ──────────────────────── */}
+        {/* ── Left: Video player or Test + controls ──────────────────────── */}
         <div className="lg:col-span-2 space-y-4">
-          <VideoPlayer url={currentLesson?.contentUrl} />
+          {currentLesson?.isTest ? (
+            <SectionTestView sectionId={currentLesson.sectionId} onTestPassed={() => {
+              markCurrentDone(); 
+              loadProgress(Number(courseId));
+            }} />
+          ) : (
+            <VideoPlayer url={currentLesson?.contentUrl} />
+          )}
 
           {/* Lesson title + prev/next */}
           <div className="border rounded-xl p-4 space-y-3">
@@ -244,7 +264,7 @@ export default function EnrolledCourseDetailPage() {
             </div>
 
             {/* Đánh dấu hoàn thành */}
-            {currentLesson && (
+            {currentLesson && !currentLesson.isTest && (
               <Button
                 size="sm"
                 onClick={toggleComplete}
@@ -307,7 +327,18 @@ export default function EnrolledCourseDetailPage() {
             {sortedSections.map((section, sIdx) => {
               const sectionLessons = (section.lessons || [])
                 .slice()
-                .sort((a, b) => a.orderIndex - b.orderIndex);
+                .sort((a, b) => a.orderIndex - b.orderIndex)
+                .map(l => ({ ...l, isTest: false }));
+              
+              if (section.hasTest) {
+                sectionLessons.push({
+                  id: `test-${section.id}`,
+                  sectionId: section.id,
+                  title: 'Bài Kiểm Tra Chương',
+                  isTest: true,
+                });
+              }
+
               const sectionStartIdx = lessonFlatCounter;
               lessonFlatCounter += sectionLessons.length;
               const isOpen = !!openSections[sIdx];
@@ -352,16 +383,16 @@ export default function EnrolledCourseDetailPage() {
                                   : 'hover:bg-muted/50'
                               }`}
                             >
-                              {isDone ? (
-                                <CheckCircle2 className={`size-3.5 shrink-0 ${isActive ? 'text-emerald-300' : 'text-emerald-500'}`} />
-                              ) : isActive ? (
-                                <PlayCircle className="size-3.5 shrink-0" />
-                              ) : (
-                                <PlayCircle className="size-3.5 shrink-0 text-muted-foreground/40" />
-                              )}
-                              <span className={`text-xs leading-snug line-clamp-2 ${
-                                isActive ? '' : 'text-foreground'
-                              }`}>
+                                {isDone ? (
+                                  <CheckCircle2 className={`size-3.5 shrink-0 ${isActive ? 'text-emerald-300' : 'text-emerald-500'}`} />
+                                ) : isActive ? (
+                                  lesson.isTest ? <BookOpen className="size-3.5 shrink-0" /> : <PlayCircle className="size-3.5 shrink-0" />
+                                ) : (
+                                  lesson.isTest ? <BookOpen className="size-3.5 shrink-0 text-muted-foreground/40" /> : <PlayCircle className="size-3.5 shrink-0 text-muted-foreground/40" />
+                                )}
+                                <span className={`text-xs leading-snug line-clamp-2 ${
+                                  isActive ? '' : 'text-foreground'
+                                }`}>
                                 {lesson.title}
                               </span>
                             </button>

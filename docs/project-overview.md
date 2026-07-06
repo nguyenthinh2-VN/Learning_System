@@ -37,6 +37,9 @@ Quy tắc kiến trúc chi tiết: `.claude/rules/spring-clean-architecture.md`
 | 2.12 | Admin User Listing | 1 | `docs/api-docs.md` §17 |
 | 2.13 | Course `thumbnailUrl` | — | `docs/api-docs.md` §18 |
 | 2.14 | AI Chatbot Tư vấn lộ trình học | 3 | `docs/API/ai-chatbot.md` |
+| 2.15 | Section Tests & Progress | 2 | Khóa học có bài kiểm tra cuối chương |
+| 2.16 | Department Management | 4 | CRUD Phòng ban (`docs/API/departments-api.md`) |
+| 2.17 | Mandatory Courses | — | Khóa học bắt buộc theo phòng ban |
 
 **Tổng: ~39 endpoints.** Xem đầy đủ tại `docs/API/README.md`.
 
@@ -78,9 +81,11 @@ Chi tiết cột và index: `docs/architecture-directory-tree.md`
 |------|-------|
 | `users` | Tài khoản, `balance`, `is_internal` |
 | `roles` / `permissions` / `role_permissions` | RBAC n-n, 18 permissions seed sẵn (+ `CREATE_USER` định nghĩa trong matrix nhưng chưa seed) |
-| `courses` | + 4 cột approval: `published`, `price_locked`, `published_at`, `published_by`; + `thumbnail_url` (ảnh bìa) |
+| `departments` | Phòng ban (cây phân cấp `parent_id`) |
+| `courses` | + 4 cột approval: `published`, `price_locked`, `published_at`, `published_by`; + `thumbnail_url` (ảnh bìa); + `is_mandatory`, `assigned_department_id`, `mandatory_deadline` |
 | `course_sections` | Chương học, `order_index` |
 | `course_lessons` | Bài giảng, `content_url`, `order_index` |
+| `section_test_progress` | Tiến độ và điểm số bài test của học viên |
 | `enrollments` | Lịch sử mua: `user_id`, `course_id`, `paid_price`, `enrolled_at` |
 | `vouchers` | PERCENT/FIXED, scope, usage limit |
 | `voucher_courses` | Mapping voucher ↔ course (scope = SPECIFIC) |
@@ -143,6 +148,7 @@ SQL migration mới nhất: `docs/sql/wallet_transactions.sql`
 - Admin liệt kê người dùng (`GET /api/v1/admin/users` — phân trang + tìm kiếm)
 - Course `thumbnailUrl` (ảnh bìa khóa học)
 - AI Chatbot Tư vấn lộ trình học (Context Compaction, Gợi ý khóa học)
+- Kiểm tra cuối chương (Section Tests) và theo dõi tiến độ (Progress Tracking)
 
 **Chưa làm (next steps):**
 - Ghép VietQR thật (chỉ cần thêm `VietQrGateway` + `VietQrWebhookController`)

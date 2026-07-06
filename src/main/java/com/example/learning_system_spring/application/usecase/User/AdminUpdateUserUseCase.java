@@ -60,8 +60,8 @@ public class AdminUpdateUserUseCase {
         }
 
         // Đổi phòng ban
-        if (input.department() != null) {
-            target.changeDepartment(input.department());
+        if (input.departmentId() != null) {
+            target.changeDepartment(input.departmentId());
         }
 
         User saved = userRepository.save(target);

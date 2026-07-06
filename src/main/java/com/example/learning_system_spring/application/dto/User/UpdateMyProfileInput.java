@@ -4,5 +4,5 @@ public record UpdateMyProfileInput(
         Long userId,
         String name,
         String avatarUrl,
-        String department
+        Long departmentId
 ) {}

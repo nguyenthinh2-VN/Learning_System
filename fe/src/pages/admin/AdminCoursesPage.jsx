@@ -6,6 +6,7 @@ import {
   getAdminCoursesApi, getInstructorCoursesApi, publishCourseApi, unpublishCourseApi, updateCoursePriceApi,
   adminCreateCourseApi, adminUpdateCourseApi, adminDeleteCourseApi,
 } from '@/api/adminApi';
+import { getDepartmentsApi } from '@/api/departmentApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -80,11 +81,32 @@ function CourseFormModal({ course, onClose, onSave }) {
     requestedInstructorId: course?.instructorId ?? '',
     freeForInternal: course?.freeForInternal ?? false,
     isMandatory: course?.isMandatory ?? false,
-    assignedDepartment: course?.assignedDepartment || '',
     mandatoryDeadline: course?.mandatoryDeadline ? new Date(course.mandatoryDeadline).toISOString().slice(0, 16) : '',
   });
+  const [departments, setDepartments] = useState([]);
+  const [selectedRootId, setSelectedRootId] = useState('');
+  const [selectedChildId, setSelectedChildId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    getDepartmentsApi().then((res) => {
+      const depts = res.data?.data || [];
+      setDepartments(depts);
+      if (course?.assignedDepartmentId) {
+        const dept = depts.find(d => d.id === course.assignedDepartmentId);
+        if (dept) {
+          if (dept.parentId) {
+            setSelectedRootId(dept.parentId);
+            setSelectedChildId(dept.id);
+          } else {
+            setSelectedRootId(dept.id);
+            setSelectedChildId('');
+          }
+        }
+      }
+    }).catch(() => { });
+  }, [course]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -108,7 +130,7 @@ function CourseFormModal({ course, onClose, onSave }) {
         thumbnailUrl: form.thumbnailUrl.trim() || null,
         freeForInternal: form.freeForInternal,
         isMandatory: form.isMandatory,
-        assignedDepartment: form.assignedDepartment.trim() || null,
+        assignedDepartmentId: selectedChildId !== '' ? Number(selectedChildId) : (selectedRootId !== '' ? Number(selectedRootId) : null),
         mandatoryDeadline: form.mandatoryDeadline ? new Date(form.mandatoryDeadline).toISOString() : null,
       };
       if (form.requestedInstructorId) {
@@ -216,10 +238,37 @@ function CourseFormModal({ course, onClose, onSave }) {
             </label>
 
             {form.isMandatory && (
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/50">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-border/50">
                 <div className="space-y-1.5">
-                  <Label>{t('ui.admin_courses.assign_dept')}</Label>
-                  <Input name="assignedDepartment" value={form.assignedDepartment} onChange={handleChange} placeholder={t('ui.admin_courses.assign_dept_placeholder')} />
+                  <Label>Khối (Cấp 1)</Label>
+                  <select
+                    value={selectedRootId}
+                    onChange={(e) => { setSelectedRootId(e.target.value); setSelectedChildId(''); }}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">— Chọn Khối —</option>
+                    {departments.filter(d => d.parentId == null).map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.code} — {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Phòng Ban Con (Cấp 2)</Label>
+                  <select
+                    value={selectedChildId}
+                    onChange={(e) => setSelectedChildId(e.target.value)}
+                    disabled={!selectedRootId}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                  >
+                    <option value="">— Chọn Phòng Ban Con —</option>
+                    {departments.filter(d => d.parentId == selectedRootId).map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.code} — {d.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-1.5">
                   <Label>{t('ui.admin_courses.deadline')}</Label>

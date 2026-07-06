@@ -61,7 +61,8 @@ public class UpdateCourseUseCase {
             }
         }
 
-        // Tạo course mới với id cũ + giữ nguyên flag published / priceLocked / publishedAt / publishedBy
+        // Tạo course mới với id cũ + giữ nguyên flag published / priceLocked /
+        // publishedAt / publishedBy
         Course updatedCourse = Course.reconstitute(
                 course.getId(),
                 input.title(),
@@ -75,7 +76,7 @@ public class UpdateCourseUseCase {
                 course.isPriceLocked(),
                 input.freeForInternal(),
                 input.isMandatory(),
-                input.assignedDepartment(),
+                input.assignedDepartmentId(),
                 input.mandatoryDeadline(),
                 course.getPublishedAt(),
                 course.getPublishedBy(),

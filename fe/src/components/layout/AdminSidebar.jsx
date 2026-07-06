@@ -27,6 +27,8 @@ import {
   ClipboardCheck,
   GraduationCap,
   KeyRound,
+  Building2,
+  FileQuestion,
 } from 'lucide-react';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
 import { ROLE_LABELS, getRoleTextClass } from '@/lib/roleColors';
@@ -43,42 +45,43 @@ export default function AdminSidebar() {
   const { t } = useTranslation();
 
   const NAV_GROUPS = [
-  {
-    label: t('ui.admin.overview'),
-    items: [
-      { title: t('ui.admin.dashboard'), url: '/admin', icon: LayoutDashboard },
-    ],
-  },
-  {
-    label: t('ui.admin.content'),
-    items: [
-      // INSTRUCTOR chỉ thấy "Khóa học của tôi" — tất cả role có CREATE_COURSE đều thấy
-      { title: t('ui.admin.courses'), url: '/admin/courses', icon: BookOpen },
-      // Chờ duyệt: ai có PUBLISH_COURSE
-      { title: t('ui.admin.pending_approval'), url: '/admin/courses/pending', icon: ClipboardCheck, permission: 'PUBLISH_COURSE' },
-    ],
-  },
-  {
-    label: t('ui.admin.management'),
-    items: [
-      // VIEW_USER: ADMIN_USER, SUPER_ADMIN
-      { title: t('ui.admin.users'), url: '/admin/users', icon: Users, roles: ['ADMIN_USER', 'SUPER_ADMIN'] },
-      // MANAGE_ROLE: phân quyền động (mặc định chỉ SUPER_ADMIN)
-      { title: t('ui.admin.roles_permissions'), url: '/admin/permissions', icon: KeyRound, permission: 'MANAGE_ROLE' },
-    ],
-  },
-  {
-    label: t('ui.admin.finance'),
-    items: [
-      // MANAGE_VOUCHER: ai có MANAGE_VOUCHER
-      { title: t('ui.admin.vouchers'), url: '/admin/vouchers', icon: Ticket, permission: 'MANAGE_VOUCHER' },
-      // Giao dịch toàn hệ thống: ai có VIEW_TRANSACTION
-      { title: t('ui.admin.transactions'), url: '/admin/transactions', icon: Receipt, permission: 'VIEW_TRANSACTION' },
-      // Cộng tiền: ai có MANAGE_WALLET
-      { title: t('ui.admin.add_funds'), url: '/admin/wallet', icon: Wallet, permission: 'MANAGE_WALLET' },
-    ],
-  },
-];
+    {
+      label: t('ui.admin.overview'),
+      items: [
+        { title: t('ui.admin.dashboard'), url: '/admin', icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: t('ui.admin.content'),
+      items: [
+        // INSTRUCTOR chỉ thấy "Khóa học của tôi" — tất cả role có CREATE_COURSE đều thấy
+        { title: t('ui.admin.courses'), url: '/admin/courses', icon: BookOpen },
+        { title: t('ui.admin.tests'), url: '/admin/tests', icon: FileQuestion, permission: 'CREATE_SECTION' },
+        // Chờ duyệt: ai có PUBLISH_COURSE
+        { title: t('ui.admin.pending_approval'), url: '/admin/courses/pending', icon: ClipboardCheck, permission: 'PUBLISH_COURSE' },
+      ],
+    },
+    {
+      label: t('ui.admin.management'),
+      items: [
+        { title: t('ui.admin.users'), url: '/admin/users', icon: Users, roles: ['ADMIN_USER', 'SUPER_ADMIN'] },
+        { title: t('ui.admin.departments'), url: '/admin/departments', icon: Building2, roles: ['ADMIN_USER', 'SUPER_ADMIN'] },
+        // MANAGE_ROLE: phân quyền động (mặc định chỉ SUPER_ADMIN)
+        { title: t('ui.admin.roles_permissions'), url: '/admin/permissions', icon: KeyRound, permission: 'MANAGE_ROLE' },
+      ],
+    },
+    {
+      label: t('ui.admin.finance'),
+      items: [
+        // MANAGE_VOUCHER: ai có MANAGE_VOUCHER
+        { title: t('ui.admin.vouchers'), url: '/admin/vouchers', icon: Ticket, permission: 'MANAGE_VOUCHER' },
+        // Giao dịch toàn hệ thống: ai có VIEW_TRANSACTION
+        { title: t('ui.admin.transactions'), url: '/admin/transactions', icon: Receipt, permission: 'VIEW_TRANSACTION' },
+        // Cộng tiền: ai có MANAGE_WALLET
+        { title: t('ui.admin.add_funds'), url: '/admin/wallet', icon: Wallet, permission: 'MANAGE_WALLET' },
+      ],
+    },
+  ];
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -117,11 +120,10 @@ export default function AdminSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" tooltip="Admin Portal" render={<Link to="/admin" />}>
-              <div className={`flex aspect-square size-8 items-center justify-center rounded-lg shrink-0 ${
-                isInstructor
+              <div className={`flex aspect-square size-8 items-center justify-center rounded-lg shrink-0 ${isInstructor
                   ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'
                   : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
-              }`}>
+                }`}>
                 {isInstructor ? <GraduationCap className="size-4" /> : <ShieldCheck className="size-4" />}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -174,11 +176,10 @@ export default function AdminSidebar() {
               tooltip={`${adminUser?.name} · ${adminUser?.email}`}
               className="cursor-default hover:bg-transparent h-auto py-2"
             >
-              <div className={`flex aspect-square size-8 items-center justify-center rounded-full font-semibold text-xs border shrink-0 ${
-                isInstructor
+              <div className={`flex aspect-square size-8 items-center justify-center rounded-full font-semibold text-xs border shrink-0 ${isInstructor
                   ? 'bg-gradient-to-br from-emerald-500/15 to-teal-500/15 text-emerald-700 border-emerald-500/30'
                   : 'bg-gradient-to-br from-indigo-500/15 to-purple-500/15 text-indigo-700 border-indigo-500/30'
-              }`}>
+                }`}>
                 {adminUser?.name?.charAt(0)?.toUpperCase() || 'A'}
               </div>
               <div className="flex flex-col flex-1 text-left text-sm leading-tight min-w-0">

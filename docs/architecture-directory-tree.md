@@ -13,11 +13,13 @@ src/main/java/com/example/learning_system_spring
 |   |   |   |-- CourseController                # /api/v1/courses (public + purchase + quote)
 |   |   |   |-- CourseQuoteController            # POST /api/v1/courses/{id}/quote
 |   |   |   |-- CourseSectionController          # /api/v1/courses/{id}/sections
+|   |   |   |-- AdminSectionTestController       # /api/v1/admin/sections/{id}/test
 |   |   |   |-- InstructorCourseController       # /api/v1/instructor/courses
 |   |   |   |-- Lesson/CourseLessonController    # /api/v1/courses/{id}/sections/{id}/lessons
 |   |   |-- AdminCourseController                # /api/v1/admin/courses/**
 |   |   |-- AdminUserController                  # /api/v1/admin/users (+ /{id}/top-up)
 |   |   |-- AdminVoucherController               # /api/v1/admin/vouchers
+|   |   |-- Department/DepartmentAdminController # /api/v1/admin/departments
 |   |   |-- UserController                       # /api/v1/users/me/top-up, /me/enrollments
 |   |   |-- WalletController                     # /api/v1/wallet/top-up/init
 |   |   |-- MockWebhookController                # /api/v1/webhook/mock (dev only)
@@ -40,7 +42,8 @@ src/main/java/com/example/learning_system_spring
 |   |-- repository/
 |       |-- jpa/
 |       |   |-- CourseEntity/                    # CourseJpaEntity, CourseSectionJpaEntity,
-|       |   |                                    #   CourseLessonJpaEntity, EnrollmentJpaEntity
+|       |   |                                    #   CourseLessonJpaEntity, EnrollmentJpaEntity,
+|       |   |                                    #   SectionTestProgressJpaEntity
 |       |   |-- UserEntity/UserJpaEntity
 |       |   |-- VoucherEntity/                   # VoucherJpaEntity, VoucherUsageJpaEntity
 |       |   |-- WalletEntity/WalletTransactionJpaEntity
@@ -64,6 +67,7 @@ src/main/java/com/example/learning_system_spring
 |   |   |                                        #   QuotePricingInput/Output, PurchaseCourseInput/Output
 |   |   |-- Wallet/                              # InitTopUpOutput, AdminTopUpOutput
 |   |   |-- User/                                # MyEnrollmentOutput
+|   |   |-- Department/                          # CreateDepartmentInput, UpdateDepartmentInput, DepartmentOutput
 |   |   |-- CreateUserInput, PageResult (+ map())
 |   |-- port/
 |   |   |-- PaymentGateway.java                  # Interface — không bao giờ sửa
@@ -75,17 +79,22 @@ src/main/java/com/example/learning_system_spring
 |   |   |-- Voucher/                             # VoucherRepository, VoucherUsageRepository
 |   |   |-- Wallet/WalletTransactionRepository
 |   |   |-- RoleRepository
+|   |   |-- Department/DepartmentRepository
 |   |-- usecase/
 |       |-- Auth/                                # LoginUseCase, RegisterUseCase
 |       |-- Course/                              # CreateCourse, UpdateCourse, DeleteCourse,
 |       |                                        #   GetCourseList, GetCourseDetail,
 |       |                                        #   PublishCourseUseCase, UnpublishCourseUseCase,
-|       |                                        #   UpdateCoursePriceUseCase
+|       |                                        #   UpdateCoursePriceUseCase,
+|       |                                        #   AdminGetSectionTestUseCase, AdminUpdateSectionTestUseCase,
+|       |                                        #   GetSectionTestUseCase, SubmitSectionTestUseCase
 |       |-- Section/                             # GetSections, CreateSection, UpdateSection, DeleteSection
 |       |-- Lesson/                              # GetLessons (+ enrollment check), CreateLesson,
 |       |                                        #   UpdateLesson, DeleteLesson
 |       |-- User/                                # TopUpBalanceUseCase, AdminCreateUserUseCase,
 |       |                                        #   GetMyEnrollmentsUseCase
+|       |-- Department/                          # CreateDepartmentUseCase, UpdateDepartmentUseCase,
+|       |                                        #   DeleteDepartmentUseCase, GetDepartmentsUseCase
 |       |-- Voucher/                             # CreateVoucherUseCase, UpdateVoucherUseCase,
 |       |                                        #   DeleteVoucherUseCase, GetVouchersUseCase,
 |       |                                        #   QuotePricingUseCase, ApplyVoucherCheckoutUseCase
@@ -100,6 +109,8 @@ src/main/java/com/example/learning_system_spring
 |   |                                            #   User, Voucher, Wallet)
 |   |-- model/
 |   |   |-- User, Course, CourseSection, CourseLesson, Enrollment, Role, Permission
+|   |   |-- SectionTestProgress                  # Tracks user test completion and score
+|   |   |-- Department                           # Defines organizational units
 |   |   |-- Wallet/                              # WalletTransaction, TxStatus, TxSource
 |   |   |-- Voucher/                             # Voucher, VoucherType, VoucherStatus,
 |   |                                            #   VoucherScope, VoucherUsage, PriceQuote

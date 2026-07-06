@@ -121,6 +121,14 @@ export const adminUpdateSectionApi = (courseId, sectionId, data) =>
 export const adminDeleteSectionApi = (courseId, sectionId) =>
   adminApi.delete(`/courses/${courseId}/sections/${sectionId}`);
 
+export const adminUpdateSectionTestApi = (sectionId, testContent) =>
+  adminApi.put(`/admin/sections/${sectionId}/test`, testContent, {
+    headers: { 'Content-Type': 'text/plain' },
+  });
+
+export const adminGetSectionTestApi = (sectionId) =>
+  adminApi.get(`/admin/sections/${sectionId}/test`);
+
 // Lessons (dùng adminApi)
 export const adminCreateLessonApi = (courseId, sectionId, data) =>
   adminApi.post(`/courses/${courseId}/sections/${sectionId}/lessons`, data);

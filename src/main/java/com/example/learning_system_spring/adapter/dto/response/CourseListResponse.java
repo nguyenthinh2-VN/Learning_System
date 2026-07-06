@@ -35,7 +35,7 @@ public class CourseListResponse {
         private boolean freeForInternal;
         @JsonProperty("isMandatory")
         private boolean isMandatory;
-        private String assignedDepartment;
+        private Long assignedDepartmentId;
         private LocalDateTime mandatoryDeadline;
         private LocalDateTime publishedAt;
     }
@@ -55,7 +55,7 @@ public class CourseListResponse {
                         .priceLocked(output.priceLocked())
                         .freeForInternal(output.freeForInternal())
                         .isMandatory(output.isMandatory())
-                        .assignedDepartment(output.assignedDepartment())
+                        .assignedDepartmentId(output.assignedDepartmentId())
                         .mandatoryDeadline(output.mandatoryDeadline())
                         .publishedAt(output.publishedAt())
                         .build())

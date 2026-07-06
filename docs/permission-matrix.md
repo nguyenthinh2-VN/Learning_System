@@ -40,6 +40,7 @@ Danh sách các vai trò (Roles) trong hệ thống:
 | 22 | `VIEW_TRANSACTION` 🆕 | Xem giao dịch toàn hệ thống trong admin panel | [ ] | [ ] | [ ] | [ ] | [x] |
 | 23 | `VIEW_REVENUE` 🆕 | Xem báo cáo doanh thu (admin) | [ ] | [ ] | [ ] | [ ] | [x] |
 | 24 | `MANAGE_WALLET` 🆕 | Admin cộng tiền thủ công vào ví user | [ ] | [ ] | [ ] | [ ] | [x] |
+| 25 | `MANAGE_DEPARTMENT` 🆕 | Quản lý phòng ban | [ ] | [ ] | [ ] | [x] | [x] |
 
 > Lưu ý phân quyền:
 > - `CREATE_USER` (#11): nay **đã được seed** trong `DataInitializer` và gán cho ADMIN_USER + SUPER_ADMIN. Tuy nhiên endpoint tạo tài khoản `POST /api/v1/admin/users` vẫn enforce bằng **role gate** `@PreAuthorize("hasAnyRole('ADMIN_USER','SUPER_ADMIN','STAFF')")` chứ chưa kiểm tra permission này. Vì là role-gate nên thực tế **STAFF vẫn tạo được tài khoản** (rộng hơn cột `CREATE_USER`). Khi chuyển sang enforce theo permission động, cần đồng bộ lại gate cho khớp.
@@ -52,7 +53,8 @@ Danh sách các vai trò (Roles) trong hệ thống:
 > - 🆕 `VIEW_LESSON` (#20): gate role là `hasAnyRole('MEMBER','INSTRUCTOR','STAFF','ADMIN_USER','SUPER_ADMIN')` nhưng domain policy (`LessonAuthorizationService`) siết lại: SUPER_ADMIN/STAFF luôn xem được, INSTRUCTOR chỉ xem course của mình, MEMBER chỉ xem khi đã enrolled, **ADMIN_USER bị từ chối 403**. Vì vậy ma trận đánh dấu ADMIN_USER `[ ]`.
 > - 🆕 `TRACK_PROGRESS` (#21): áp dụng cho `POST/DELETE .../lessons/{id}/complete` và `GET .../progress`. Cùng quy tắc với `VIEW_LESSON` (ADMIN_USER không thuộc luồng học tập → 403); ngoài ra MEMBER phải enrolled, INSTRUCTOR phải sở hữu course.
 > - 🆕 `VIEW_TRANSACTION` (#22), `VIEW_REVENUE` (#23), `MANAGE_WALLET` (#24): các chức năng tài chính nhạy cảm trong admin panel, hiện chỉ `SUPER_ADMIN` (`@PreAuthorize("hasRole('SUPER_ADMIN')")`). Tách riêng khỏi `VIEW_REPORT` (vốn được gán cho cả INSTRUCTOR) vì dữ liệu doanh thu/giao dịch toàn hệ thống rộng hơn report của instructor.
-> - 🆕 Các permission #20–#24 (cùng với `CREATE_USER` #11) **đã được seed trong DB** và gán cho role theo đúng ma trận này (`DataInitializer` nay seed 24 permissions, idempotent — DB cũ tự bổ sung khi khởi động lại). Hiện endpoint vẫn enforce bằng role-gate; các permission này sẵn sàng cho phân quyền động (ADMIN tự gán permission cho role).
+> - 🆕 `MANAGE_DEPARTMENT` (#25): Quản lý sơ đồ phòng ban (tạo/sửa/xóa). Được gán cho `ADMIN_USER` và `SUPER_ADMIN`.
+> - 🆕 Các permission #20–#25 (cùng với `CREATE_USER` #11) **đã được seed trong DB** và gán cho role theo đúng ma trận này (`DataInitializer` nay seed 25 permissions, idempotent — DB cũ tự bổ sung khi khởi động lại). Hiện endpoint vẫn enforce bằng role-gate; các permission này sẵn sàng cho phân quyền động (ADMIN tự gán permission cho role).
 
 ## Ánh xạ Chức năng → Quyền sử dụng (theo endpoint thực tế)
 
@@ -93,12 +95,16 @@ Bảng dưới liệt kê **quyền thực tế đang enforce** trên từng ch�
 | Tạo / Sửa / Xóa Lesson | `.../lessons` (POST/PUT/DELETE) | INSTRUCTOR (course của mình), STAFF, SUPER_ADMIN | `CREATE_LESSON`, `EDIT_LESSON` | ADMIN_USER KHÔNG có quyền |
 | Xem lesson (nội dung trả phí) | `GET .../lessons` | SUPER_ADMIN, STAFF; INSTRUCTOR (chủ sở hữu); MEMBER (đã enrolled) | `VIEW_LESSON` 🆕 | ADMIN_USER → 403; MEMBER chưa mua → 403 (`LESSON_ACCESS_DENIED`) |
 
-### Tiến độ học (Lesson Progress)
+### Tiến độ học & Kiểm tra (Lesson Progress & Section Test)
 
 | Chức năng | Endpoint | Role được phép | Permission (matrix) | Ghi chú |
 |-----------|----------|----------------|---------------------|---------|
 | Đánh dấu / bỏ đánh dấu hoàn thành | `POST` / `DELETE .../lessons/{lessonId}/complete` | SUPER_ADMIN, STAFF; INSTRUCTOR (chủ sở hữu); MEMBER (đã enrolled) | `TRACK_PROGRESS` 🆕 | ADMIN_USER → 403 |
 | Xem tiến độ tổng quan | `GET /api/v1/courses/{courseId}/progress` | SUPER_ADMIN, STAFF; INSTRUCTOR (chủ sở hữu); MEMBER (đã enrolled) | `TRACK_PROGRESS` 🆕 | ADMIN_USER → 403 |
+| Xem bài test chương | `GET /api/v1/sections/{sectionId}/test` | Mọi role đã đăng nhập | `TRACK_PROGRESS` | Cần bổ sung kiểm tra enrollment (chưa enforce) |
+| Nộp bài test chương | `POST /api/v1/sections/{sectionId}/submit-test` | Mọi role đã đăng nhập | `TRACK_PROGRESS` | Cần bổ sung kiểm tra enrollment (chưa enforce) |
+| Lấy bài test gốc (kèm đáp án) | `GET /api/v1/admin/sections/{sectionId}/test` | INSTRUCTOR (chủ sở hữu), STAFF, SUPER_ADMIN | `EDIT_SECTION` | Dùng để sửa bài test |
+| Cập nhật bài test (Admin) | `PUT /api/v1/admin/sections/{sectionId}/test` | INSTRUCTOR (chủ sở hữu), STAFF, SUPER_ADMIN | `EDIT_SECTION` | Dùng để sửa bài test |
 
 ### Duyệt khóa học (Course Approval)
 
@@ -132,6 +138,12 @@ Bảng dưới liệt kê **quyền thực tế đang enforce** trên từng ch�
 | Giao dịch toàn hệ thống | `GET /api/v1/admin/transactions` | SUPER_ADMIN | `VIEW_TRANSACTION` 🆕 | `@PreAuthorize("hasRole('SUPER_ADMIN')")`; lọc + phân trang |
 | Báo cáo doanh thu | `GET /api/v1/admin/reports/revenue` | SUPER_ADMIN | `VIEW_REVENUE` 🆕 | `@PreAuthorize("hasRole('SUPER_ADMIN')")`; DAY / MONTH |
 | Admin cộng tiền vào ví | `POST /api/v1/admin/users/{userId}/top-up`, `POST /api/v1/admin/users/top-up` | SUPER_ADMIN | `MANAGE_WALLET` 🆕 | `@PreAuthorize("hasRole('SUPER_ADMIN')")`; push WebSocket `WALLET_UPDATED` |
+
+### Quản lý Phòng ban (Admin)
+
+| Chức năng | Endpoint | Role được phép | Permission (matrix) | Ghi chú |
+|-----------|----------|----------------|---------------------|---------|
+| Tạo / Sửa / Xóa / Xem phòng ban | `/api/v1/admin/departments` (CRUD) | ADMIN_USER, SUPER_ADMIN | `MANAGE_DEPARTMENT` 🆕 | Cấu trúc cây (hierarchy) |
 
 > Quy ước cột "Role được phép":
 > - "Mọi role đã đăng nhập" = endpoint thuộc nhánh `anyRequest().authenticated()`, không gắn role gate; chỉ cần JWT hợp lệ. Logic "chỉ của chính mình" được enforce trong use case bằng `userId` lấy từ JWT.
@@ -191,7 +203,8 @@ SELECT * FROM permissions ORDER BY id;
 -- 22 | VIEW_TRANSACTION    | Xem giao dịch toàn hệ thống
 -- 23 | VIEW_REVENUE        | Xem báo cáo doanh thu
 -- 24 | MANAGE_WALLET       | Admin cộng tiền thủ công vào ví user
--- (Ghi chú: id 19–24 là thứ tự seed; số thứ tự trong bảng matrix ở trên là #11 + #20–#24)
+-- 25 | MANAGE_DEPARTMENT   | Quản lý phòng ban
+-- (Ghi chú: id 19–25 là thứ tự seed; số thứ tự trong bảng matrix ở trên là #11 + #20–#25)
 
 -- Bảng role_permissions (junction table)
 SELECT r.name AS role, p.name AS permission

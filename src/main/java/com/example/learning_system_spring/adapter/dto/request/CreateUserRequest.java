@@ -13,13 +13,16 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class CreateUserRequest {
-    @NotBlank @Email
+    @NotBlank
+    @Email
     private String email;
 
-    @NotBlank @Size(min = 6, max = 100)
+    @NotBlank
+    @Size(min = 6, max = 100)
     private String password;
 
-    @NotBlank @Size(min = 1, max = 200)
+    @NotBlank
+    @Size(min = 1, max = 200)
     private String name;
 
     @NotBlank
@@ -28,7 +31,9 @@ public class CreateUserRequest {
     @NotNull
     private Boolean isInternal;
 
+    private Long departmentId;
+
     public CreateUserInput toInput() {
-        return new CreateUserInput(email, password, name, roleName, isInternal);
+        return new CreateUserInput(email, password, name, roleName, isInternal, departmentId);
     }
 }

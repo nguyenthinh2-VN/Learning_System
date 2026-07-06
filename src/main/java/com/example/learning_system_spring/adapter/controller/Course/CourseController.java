@@ -112,7 +112,7 @@ public class CourseController {
                                 requesterId, requesterRole, req.getTitle(), req.getDescription(),
                                 req.getMaxStudents(), req.getPrice(), req.getRequestedInstructorId(),
                                 req.getThumbnailUrl(), req.isFreeForInternal(),
-                                req.isMandatory(), req.getAssignedDepartment(), req.getMandatoryDeadline(),
+                                req.isMandatory(), req.getAssignedDepartmentId(), req.getMandatoryDeadline(),
                                 req.getSections());
 
                 CourseOutput output = createCourseUseCase.execute(input);
@@ -135,7 +135,7 @@ public class CourseController {
                                 id, requesterId, requesterRole, req.getTitle(), req.getDescription(),
                                 req.getMaxStudents(), req.getPrice(), req.getThumbnailUrl(),
                                 req.isFreeForInternal(),
-                                req.isMandatory(), req.getAssignedDepartment(), req.getMandatoryDeadline(),
+                                req.isMandatory(), req.getAssignedDepartmentId(), req.getMandatoryDeadline(),
                                 req.getSections());
 
                 CourseOutput output = updateCourseUseCase.execute(input);

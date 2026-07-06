@@ -35,7 +35,7 @@ public class CreateCourseRequest {
 
     @JsonProperty("isMandatory")
     private boolean isMandatory;
-    private String assignedDepartment;
+    private Long assignedDepartmentId;
     private java.time.LocalDateTime mandatoryDeadline;
 
     private List<CourseSectionDto> sections;

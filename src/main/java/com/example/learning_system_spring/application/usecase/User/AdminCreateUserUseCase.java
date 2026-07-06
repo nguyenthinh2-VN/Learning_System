@@ -35,6 +35,9 @@ public class AdminCreateUserUseCase {
         String encodedPassword = passwordEncoder.encode(input.password());
 
         User user = User.create(username, input.email(), encodedPassword, input.name(), role, input.isInternal());
+        if (input.departmentId() != null) {
+            user.changeDepartment(input.departmentId());
+        }
         User saved = userRepo.save(user);
 
         return RegisterOutput.from(saved);

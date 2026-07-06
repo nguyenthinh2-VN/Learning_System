@@ -251,9 +251,15 @@ export default function ProgressPage() {
                     <span className="text-slate-500">{t('ui.progress.progress_label', 'Tiến độ')}</span>
                     <span className="font-bold text-slate-900">{course.progressPercentage}%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-1">
                     <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${course.progressPercentage}%` }}></div>
                   </div>
+                  {course.totalTests > 0 && (
+                    <div className="flex items-center justify-between w-full text-xs">
+                      <span className="text-slate-500">Bài test</span>
+                      <span className="font-bold text-slate-900">{course.passedTests} / {course.totalTests}</span>
+                    </div>
+                  )}
                 </div>
               </Link>
             ))}

@@ -32,6 +32,16 @@ public class CourseSectionRepositoryImpl implements CourseSectionRepository {
     }
 
     @Override
+    public Long findCourseIdBySectionId(Long sectionId) {
+        return jpaRepo.findCourseIdBySectionId(sectionId);
+    }
+
+    @Override
+    public long countTotalTestsByCourseId(Long courseId) {
+        return jpaRepo.countTotalTestsByCourseId(courseId);
+    }
+
+    @Override
     public CourseSection save(CourseSection section, Long courseId) {
         CourseSectionJpaEntity entity = CourseSectionJpaEntity.fromDomain(section);
 
@@ -44,6 +54,14 @@ public class CourseSectionRepositoryImpl implements CourseSectionRepository {
 
         CourseSectionJpaEntity saved = jpaRepo.save(entity);
         return saved.toDomain();
+    }
+
+    @Override
+    public void updateTestContent(Long sectionId, String testContent) {
+        jpaRepo.findById(sectionId).ifPresent(entity -> {
+            entity.setTestContent(testContent);
+            jpaRepo.save(entity);
+        });
     }
 
     @Override

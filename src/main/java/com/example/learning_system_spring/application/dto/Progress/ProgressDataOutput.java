@@ -51,5 +51,7 @@ public class ProgressDataOutput {
         @JsonProperty("isMandatory")
         private boolean isMandatory;
         private String statusMessage; // "Chưa đạt kết quả...", "Chưa được đăng ký học do khóa bắt buộc"
+        private int totalTests;
+        private int passedTests;
     }
 }

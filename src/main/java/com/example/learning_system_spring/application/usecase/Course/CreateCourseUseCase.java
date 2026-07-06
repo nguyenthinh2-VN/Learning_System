@@ -57,7 +57,7 @@ public class CreateCourseUseCase {
                 input.thumbnailUrl(),
                 input.freeForInternal(),
                 input.isMandatory(),
-                input.assignedDepartment(),
+                input.assignedDepartmentId(),
                 input.mandatoryDeadline(),
                 domainSections);
 

@@ -11,5 +11,5 @@ public record AdminUpdateUserInput(
         String name,
         String roleName,
         Boolean isInternal,
-        String department
+        Long departmentId
 ) {}

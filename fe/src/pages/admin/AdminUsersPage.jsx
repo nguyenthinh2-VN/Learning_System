@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createUserApi, getUsersApi, adminUpdateUserApi, adminSetUserStatusApi } from '@/api/adminApi';
+import { getDepartmentsApi } from '@/api/departmentApi';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -38,8 +39,15 @@ function AddUserModal({ onClose, onSuccess }) {
   const [form, setForm] = useState({
     email: '', password: '', name: '', roleName: 'MEMBER', isInternal: false,
   });
+  const [departments, setDepartments] = useState([]);
+  const [selectedRootId, setSelectedRootId] = useState('');
+  const [selectedChildId, setSelectedChildId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    getDepartmentsApi().then((res) => setDepartments(res.data?.data || [])).catch(() => { });
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -55,7 +63,11 @@ function AddUserModal({ onClose, onSuccess }) {
     }
     setLoading(true);
     try {
-      const res = await createUserApi(form);
+      const payload = {
+        ...form,
+        departmentId: selectedChildId !== '' ? Number(selectedChildId) : (selectedRootId !== '' ? Number(selectedRootId) : null)
+      };
+      const res = await createUserApi(payload);
       onSuccess(res.data.data || res.data);
     } catch (err) {
       setError(err?.response?.data?.message || t('ui.admin_users.err_create_fail'));
@@ -108,6 +120,39 @@ function AddUserModal({ onClose, onSuccess }) {
             <input id="add-internal" name="isInternal" type="checkbox" checked={form.isInternal} onChange={handleChange} className="rounded" />
             <Label htmlFor="add-internal" className="cursor-pointer">{t('ui.admin_users.internal_account')}</Label>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Khối (Cấp 1)</Label>
+              <select
+                value={selectedRootId}
+                onChange={(e) => { setSelectedRootId(e.target.value); setSelectedChildId(''); }}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">— Chọn Khối —</option>
+                {departments.filter(d => d.parentId == null).map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.code} — {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Phòng Ban Con (Cấp 2)</Label>
+              <select
+                value={selectedChildId}
+                onChange={(e) => setSelectedChildId(e.target.value)}
+                disabled={!selectedRootId}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+              >
+                <option value="">— Chọn Phòng Ban Con —</option>
+                {departments.filter(d => d.parentId == selectedRootId).map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.code} — {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="flex gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">{t('ui.admin_users.cancel')}</Button>
             <Button type="submit" disabled={loading} className="flex-1" id="add-user-submit">
@@ -137,8 +182,30 @@ function EditUserModal({ user, onClose, onSuccess }) {
     roleName: user.role || 'MEMBER',
     isInternal: !!user.isInternal,
   });
+  const [departments, setDepartments] = useState([]);
+  const [selectedRootId, setSelectedRootId] = useState('');
+  const [selectedChildId, setSelectedChildId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    getDepartmentsApi().then((res) => {
+      const depts = res.data?.data || [];
+      setDepartments(depts);
+      if (user.departmentId) {
+        const dept = depts.find(d => d.id === user.departmentId);
+        if (dept) {
+          if (dept.parentId) {
+            setSelectedRootId(dept.parentId);
+            setSelectedChildId(dept.id);
+          } else {
+            setSelectedRootId(dept.id);
+            setSelectedChildId('');
+          }
+        }
+      }
+    }).catch(() => { });
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -155,6 +222,7 @@ function EditUserModal({ user, onClose, onSuccess }) {
         name: form.name.trim(),
         roleName: form.roleName,
         isInternal: form.isInternal,
+        departmentId: selectedChildId !== '' ? Number(selectedChildId) : (selectedRootId !== '' ? Number(selectedRootId) : null),
       });
       onSuccess(res.data.data);
     } catch (err) {
@@ -203,6 +271,39 @@ function EditUserModal({ user, onClose, onSuccess }) {
           <div className="flex items-center gap-2">
             <input id="edit-internal" name="isInternal" type="checkbox" checked={form.isInternal} onChange={handleChange} className="rounded" />
             <Label htmlFor="edit-internal" className="cursor-pointer">{t('ui.admin_users.internal_account')}</Label>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Khối (Cấp 1)</Label>
+              <select
+                value={selectedRootId}
+                onChange={(e) => { setSelectedRootId(e.target.value); setSelectedChildId(''); }}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">— Chọn Khối —</option>
+                {departments.filter(d => d.parentId == null).map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.code} — {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Phòng Ban Con (Cấp 2)</Label>
+              <select
+                value={selectedChildId}
+                onChange={(e) => setSelectedChildId(e.target.value)}
+                disabled={!selectedRootId}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+              >
+                <option value="">— Chọn Phòng Ban Con —</option>
+                {departments.filter(d => d.parentId == selectedRootId).map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.code} — {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">{t('ui.admin_users.cancel')}</Button>

@@ -12,7 +12,7 @@ public record AdminUserDetailOutput(
         String role,
         boolean isInternal,
         boolean enabled,
-        String department,
+        Long departmentId,
         LocalDateTime createdAt
 ) {
     public static AdminUserDetailOutput from(User user) {
@@ -24,7 +24,7 @@ public record AdminUserDetailOutput(
                 user.getRole().getName(),
                 user.isInternal(),
                 user.isEnabled(),
-                user.getDepartment(),
+                user.getDepartmentId(),
                 user.getCreatedAt());
     }
 }

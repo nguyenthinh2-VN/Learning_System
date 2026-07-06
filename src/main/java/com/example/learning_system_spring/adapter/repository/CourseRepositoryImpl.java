@@ -1,3 +1,4 @@
+
 package com.example.learning_system_spring.adapter.repository;
 
 import com.example.learning_system_spring.adapter.repository.jpa.CourseEntity.CourseJpaEntity;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -62,7 +64,8 @@ public class CourseRepositoryImpl implements CourseRepository {
     @Override
     public PageResult<Course> searchByInstructorId(Long instructorId, String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return toPageResult(jpaCourseRepository.searchByInstructorId(instructorId, normalizeKeyword(keyword), pageable));
+        return toPageResult(
+                jpaCourseRepository.searchByInstructorId(instructorId, normalizeKeyword(keyword), pageable));
     }
 
     @Override
@@ -102,9 +105,9 @@ public class CourseRepositoryImpl implements CourseRepository {
     }
 
     @Override
-    public List<Course> findMandatoryCoursesByDepartment(String department) {
-        return jpaCourseRepository.findByIsMandatoryTrueAndAssignedDepartment(department).stream()
+    public List<Course> findMandatoryCoursesByDepartmentIds(List<Long> departmentIds) {
+        return jpaCourseRepository.findByIsMandatoryTrueAndAssignedDepartmentIdIn(departmentIds).stream()
                 .map(courseMapper::toDomain)
-                .toList();
+                .collect(Collectors.toList());
     }
 }

@@ -23,8 +23,8 @@ public class UpdateMyProfileUseCase {
 
         user.changeName(input.name());
         user.changeAvatar(input.avatarUrl()); // null = giữ nguyên, "" = xóa
-        if (input.department() != null) {
-            user.changeDepartment(input.department());
+        if (input.departmentId() != null) {
+            user.changeDepartment(input.departmentId());
         }
 
         User saved = userRepository.save(user);
